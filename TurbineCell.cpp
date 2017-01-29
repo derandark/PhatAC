@@ -5,5 +5,9 @@
 
 TurbineCell::TurbineCell()
 {
+#if PRE_TOD_DATA_FILES
 	LoadFile("cell.dat");
+#else
+	LoadFile("client_cell_1.dat");
+#endif
 }
