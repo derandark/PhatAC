@@ -1,0 +1,7 @@
+You are in the world of PHATAC.
+
+Welcome to Asheron's Call!
+
+Sat 05/01/2004
+=============
+Using default MOTD file.
