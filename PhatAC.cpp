@@ -242,6 +242,7 @@ LRESULT CALLBACK LauncherProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 					memset(szLaunchDir, 0, dwLen);
 					dwLen -= 1;
 
+					/*
 					HKEY hKey;
 					if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Microsoft Games\\Asheron's Call\\1.00", NULL, KEY_QUERY_VALUE, &hKey) == ERROR_SUCCESS)
 					{
@@ -253,6 +254,13 @@ LRESULT CALLBACK LauncherProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 						MsgBox("Couldn't find installation directory. Is AC installed?\r\n");
 						break;
 					}
+					*/
+
+					char dir[MAX_PATH];
+					GetCurrentDirectory(MAX_PATH, dir);
+					dir[MAX_PATH - 1] = '\0';
+
+					sprintf(szLaunchDir, "%s\\Client", dir);
 
 					if (szLaunchDir[strlen(szLaunchDir) - 1] != '\\')
 					{
@@ -260,8 +268,16 @@ LRESULT CALLBACK LauncherProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 						end[0] = '\\';
 						end[1] = '\0';
 					}
-					//OutputConsole("Launching %s %s\r\n", szLaunch, szLaunchDir);
-					ShellExecute(0, "open", "acclient.exe", szLaunch, szLaunchDir, SW_SHOW);
+
+					if (!FileExists(((std::string)szLaunchDir + "\\acclient.exe").c_str()))
+					{
+						MsgBox("Please copy your Asheron's Call client to the Client folder of PhatAC.\r\n");
+					}
+					else
+					{
+						//OutputConsole("Launching %s %s\r\n", szLaunch, szLaunchDir);
+						ShellExecute(0, "open", "acclient.exe", szLaunch, szLaunchDir, SW_SHOW);
+					}
 				}
 				else
 					MsgBox("Please specify the remote IP to connect to.");
@@ -480,8 +496,16 @@ int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 						end[0] = '\\';
 						end[1] = '\0';
 					}
-					//OutputConsole("Launching %s %s\r\n", szLaunch, szLaunchDir);
-					ShellExecute(0, "open", "acclient.exe", szLaunch, szLaunchDir, SW_SHOW);
+
+					if (!FileExists(((std::string)szLaunchDir + "\\acclient.exe").c_str()))
+					{
+						MsgBox("Please copy your Asheron's Call client to the Client folder of PhatAC.\r\n");
+					}
+					else
+					{
+						//OutputConsole("Launching %s %s\r\n", szLaunch, szLaunchDir);
+						ShellExecute(0, "open", "acclient.exe", szLaunch, szLaunchDir, SW_SHOW);
+					}
 				}
 				else
 				{

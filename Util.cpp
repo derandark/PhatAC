@@ -174,6 +174,12 @@ BOOL ReadConfigKey(const char* Key, char* value, DWORD size)
 	return bReturn;
 }
 
+bool FileExists(const char *filePath)
+{
+	DWORD dwAttrib = GetFileAttributes(filePath);
+	return (dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
 void strtrim(char *szText)
 {
 	//how many left spaces are leading?
