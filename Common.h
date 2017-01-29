@@ -25,8 +25,8 @@ struct BlobPacket_s
  BlobPacket_s *name = (BlobPacket_s *)new BYTE[ BLOBLEN(source) ]; \
  memcpy(name, source, BLOBLEN(source));
 #define CREATEBLOB(name, size) \
- BlobPacket_s *name = (BlobPacket_s *)new BYTE[ sizeof(BlobHeader_s) + size ]; \
- name->header.wSize = (WORD)size;
+ BlobPacket_s *name = (BlobPacket_s *)new BYTE[ sizeof(BlobHeader_s) + (size) ]; \
+ name->header.wSize = (WORD)(size);
 #define DELETEBLOB(name) delete [] name
 #define BLOBLEN(x) (sizeof(BlobHeader_s) + (x)->header.wSize)
 
