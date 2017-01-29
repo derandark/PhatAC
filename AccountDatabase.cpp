@@ -59,7 +59,7 @@ BOOL CAccountDatabase::CheckAccount(const char *account, const char *password)
 	}
 	szCorrectPassword[0] = '\0';
 
-	char *accountlwr = strlwr(strdup(account));
+	char *accountlwr = _strlwr(_strdup(account));
 	char *command = csprintf("SELECT Password FROM Accounts WHERE (Username = \'%s\');", accountlwr);
 	free(accountlwr);
 
@@ -85,7 +85,7 @@ BOOL CAccountDatabase::CheckAccount(const char *account, const char *password)
 	}
 	else
 	{
-		char *accountlwr = strlwr(strdup(account));
+		char *accountlwr = _strlwr(_strdup(account));
 		OutputConsole("Creating new account %s:%s\r\n", accountlwr, password);
 		command = csprintf("INSERT INTO Accounts (Username, Password) VALUES (\'%s\', \'%s\');", accountlwr, password);
 		free(accountlwr);
@@ -96,7 +96,7 @@ BOOL CAccountDatabase::CheckAccount(const char *account, const char *password)
 
 		if (rc != SQL_ERROR)
 		{
-			char* szCharacterName = strlwr(strdup(account));
+			char* szCharacterName = _strlwr(_strdup(account));
 			char leadchar = szCharacterName[0];
 			if (leadchar > 0x60 && leadchar < 0x7B)
 				szCharacterName[0] = leadchar - 0x20;

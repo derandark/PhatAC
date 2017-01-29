@@ -37,7 +37,7 @@ void DATDisk::CloseDisks()
 
 DATDisk::DATDisk(const char *Path) : m_BTree(&m_BlockLoader)
 {
-	m_FilePath = strdup(Path);
+	m_FilePath = _strdup(Path);
 
 	ZeroMemory(&m_DATHeader, sizeof(DATHeader));
 }

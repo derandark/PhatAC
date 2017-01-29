@@ -127,7 +127,7 @@ bool TurbineAnimation::Execute(CPhysicsObj* pWeenie, AnimationPackage* pAnimatio
 		min(GetFrameCount() - 1, pAnimation->m_dwStartFrame);
 
 	//The offset from the starting frame.
-	float fTime = g_pGlobals->Time() - pAnimation->m_fStartTime;
+	float fTime = (float)(g_pGlobals->Time() - pAnimation->m_fStartTime);
 	long lFrame = GetFrameByTime(fTime, pAnimation->m_fSpeed);
 
 	//The offset extends beyond the desired frames.

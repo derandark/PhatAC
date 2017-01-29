@@ -53,10 +53,7 @@ void TurbineData::LoadFile(const char* szFile)
 
 	m_pDATDisk->FindFileIDsWithinRange(0, (DWORD)-1, FileFoundCallback, NULL, this);
 
-	OutputConsole("done!");
-
-done:
-	OutputConsole("\r\n");
+	OutputConsole("done!\r\n");
 }
 
 void TurbineData::CloseFile()

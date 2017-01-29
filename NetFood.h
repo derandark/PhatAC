@@ -33,7 +33,7 @@ public:
 	__forceinline void WritePackedDWORD(DWORD f00d) {
 		if (f00d < 0x8000)
 		{
-			WriteWORD(f00d);
+			WriteWORD((WORD)f00d);
 		}
 		else
 		{

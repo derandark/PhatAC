@@ -96,7 +96,7 @@ DWORD CCharacterDatabase::IncCharacterInstance(DWORD dwGUID, DWORD dwLastInstanc
 
 DWORD CCharacterDatabase::GetCharacters(const char *account, DWORD *dwGUIDs)
 {
-	char *accountlwr = strlwr(strdup(account));
+	char *accountlwr = _strlwr(_strdup(account));
 	char *command = csprintf("SELECT ID FROM Characters WHERE (LCase(Account) = \'%s\');", accountlwr);
 	free(accountlwr);
 

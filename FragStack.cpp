@@ -38,7 +38,7 @@ void FragmentStack::AddFragment(FragPacket_s *frag)
 
 	if (index == (count - 1))
 	{
-		m_wSize = ((count - 1) * 0x1C0) + datalen;
+		m_wSize = (WORD) (((count - 1) * 0x1C0) + datalen);
 	}
 	else if (datalen < 0x1C0)
 	{

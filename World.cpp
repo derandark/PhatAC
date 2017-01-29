@@ -172,9 +172,9 @@ void CWorld::LoadDungeonsFile()
 				if (input.GetLastError()) break;
 
 				//Avoid using a buffer thats going to be deleted.
-				dd.szDungeonName = strdup(dd.szDungeonName);
-				dd.szAuthor = strdup(dd.szAuthor);
-				dd.szDescription = strdup(dd.szDescription);
+				dd.szDungeonName = _strdup(dd.szDungeonName);
+				dd.szAuthor = _strdup(dd.szAuthor);
+				dd.szDescription = _strdup(dd.szDescription);
 
 				memcpy(&dd.origin, origin, sizeof(loc_t));
 				memcpy(&dd.angles, angles, sizeof(heading_t));
@@ -275,9 +275,9 @@ void CWorld::SetDungeonDesc(WORD wBlockID, const char* szDungeonName, const char
 
 	DungeonDesc_t dd;
 	dd.wBlockID = wBlockID;
-	dd.szDungeonName = strdup(szDungeonName);
-	dd.szAuthor = strdup(szAuthor);
-	dd.szDescription = strdup(szDescription);
+	dd.szDungeonName = _strdup(szDungeonName);
+	dd.szAuthor = _strdup(szAuthor);
+	dd.szDescription = _strdup(szDescription);
 	dd.origin = origin;
 	dd.angles = angles;
 
@@ -827,9 +827,9 @@ void CWorld::EnumerateDungeonsFromCellData()
 					//Point.y = pt.y;
 					//Point.z = pt.z;
 
-					di.x = _xTrans + pt.x;
-					di.y = _yTrans + pt.y;
-					di.z = _zTrans + pt.z + 0.025f;
+					di.x = (float)(_xTrans + pt.x);
+					di.y = (float)(_yTrans + pt.y);
+					di.z = (float)(_zTrans + pt.z + 0.025f);
 
 					//if ( BLOCK_WORD( dwID ) == 0xF924 )
 					// OutputConsole("%f %f %f\r\n", di.x, di.y, di.z );

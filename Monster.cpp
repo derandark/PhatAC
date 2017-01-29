@@ -151,7 +151,7 @@ DWORD CBaseMonster::GiveSkillXP(eSkill index, DWORD dwXP)
 	}
 
 	pSkill->data.exp = dwNewSkillXP;
-	pSkill->data.raises = dwNewRaises;
+	pSkill->data.raises = (WORD) dwNewRaises;
 
 	if (index == eRun)
 		CalculateSpeed();
