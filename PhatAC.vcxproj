@@ -1,0 +1,226 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{79CD1CA2-76B3-4FFC-9825-DC29E861CE25}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC71.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>14.0.25431.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>Debug\</OutDir>
+    <IntDir>Debug\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>Release\</OutDir>
+    <IntDir>Release\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;__BUILDNAME__=DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderOutputFile>$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
+      <WarningLevel>Level2</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>ws2_32.lib;comctl32.lib;zlib\zlibstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)PhatAC.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>$(OutDir)PhatAC.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <IgnoreSpecificDefaultLibraries>libc.lib</IgnoreSpecificDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;__BUILDNAME__=RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>ws2_32.lib;comctl32.lib;zlib\zlibstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)PhatAC.exe</OutputFile>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX86</TargetMachine>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+      <IgnoreAllDefaultLibraries>
+      </IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>libc.lib</IgnoreSpecificDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="AccountDatabase.cpp" />
+    <ClCompile Include="Animate.cpp" />
+    <ClCompile Include="Attributes.cpp" />
+    <ClCompile Include="PhysicsObj.cpp" />
+    <ClCompile Include="CharacterDatabase.cpp" />
+    <ClCompile Include="Client.cpp" />
+    <ClCompile Include="ClientCommands.cpp" />
+    <ClCompile Include="ClientEvents.cpp" />
+    <ClCompile Include="ChatMsgs.cpp" />
+    <ClCompile Include="Container.cpp" />
+    <ClCompile Include="crc.cpp" />
+    <ClCompile Include="crcwheel-test.cpp" />
+    <ClCompile Include="crcwheel.cpp" />
+    <ClCompile Include="Database.cpp" />
+    <ClCompile Include="DATDisk.cpp" />
+    <ClCompile Include="Door.cpp" />
+    <ClCompile Include="FragStack.cpp" />
+    <ClCompile Include="Globals.cpp" />
+    <ClCompile Include="Item.cpp" />
+    <ClCompile Include="LandBlock.cpp" />
+    <ClCompile Include="Math.cpp" />
+    <ClCompile Include="ModelInfo.cpp" />
+    <ClCompile Include="Monster.cpp" />
+    <ClCompile Include="Moves.cpp" />
+    <ClCompile Include="NetFood.cpp" />
+    <ClCompile Include="NetMeal.cpp" />
+    <ClCompile Include="Network.cpp" />
+    <ClCompile Include="ObjectMsgs.cpp" />
+    <ClCompile Include="PacketController.cpp" />
+    <ClCompile Include="Pet.cpp" />
+    <ClCompile Include="PhatAC.cpp" />
+    <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Precompiled.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Rules.cpp" />
+    <ClCompile Include="Server.cpp" />
+    <ClCompile Include="Sign.cpp" />
+    <ClCompile Include="Skills.cpp" />
+    <ClCompile Include="TurbineAnimation.cpp" />
+    <ClCompile Include="TurbineAnimationSet.cpp" />
+    <ClCompile Include="TurbineCell.cpp" />
+    <ClCompile Include="TurbineData.cpp" />
+    <ClCompile Include="TurbineDungeon.cpp" />
+    <ClCompile Include="TurbineFile.cpp" />
+    <ClCompile Include="TurbineObject.cpp" />
+    <ClCompile Include="TurbinePortal.cpp" />
+    <ClCompile Include="TurbineXPTable.cpp" />
+    <ClCompile Include="Util.cpp" />
+    <ClCompile Include="Vitals.cpp" />
+    <ClCompile Include="World.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AccountDatabase.h" />
+    <ClInclude Include="Animate.h" />
+    <ClInclude Include="Animation.h" />
+    <ClInclude Include="AnimationPackage.h" />
+    <ClInclude Include="Attributes.h" />
+    <ClInclude Include="PhysicsObj.h" />
+    <ClInclude Include="CharacterDatabase.h" />
+    <ClInclude Include="Client.h" />
+    <ClInclude Include="ClientCommands.h" />
+    <ClInclude Include="ClientEvents.h" />
+    <ClInclude Include="Common.h" />
+    <ClInclude Include="ChatMsgs.h" />
+    <ClInclude Include="Container.h" />
+    <ClInclude Include="crc.h" />
+    <ClInclude Include="crcwheel.h" />
+    <ClInclude Include="Database.h" />
+    <ClInclude Include="DATDisk.h" />
+    <ClInclude Include="Door.h" />
+    <ClInclude Include="FragStack.h" />
+    <ClInclude Include="Globals.h" />
+    <ClInclude Include="Item.h" />
+    <ClInclude Include="Killable.h" />
+    <ClInclude Include="LandBlock.h" />
+    <ClInclude Include="Math.h" />
+    <ClInclude Include="ModelInfo.h" />
+    <ClInclude Include="Monster.h" />
+    <ClInclude Include="Moves.h" />
+    <ClInclude Include="NetFood.h" />
+    <ClInclude Include="NetMeal.h" />
+    <ClInclude Include="Network.h" />
+    <ClInclude Include="ObjectMsgs.h" />
+    <ClInclude Include="PacketController.h" />
+    <ClInclude Include="Pet.h" />
+    <ClInclude Include="Player.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="Rules.h" />
+    <ClInclude Include="Server.h" />
+    <ClInclude Include="Sign.h" />
+    <ClInclude Include="Skills.h" />
+    <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="TurbineAnimation.h" />
+    <ClInclude Include="TurbineAnimationSet.h" />
+    <ClInclude Include="TurbineCell.h" />
+    <ClInclude Include="TurbineData.h" />
+    <ClInclude Include="TurbineDungeon.h" />
+    <ClInclude Include="TurbineFile.h" />
+    <ClInclude Include="TurbineFormats.h" />
+    <ClInclude Include="TurbineObject.h" />
+    <ClInclude Include="TurbinePortal.h" />
+    <ClInclude Include="TurbineXPTable.h" />
+    <ClInclude Include="Util.h" />
+    <ClInclude Include="Vertex.h" />
+    <ClInclude Include="Vitals.h" />
+    <ClInclude Include="World.h" />
+    <ClInclude Include="zlib\ioapi.h" />
+    <ClInclude Include="zlib\zconf.h" />
+    <ClInclude Include="zlib\zlib.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="client.ico" />
+    <Image Include="logo.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="PhatAC.rc" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

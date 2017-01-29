@@ -1,0 +1,382 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source Files\Network">
+      <UniqueIdentifier>{5a67bb75-3f37-4cc8-8c08-84ec2886d281}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Client">
+      <UniqueIdentifier>{79bcf0ec-fa80-477e-ba72-e510508f22b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\World">
+      <UniqueIdentifier>{b842ab99-73aa-425f-b097-6dee7ce94fad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Rules">
+      <UniqueIdentifier>{6ee197d7-db4b-45d7-a818-8762b1cee8d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Objects">
+      <UniqueIdentifier>{63c8bc12-9e24-448d-8ce8-71aab4e757d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Object Capabilities">
+      <UniqueIdentifier>{0d8e9324-e844-4a74-9ab3-5449d027f067}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Turbine Data Files">
+      <UniqueIdentifier>{64ec52ac-7a51-4ab2-b9ea-61deb90880c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ZLib">
+      <UniqueIdentifier>{e759c91a-cce8-41f9-b940-43fa1d6eaba4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Formats">
+      <UniqueIdentifier>{cd2689e9-0124-49e8-bde2-14e5a420af82}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Database">
+      <UniqueIdentifier>{4e34f860-5a55-43f9-9f84-da5ba16dfe4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="PhatAC.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="crc.cpp">
+      <Filter>Source Files\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="crcwheel-test.cpp">
+      <Filter>Source Files\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="crcwheel.cpp">
+      <Filter>Source Files\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="TurbineAnimation.cpp">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TurbineAnimationSet.cpp">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TurbineCell.cpp">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TurbineData.cpp">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TurbineDungeon.cpp">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TurbineFile.cpp">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TurbineObject.cpp">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TurbinePortal.cpp">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TurbineXPTable.cpp">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelInfo.cpp">
+      <Filter>Source Files\Formats</Filter>
+    </ClCompile>
+    <ClCompile Include="DATDisk.cpp">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Client.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientCommands.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientEvents.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="AccountDatabase.cpp">
+      <Filter>Source Files\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="CharacterDatabase.cpp">
+      <Filter>Source Files\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="Database.cpp">
+      <Filter>Source Files\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="FragStack.cpp">
+      <Filter>Source Files\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="NetFood.cpp">
+      <Filter>Source Files\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="NetMeal.cpp">
+      <Filter>Source Files\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Network.cpp">
+      <Filter>Source Files\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="PacketController.cpp">
+      <Filter>Source Files\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysicsObj.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="ChatMsgs.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Door.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Item.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Monster.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectMsgs.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Pet.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Sign.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Animate.cpp">
+      <Filter>Source Files\Object Capabilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Container.cpp">
+      <Filter>Source Files\Object Capabilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Moves.cpp">
+      <Filter>Source Files\Object Capabilities</Filter>
+    </ClCompile>
+    <ClCompile Include="Attributes.cpp">
+      <Filter>Source Files\Rules</Filter>
+    </ClCompile>
+    <ClCompile Include="Rules.cpp">
+      <Filter>Source Files\Rules</Filter>
+    </ClCompile>
+    <ClCompile Include="Skills.cpp">
+      <Filter>Source Files\Rules</Filter>
+    </ClCompile>
+    <ClCompile Include="Vitals.cpp">
+      <Filter>Source Files\Rules</Filter>
+    </ClCompile>
+    <ClCompile Include="LandBlock.cpp">
+      <Filter>Source Files\World</Filter>
+    </ClCompile>
+    <ClCompile Include="World.cpp">
+      <Filter>Source Files\World</Filter>
+    </ClCompile>
+    <ClCompile Include="Globals.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Math.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Precompiled.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Server.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="crcwheel.h">
+      <Filter>Source Files\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="TurbineAnimation.h">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TurbineAnimationSet.h">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TurbineCell.h">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TurbineData.h">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TurbineDungeon.h">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TurbineFile.h">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TurbineFormats.h">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TurbineObject.h">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TurbinePortal.h">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TurbineXPTable.h">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClInclude>
+    <ClInclude Include="zlib\ioapi.h">
+      <Filter>Source Files\ZLib</Filter>
+    </ClInclude>
+    <ClInclude Include="zlib\zconf.h">
+      <Filter>Source Files\ZLib</Filter>
+    </ClInclude>
+    <ClInclude Include="zlib\zlib.h">
+      <Filter>Source Files\ZLib</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelInfo.h">
+      <Filter>Source Files\Formats</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StdAfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DATDisk.h">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Vertex.h">
+      <Filter>Source Files\Turbine Data Files</Filter>
+    </ClInclude>
+    <ClInclude Include="crc.h">
+      <Filter>Source Files\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Killable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Client.h">
+      <Filter>Source Files\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientCommands.h">
+      <Filter>Source Files\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientEvents.h">
+      <Filter>Source Files\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="AccountDatabase.h">
+      <Filter>Source Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="CharacterDatabase.h">
+      <Filter>Source Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="Database.h">
+      <Filter>Source Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="FragStack.h">
+      <Filter>Source Files\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="NetFood.h">
+      <Filter>Source Files\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="NetMeal.h">
+      <Filter>Source Files\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Network.h">
+      <Filter>Source Files\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketController.h">
+      <Filter>Source Files\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsObj.h">
+      <Filter>Source Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="ChatMsgs.h">
+      <Filter>Source Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Door.h">
+      <Filter>Source Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Item.h">
+      <Filter>Source Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Monster.h">
+      <Filter>Source Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectMsgs.h">
+      <Filter>Source Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Pet.h">
+      <Filter>Source Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>Source Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Sign.h">
+      <Filter>Source Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Animate.h">
+      <Filter>Source Files\Object Capabilities</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationPackage.h">
+      <Filter>Source Files\Object Capabilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Container.h">
+      <Filter>Source Files\Object Capabilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Moves.h">
+      <Filter>Source Files\Object Capabilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Attributes.h">
+      <Filter>Source Files\Rules</Filter>
+    </ClInclude>
+    <ClInclude Include="Rules.h">
+      <Filter>Source Files\Rules</Filter>
+    </ClInclude>
+    <ClInclude Include="Skills.h">
+      <Filter>Source Files\Rules</Filter>
+    </ClInclude>
+    <ClInclude Include="Vitals.h">
+      <Filter>Source Files\Rules</Filter>
+    </ClInclude>
+    <ClInclude Include="LandBlock.h">
+      <Filter>Source Files\World</Filter>
+    </ClInclude>
+    <ClInclude Include="World.h">
+      <Filter>Source Files\World</Filter>
+    </ClInclude>
+    <ClInclude Include="Globals.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Math.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Server.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Util.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Animation.h">
+      <Filter>Source Files\Object Capabilities</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="client.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="logo.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="PhatAC.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
