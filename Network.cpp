@@ -461,8 +461,8 @@ void CNetwork::ProcessConnectionless(sockaddr_in *peer, BlobPacket_s *blob)
 		return;
 	}
 
-	OutputConsole("OOB received: %08X\r\n", dwFlags);
-	OutputConsoleBytes(blob->data, blob->header.wSize);
+	// OutputConsole("Unknown connectionless packet received: %08X Look into this\r\n", dwFlags);
+	// OutputConsoleBytes(blob->data, blob->header.wSize);
 }
 
 BOOL CNetwork::IsBannedIP(in_addr ip)
