@@ -1,0 +1,1 @@
+Copy the game client files here if you want to launch directly from the application.
