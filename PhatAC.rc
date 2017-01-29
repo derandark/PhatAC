@@ -13,13 +13,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -53,26 +51,20 @@ END
 //
 
 IDD_MAIN DIALOGEX 0, 0, 408, 241
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_MINIMIZEBOX | 
-    WS_CAPTION | WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_MINIMIZEBOX | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_STATICEDGE
 CAPTION "PhatAC"
 MENU IDR_MENU
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LISTBOX         IDC_CLIENTS,252,20,152,202,LBS_SORT | 
-                    LBS_NOINTEGRALHEIGHT | NOT WS_BORDER | WS_VSCROLL | 
-                    WS_TABSTOP,WS_EX_STATICEDGE
+    LISTBOX         IDC_CLIENTS,252,20,152,202,LBS_SORT | LBS_NOINTEGRALHEIGHT | NOT WS_BORDER | WS_VSCROLL | WS_TABSTOP,WS_EX_STATICEDGE
     CONTROL         "",IDC_SERVERIP,"SysIPAddress32",WS_TABSTOP,4,20,98,12
-    EDITTEXT        IDC_CONSOLE,4,72,244,136,ES_MULTILINE | ES_AUTOVSCROLL | 
-                    ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL
+    EDITTEXT        IDC_CONSOLE,4,72,244,136,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_READONLY | WS_VSCROLL
     PUSHBUTTON      "Test",IDC_KICK,328,4,36,12
     PUSHBUTTON      "Kick",IDC_BAN,368,4,36,12
     LTEXT           "External Server IP:",IDC_STATIC,4,8,66,8
-    CONTROL         "",IDC_NETWORKLOADBAR,"msctls_progress32",WS_BORDER | 
-                    0x1,80,38,166,8
-    LTEXT           "Network Load (0):",IDC_NETWORKLOADTEXT,4,36,72,8,0,
-                    WS_EX_TRANSPARENT
+    CONTROL         "",IDC_NETWORKLOADBAR,"msctls_progress32",PBS_SMOOTH | WS_BORDER,80,38,166,8
+    LTEXT           "Network Load (0):",IDC_NETWORKLOADTEXT,4,36,72,8,0,WS_EX_TRANSPARENT
     PUSHBUTTON      "Start",IDC_TOGGLE,144,20,45,12
     PUSHBUTTON      "Launch Admin",IDC_LAUNCH,192,20,56,12
     EDITTEXT        IDC_SERVERPORT,104,20,36,12,ES_AUTOHSCROLL | ES_NUMBER
@@ -80,18 +72,15 @@ BEGIN
     LTEXT           "Clients:",IDC_STATIC,252,8,68,8
     EDITTEXT        IDC_BROADCASTTEXT,4,224,348,12,ES_AUTOHSCROLL
     PUSHBUTTON      "Broadcast",IDC_BROADCAST,356,224,48,12
-    LTEXT           "CPU Lag (0.00%):",IDC_CPULOADTEXT,4,48,72,8,0,
-                    WS_EX_TRANSPARENT
-    CONTROL         "",IDC_CPULOADBAR,"msctls_progress32",WS_BORDER | 0x1,80,
-                    48,166,8
+    LTEXT           "CPU Lag (0.00%):",IDC_CPULOADTEXT,4,48,72,8,0,WS_EX_TRANSPARENT
+    CONTROL         "",IDC_CPULOADBAR,"msctls_progress32",PBS_SMOOTH | WS_BORDER,80,48,166,8
     LTEXT           "",IDC_VERSION,4,60,244,8
     PUSHBUTTON      "Clear Log",IDC_CLEARLOG,4,208,60,12
     PUSHBUTTON      "Save Log",IDC_SAVELOG,68,208,60,12
 END
 
 IDD_STATUS DIALOGEX 0, 0, 161, 111
-STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | 
-    WS_CAPTION | WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW
 CAPTION "Status"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -103,8 +92,7 @@ BEGIN
     RTEXT           "Packets Received:",IDC_STATIC,4,48,60,8
     LTEXT           "0",IDC_RP,72,48,64,8
     LTEXT           "0",IDC_SP,72,36,64,8
-    COMBOBOX        IDC_PRIORITY,68,4,84,80,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
+    COMBOBOX        IDC_PRIORITY,68,4,84,80,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Thread Priority:",IDC_STATIC,8,6,56,10
     RTEXT           "Bytes Received:",IDC_STATIC,4,72,60,8
     RTEXT           "Bytes Sent:",IDC_STATIC,4,60,60,8
@@ -113,8 +101,7 @@ BEGIN
 END
 
 IDD_LAUNCHER DIALOGEX 0, 0, 180, 118
-STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_3DLOOK | DS_FIXEDSYS | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOOLWINDOW
 CAPTION "Launcher"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -126,24 +113,20 @@ BEGIN
     EDITTEXT        IDC_PASSWORD,69,52,99,12,NOT WS_BORDER,WS_EX_STATICEDGE
     RTEXT           "Account Name:",IDC_STATIC,4,36,60,12
     RTEXT           "Password:",IDC_STATIC,4,52,60,12
-    CTEXT           "If the account name you specify does not exist, one will be created along with the password you entered.",
-                    IDC_STATIC,4,92,172,16
+    CTEXT           "If the account name you specify does not exist, one will be created along with the password you entered.",IDC_STATIC,4,92,172,16
     LTEXT           "Remote Server IP:",IDC_STATIC,32,8,66,8
     LTEXT           "Port:",IDC_STATIC,132,8,36,8
 END
 
 IDD_ABOUT DIALOGEX 0, 0, 252, 185
-STYLE DS_SETFONT | DS_MODALFRAME | DS_NOIDLEMSG | DS_3DLOOK | DS_FIXEDSYS | 
-    DS_CENTER | WS_POPUP | WS_CAPTION
+STYLE DS_SETFONT | DS_MODALFRAME | DS_NOIDLEMSG | DS_3DLOOK | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION
 CAPTION "About PhatAC"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,192,160,50,14
-    CONTROL         110,IDC_BANNER,"Static",SS_BITMAP | WS_BORDER,4,4,241,
-                    112
-    LTEXT           "PhatAC 1.0 - EXPLORER edition (beta!)\nWritten and developed by Sean ""Pea"" H.\n\nSpecial thanks to Lane and Loap for their endless support.",
-                    IDC_CREDITS,8,120,234,32,0,WS_EX_TRANSPARENT
-    DEFPUSHBUTTON   "Website",IDC_WEBSITE,8,160,50,14
+    CONTROL         IDB_BANNER,IDC_BANNER,"Static",SS_BITMAP | WS_BORDER,4,4,241,112
+    LTEXT           "Written and developed by Sean ""Pea"" H.\n\nSpecial thanks to Lane, Loap, and all of #acdev.",IDC_CREDITS,8,120,234,32,0,WS_EX_TRANSPARENT
+    DEFPUSHBUTTON   "Author Website",IDC_WEBSITE,8,160,76,14
 END
 
 
@@ -153,7 +136,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_MAIN, DIALOG
     BEGIN
@@ -199,12 +182,13 @@ END
 // remains consistent on all systems.
 IDI_PHATAC              ICON                    "client.ico"
 
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Menu
 //
 
-IDR_MENU MENU 
+IDR_MENU MENU
 BEGIN
     POPUP "&File"
     BEGIN
@@ -228,7 +212,19 @@ END
 //
 
 IDB_BANNER              BITMAP                  "logo.bmp"
-#endif    // English (U.S.) resources
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_ABOUT AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+#endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
