@@ -261,7 +261,7 @@ LRESULT CALLBACK LauncherProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 						end[1] = '\0';
 					}
 					//OutputConsole("Launching %s %s\r\n", szLaunch, szLaunchDir);
-					ShellExecute(0, "open", "client.exe", szLaunch, szLaunchDir, SW_SHOW);
+					ShellExecute(0, "open", "acclient.exe", szLaunch, szLaunchDir, SW_SHOW);
 				}
 				else
 					MsgBox("Please specify the remote IP to connect to.");
@@ -481,7 +481,7 @@ int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 						end[1] = '\0';
 					}
 					//OutputConsole("Launching %s %s\r\n", szLaunch, szLaunchDir);
-					ShellExecute(0, "open", "client.exe", szLaunch, szLaunchDir, SW_SHOW);
+					ShellExecute(0, "open", "acclient.exe", szLaunch, szLaunchDir, SW_SHOW);
 				}
 				else
 				{
