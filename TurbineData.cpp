@@ -46,14 +46,20 @@ void TurbineData::LoadFile(const char* szFile)
 
 	if (!m_pDATDisk->Open())
 	{
-		OutputConsole("Error loading file %s!", fullpath.c_str());
+		OutputConsole("Error loading file %s!\r\n", fullpath.c_str());
+		SafeDelete(m_pDATDisk);
 	}
+	else
+	{
+		OutputConsole("mapping.. ");
+		m_pDATDisk->FindFileIDsWithinRange(0, (DWORD)-1, FileFoundCallback, NULL, this);
+		OutputConsole("done!\r\n");
 
-	OutputConsole(" mapping.. ");
-
-	m_pDATDisk->FindFileIDsWithinRange(0, (DWORD)-1, FileFoundCallback, NULL, this);
-
-	OutputConsole("done!\r\n");
+#ifdef PRE_TOD_DATA_FILES
+#else
+		OutputConsole("%s: version %u, %u entries.\r\n", szFile, m_pDATDisk->GetHeader()->VersionMinor, m_mFileInfo.size());
+#endif
+	}
 }
 
 void TurbineData::CloseFile()
@@ -78,7 +84,7 @@ BOOL TurbineData::FileExists(DWORD dwID)
 TURBINEFILE *TurbineData::GetFile(DWORD dwID)
 {
 	DATEntry entry;
-	if (m_pDATDisk->GetData(dwID, &entry))
+	if (m_pDATDisk && m_pDATDisk->GetData(dwID, &entry))
 	{
 		return new TurbineFile(dwID, entry.Data, entry.Length);
 	}
