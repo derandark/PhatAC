@@ -70,8 +70,8 @@ void CNetwork::SendPacket(SOCKADDR_IN *peer, void *data, DWORD len)
 	SOCKET socket = m_sockets[0];
 	if (socket == INVALID_SOCKET) return;
 
-	//OutputConsole("Sent:\r\n");
-	//OutputConsoleBytes(data, len);
+	// OutputConsole("Sent:\r\n");
+	// OutputConsoleBytes(data, len);
 
 	sendto(socket, (char *)data, len, 0, (sockaddr *)peer, sizeof(SOCKADDR_IN));
 	g_pGlobals->PacketSent(len);
@@ -117,8 +117,8 @@ void CNetwork::ThinkSocket(SOCKET socket)
 
 		blob->header.dwCRC -= CalcTransportCRC((DWORD *)blob);
 
-		//OutputConsole("Received:\r\n");
-		//OutputConsoleBytes(&blob->header, blob->header.wSize + sizeof(blob->header));
+		// OutputConsole("Received:\r\n");
+		// OutputConsoleBytes(&blob->header, blob->header.wSize + sizeof(blob->header));
 
 		if (!wRecID)
 			ProcessConnectionless(&clientaddr, blob);

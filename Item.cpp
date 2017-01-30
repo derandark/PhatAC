@@ -99,7 +99,7 @@ void CBaseItem::SetWorldContainer(DWORD dwCell, CPhysicsObj *pContainer)
 
 void CBaseItem::SetWorldWielder(DWORD dwCell, CPhysicsObj *pWielder)
 {
-	if (m_dwCategory == eArmor)
+	if (m_ItemType == TYPE_ARMOR)
 		DebugMe();
 
 	NetFood SWW;
@@ -157,7 +157,7 @@ CBaseWand::CBaseWand()
 
 	m_wTypeID = 0x2FBD;
 	m_wIcon = 0x22B3;
-	m_dwCategory = eCastingTool;
+	m_ItemType = TYPE_CASTER;
 
 	m_dwEquipSlot = eEquipSlotMelee;
 	m_dwCoverage1 = CA_WEAPON_FOCUS;
@@ -176,7 +176,7 @@ CEnvoyShield::CEnvoyShield()
 
 	m_wTypeID = 0x65CA;
 	m_wIcon = 0x13FF;
-	m_dwCategory = eShield;
+	m_ItemType = TYPE_ARMOR;
 
 	m_dwEquipSlot = eEquipSlotShield;
 	m_dwEquipType = eEquipTypeShield;
@@ -188,7 +188,7 @@ CBaseArmor::CBaseArmor()
 {
 	//We'll be a drudge wand by default =)
 	m_strName = "Armor";
-	m_dwCategory = eArmor;
+	m_ItemType = TYPE_ARMOR;
 	m_dwEquipSlot = eEquipSlotNone;
 
 	//m_dwCoverage1		= ..;

@@ -546,8 +546,8 @@ void CBasePlayer::SpawnCows()
 	if (!Animation_IsActive())
 	{
 		SpeakLocal("Zojak Quamoo", 0x11);
-		Animation_PlaySimpleAnimation(0x12F, 1.0f, 2.0f, ANIM_SPELLCAST, 2366);
-		Animation_PlaySimpleAnimation(0x136, 1.0f, 3.0f);
+		Animation_PlaySimpleAnimation(304, 1.0f, 3.0f, ANIM_SPELLCAST, 2366);
+		Animation_PlaySimpleAnimation(313, 3.0f, 1.0f);
 		Animation_PlaySimpleAnimation(0, 0);
 	}
 }

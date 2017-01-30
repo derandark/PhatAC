@@ -35,6 +35,8 @@ class CLandBlock;
 #define VF_NORMAL (VisFlags_t)0x00000008
 #define VF_HOLLOW (VisFlags_t)0x00000004 //haven't checked
 
+#define USEDISTANCE_ANYWHERE -0.1f
+
 // 0x4000 = bubbly?
 // 0x1000 = disconnects camera from player, for making videos, sweet!
 // 0x0100 = too cool, gives a sort of tumbling effect
@@ -44,18 +46,19 @@ typedef DWORD VisFlags_t;
 
 typedef std::vector<CBaseItem *> ItemVector;
 
-enum eObjectClass
+/*
+enum eOldWeenieType
 {
-	eMeleeWeapon = 0x00000001,
-	eArmor = 0x00000002,
+	TYPE_MELEE_WEAPON = 0x00000001,
+	TYPE_ARMOR = 0x00000002,
 	eShield = 0x00000002, //Shields too?
 	eClothing = 0x00000004,
 	eJewelry = 0x00000008,
 	eMonster = 0x00000010,
 	eMiscellaneous = 0x00000080,
-	ePassive = 0x00000800,
 	eCastingTool = 0x00008000
 };
+*/
 
 enum eHighlightColor
 {
@@ -156,7 +159,7 @@ public:
 	virtual BOOL CanPickup() { return FALSE; }
 	virtual BOOL IsPortal() { return FALSE; }
 	virtual BOOL IsReadable() { return FALSE; }
-	virtual BOOL IsSelectable() { return TRUE; }
+	virtual BOOL IsAttackable() { return TRUE; }
 
 	virtual BOOL IsContained() { return FALSE; }
 	virtual BOOL IsWielded() { return FALSE; }
@@ -202,7 +205,11 @@ public:
 
 	WORD m_wTypeID;
 	WORD m_wIcon;
-	DWORD m_dwCategory;
+	ITEM_TYPE m_ItemType;
+
+	ITEM_USEABLE m_Usability;
+	float m_UseDistance;
+	RadarEnum m_RadarVis;
 
 	WORD m_wNumMovements;
 	WORD m_wNumAnimInteracts;

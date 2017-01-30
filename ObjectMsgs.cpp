@@ -35,7 +35,7 @@ NetFood *GetClassData(CPhysicsObj *pEntity)
 
 	//Use item? 1 = Cannot be used?
 	dwSections |= 0x00000010;
-	Class.WriteDWORD(1);
+	Class.WriteDWORD((DWORD)pEntity->m_Usability);
 
 	float flApproachDist = pEntity->GetApproachDist();
 	if (flApproachDist > 0.0f)
@@ -95,8 +95,8 @@ NetFood *GetClassData(CPhysicsObj *pEntity)
 
 	if (pEntity->IsPlayer())
 	{
-		dwSections |= 0x00800000; //not sure
-		Class.WriteBYTE(4);
+		dwSections |= 0x00800000;
+		Class.WriteBYTE((BYTE)pEntity->m_RadarVis);
 	}
 
 	if (pEntity->HasBurden())
@@ -110,7 +110,7 @@ NetFood *GetClassData(CPhysicsObj *pEntity)
 	ClassData->WriteString(pEntity->GetName());
 	ClassData->WriteWORD(pEntity->m_wTypeID);
 	ClassData->WriteWORD(pEntity->m_wIcon);
-	ClassData->WriteDWORD(pEntity->m_dwCategory);
+	ClassData->WriteDWORD(pEntity->m_ItemType);
 	ClassData->WriteDWORD(pEntity->GetDescFlags());
 	ClassData->AppendData(Class.GetData(), Class.GetSize());
 

@@ -192,6 +192,9 @@
     <ClCompile Include="Util.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Portal.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="crcwheel.h">
@@ -364,6 +367,12 @@
     </ClInclude>
     <ClInclude Include="Animation.h">
       <Filter>Source Files\Object Capabilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Portal.h">
+      <Filter>Source Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Enums.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

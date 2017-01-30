@@ -32,8 +32,9 @@
 class CPhysicsObj;
 class CBasePlayer;
 
+#include "Enums.h"
 #include "Common.h"
-#include "math.h"
+#include "Math.h"
 #include "Util.h"
 #include "Globals.h"
 #include "Killable.h"

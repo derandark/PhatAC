@@ -33,16 +33,25 @@ CPhysicsObj::CPhysicsObj()
 	m_wTypeID = 0x0001;
 	m_wIcon = 0x1036;
 
-	m_dwCategory = ePassive;
+	m_ItemType = TYPE_GEM;
 
 	m_bRemoveMe = FALSE;
 	m_pBlock = NULL;
 	m_pfnThink = NULL;
 
-	m_dwEffectSet = 0x34000004;
-	m_dwSoundSet = 0x20000002; //0x2000000A = lugians
+	m_dwEffectSet = 0; // 0x34000004;
+	m_dwSoundSet = 0; //0x2000000A = lugians
 
 	memset(m_dwStats, 0, sizeof(m_dwStats));
+
+	memset(&m_Origin, 0, sizeof(loc_t));
+	memset(&m_Angles, 0, sizeof(heading_t));
+	m_VisFlags = 0x00400C08;
+	m_fNextThink = g_pGlobals->Time();
+	
+	m_Usability = USEABLE_NO;
+	m_UseDistance = -0.1f;
+	m_RadarVis = ShowAlways_RadarEnum;
 
 	Movement_Init();
 	Animation_Init();
@@ -288,16 +297,16 @@ DWORD CPhysicsObj::GetDescFlags()
 	DWORD dwFlags = 0;
 
 	if (IsInscribable())
-		dwFlags |= 0x00000002;
+		dwFlags |= BF_INSCRIBABLE;
 	if (!CanPickup())
-		dwFlags |= 0x00000004;
+		dwFlags |= BF_STUCK;
 	if (IsPlayer())
-		dwFlags |= 0x00000008;
-	if (IsSelectable())
-		dwFlags |= 0x00000010;
+		dwFlags |= BF_PLAYER;
+	if (IsAttackable())
+		dwFlags |= BF_ATTACKABLE;
 
 	if (IsPlayer())
-		dwFlags |= 0x00000020; //PlayerKiller!
+		dwFlags |= BF_PLAYER_KILLER; // Player Killer
 
 	return dwFlags;
 }

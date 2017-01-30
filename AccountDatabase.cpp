@@ -88,7 +88,6 @@ BOOL CAccountDatabase::CheckAccount(const char *account, const char *password)
 		char *accountlwr = _strlwr(_strdup(account));
 		OutputConsole("Creating new account %s:%s\r\n", accountlwr, password);
 		command = csprintf("INSERT INTO Accounts (Username, Password) VALUES (\'%s\', \'%s\');", accountlwr, password);
-		free(accountlwr);
 
 		SQLPrepare(m_hSTMT, (unsigned char *)command, SQL_NTS);
 		rc = SQLExecute(m_hSTMT);
@@ -113,8 +112,11 @@ BOOL CAccountDatabase::CheckAccount(const char *account, const char *password)
 			}
 
 			free(szCharacterName);
+			free(accountlwr);
 			return TRUE;
 		}
+
+		free(accountlwr);
 	}
 
 	return FALSE;

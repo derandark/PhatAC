@@ -11,6 +11,7 @@
 #include "Network.h"
 #include "World.h"
 #include "ChatMsgs.h"
+#include "Portal.h"
 
 CommandMap CommandBase::m_mCommands;
 
@@ -38,6 +39,19 @@ CLIENT_COMMAND(myloc, "", "Info on your current location.", BASIC_ACCESS)
 			pPlayer->m_Angles.w, pPlayer->m_Angles.x, pPlayer->m_Angles.y, pPlayer->m_Angles.z);
 
 	pPlayer->SendText(szResponse, 1);
+
+	return false;
+}
+
+CLIENT_COMMAND(spawnportal, "", "Spawns a portal near you.", BASIC_ACCESS)
+{
+	CPortal *pPortal = new CPortal();
+	pPortal->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
+	pPortal->m_Origin = pPlayer->m_Origin;
+	pPortal->m_Origin.x += 20.0f;
+	pPortal->m_Angles = pPlayer->m_Angles;
+
+	g_pWorld->CreateEntity(pPortal);
 
 	return false;
 }
@@ -97,7 +111,7 @@ CLIENT_COMMAND(sound, "<index> [speed?=1]", "Emits a sound effect.", BASIC_ACCES
 	return false;
 }
 
-CLIENT_COMMAND(arwic, "", "Teleports you to Arwic.", DUMMY_ACCESS)
+CLIENT_COMMAND(arwic, "", "Teleports you to Arwic.", BASIC_ACCESS)
 {
 	loc_t		origin(0xC6A90023, 102.4f, 70.1f, 44.0f);
 	heading_t	angles(0.70710677f, 0, 0, 0.70710677f);
@@ -304,7 +318,7 @@ CLIENT_COMMAND(spawnmodel, "<model index> [scale=1] [name=*]", "Spawns a model."
 	CPhysicsObj *pSpawn = new CPhysicsObj();
 	pSpawn->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
 	pSpawn->m_dwModel = dwModel;
-	pSpawn->m_dwCategory = ePassive;
+	pSpawn->m_ItemType = TYPE_GEM;
 	pSpawn->m_fScale = flScale;
 	pSpawn->m_strName = szName;
 	pSpawn->m_Origin.landcell = pPlayer->GetLandcell();
@@ -347,7 +361,7 @@ CLIENT_COMMAND(spawnmodels, "<start index> <end index>", "Spawns a range of mode
 		CPhysicsObj *pSpawn = new CPhysicsObj();
 		pSpawn->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
 		pSpawn->m_dwModel = i;
-		pSpawn->m_dwCategory = ePassive;
+		pSpawn->m_ItemType = TYPE_GEM;
 		pSpawn->m_fScale = 1.0f;
 		pSpawn->m_strName = csprintf("Model #%08X", i);;
 		pSpawn->m_Origin.landcell = pPlayer->GetLandcell();

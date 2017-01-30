@@ -92,7 +92,7 @@ void CPhysicsObj::Container_GetEquippedArmor(ItemVector *pVector)
 		if (!pItem)
 			continue;
 
-		if (pItem->m_dwCategory == eArmor)
+		if (pItem->m_ItemType == TYPE_ARMOR)
 			pVector->push_back(pItem);
 	}
 }
@@ -196,7 +196,7 @@ void CPhysicsObj::Container_EquipItem(DWORD dwCell, CBaseItem* pItem, DWORD dwCo
 		dwCoverage = dwCoverage >> 1;
 	}
 
-	if (pItem->m_dwCategory != eArmor)
+	if (pItem->m_ItemType != TYPE_ARMOR)
 	{
 		NetFood Blah;
 		Blah.WriteDWORD(0xF749);
