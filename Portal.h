@@ -18,7 +18,5 @@ public:
 	void Teleport(CPhysicsObj *pTarget);
 	BOOL ProximityThink();
 
-protected:
-
 	placement_t m_Destination;
 };

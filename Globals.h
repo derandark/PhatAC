@@ -43,3 +43,20 @@ private:
 
 extern CGlobals *g_pGlobals;
 
+class CStopWatch
+{
+public:
+	CStopWatch()
+	{
+		m_fStartTime = g_pGlobals->Time();
+	}
+
+	double GetElapsed()
+	{
+		return (g_pGlobals->Time() - m_fStartTime);
+	}
+
+private:
+	double m_fStartTime;
+};
+

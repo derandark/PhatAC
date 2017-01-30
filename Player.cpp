@@ -12,6 +12,7 @@
 
 //Database access.
 #include "Database.h"
+#include "Database2.h"
 #include "CharacterDatabase.h"
 
 //World access.
@@ -77,9 +78,20 @@ CBasePlayer::CBasePlayer(CClient *pClient, DWORD dwGUID)
 	}
 #endif
 
-	// Located on the moon by Default.
-	m_Origin = loc_t(0x01f50229, 50.0, -179.0, 0.0);// loc_t( 0xEFEA0001, 0, 0, 0 );
-	m_Angles = heading_t(1.0, 0, 0, 0);
+	// Moon location... loc_t( 0xEFEA0001, 0, 0, 0 );
+
+	if (!g_pGameDatabase->LoadedPortals())
+	{
+		// Aerfalle's Keep is default if the server wasn't configured with portals.
+		m_Origin = loc_t(0x01f50229, 50.0f, -179.0f, 0.0);
+		m_Angles = heading_t(1.0, 0, 0, 0);
+	}
+	else
+	{
+		// Otherwise outside Abandoned Mines
+		m_Origin = loc_t(0xC3AA0028, 111.904579f, 188.143036f, 116.005005f);
+		m_Angles = heading_t(0.998854f, 0.000000, 0.000000, 0.047870f);
+	}
 
 	SetThink(&CBasePlayer::PlayerThink);
 #if 0

@@ -93,7 +93,7 @@ NetFood *GetClassData(CPhysicsObj *pEntity)
 		Class.WriteBYTE(pEntity->GetRadarColor());
 	}
 
-	if (pEntity->IsPlayer())
+	// if (pEntity->IsPlayer())
 	{
 		dwSections |= 0x00800000;
 		Class.WriteBYTE((BYTE)pEntity->m_RadarVis);
