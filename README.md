@@ -2,7 +2,7 @@
 A Server Emulator for Asheron's Call
 
 # Compatibility
-Updated to work with Throne of Destiny as of 2017.
+Updated to work with Throne of Destiny as of 2017. Make sure you have full game data files, you can download them from the official website.
 
 # Instructions to Host or Launch the Game Locally
 1. Download all the files off this site (download as ZIP and extract.)
