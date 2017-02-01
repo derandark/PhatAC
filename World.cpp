@@ -664,6 +664,50 @@ void CWorld::Think()
 	}
 }
 
+void CWorld::EnumNearby(CPhysicsObj *pSource, float fRange, std::list<CPhysicsObj *> *pResults)
+{
+	// Enumerate nearby world objects
+	if (pSource != NULL && !pSource->HasOwner())
+	{
+		DWORD dwCell = pSource->GetLandcell();
+		WORD block = BLOCK_WORD(dwCell);
+		WORD cell = CELL_WORD(dwCell);
+
+		DWORD basex = BASE_OFFSET(BLOCK_X(block), CELL_X(cell));
+		DWORD basey = BASE_OFFSET(BLOCK_Y(block), CELL_Y(cell));
+
+		DWORD minx = basex;
+		DWORD maxx = basex;
+		DWORD miny = basey;
+		DWORD maxy = basey;
+
+		//if ( cell < 0xFF ) // indoor structure
+		{
+			if (minx >= (dwMinimumCellX + PVC_RANGE)) minx -= PVC_RANGE; else minx = dwMinimumCellX;
+			if (maxx <= (dwMaximumCellX - PVC_RANGE)) maxx += PVC_RANGE; else maxx = dwMaximumCellX;
+
+			if (miny >= (dwMinimumCellY + PVC_RANGE)) miny -= PVC_RANGE; else miny = dwMinimumCellY;
+			if (maxy <= (dwMaximumCellY - PVC_RANGE)) maxy += PVC_RANGE; else maxy = dwMaximumCellY;
+		}
+
+		minx = BLOCK_OFFSET(minx) << 8;
+		miny = BLOCK_OFFSET(miny);
+		maxx = BLOCK_OFFSET(maxx) << 8;
+		maxy = BLOCK_OFFSET(maxy);
+
+		for (DWORD xit = minx; xit <= maxx; xit += 0x100) {
+			for (DWORD yit = miny; yit <= maxy; yit += 1)
+			{
+				CLandBlock* pBlock = m_pBlocks[xit | yit];
+				if (pBlock)
+				{
+					pBlock->EnumNearby(pSource, fRange, pResults);
+				}
+			}
+		}
+	}
+}
+
 CPhysicsObj* CWorld::FindWithinPVS(CPhysicsObj *pSource, DWORD dwGUID)
 {
 	if (!pSource)

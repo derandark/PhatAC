@@ -64,7 +64,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ws2_32.lib;comctl32.lib;zlib\zlibstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;comctl32.lib;zlib\zlibstat.lib;mysql\libmysql.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)PhatAC.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)PhatAC.pdb</ProgramDatabaseFile>
@@ -87,7 +87,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ws2_32.lib;comctl32.lib;zlib\zlibstat.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;comctl32.lib;zlib\zlibstat.lib;mysql\libmysql.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)PhatAC.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -104,6 +104,7 @@
     <ClCompile Include="AccountDatabase.cpp" />
     <ClCompile Include="Animate.cpp" />
     <ClCompile Include="Attributes.cpp" />
+    <ClCompile Include="Database2.cpp" />
     <ClCompile Include="PhysicsObj.cpp" />
     <ClCompile Include="CharacterDatabase.cpp" />
     <ClCompile Include="Client.cpp" />
@@ -133,6 +134,7 @@
     <ClCompile Include="Pet.cpp" />
     <ClCompile Include="PhatAC.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="Portal.cpp" />
     <ClCompile Include="Precompiled.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -160,6 +162,8 @@
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AnimationPackage.h" />
     <ClInclude Include="Attributes.h" />
+    <ClInclude Include="Database2.h" />
+    <ClInclude Include="Enums.h" />
     <ClInclude Include="PhysicsObj.h" />
     <ClInclude Include="CharacterDatabase.h" />
     <ClInclude Include="Client.h" />
@@ -189,6 +193,7 @@
     <ClInclude Include="PacketController.h" />
     <ClInclude Include="Pet.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="Portal.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Rules.h" />
     <ClInclude Include="Server.h" />

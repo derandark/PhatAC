@@ -43,6 +43,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx</Extensions>
     </Filter>
+    <Filter Include="Source Files\Database 2.0">
+      <UniqueIdentifier>{87d98e75-7d37-4239-bfdd-bc362458e794}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PhatAC.cpp">
@@ -191,6 +194,12 @@
     </ClCompile>
     <ClCompile Include="Util.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Portal.cpp">
+      <Filter>Source Files\Objects</Filter>
+    </ClCompile>
+    <ClCompile Include="Database2.cpp">
+      <Filter>Source Files\Database 2.0</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -364,6 +373,15 @@
     </ClInclude>
     <ClInclude Include="Animation.h">
       <Filter>Source Files\Object Capabilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Portal.h">
+      <Filter>Source Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Enums.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Database2.h">
+      <Filter>Source Files\Database 2.0</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

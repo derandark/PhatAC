@@ -23,7 +23,7 @@ CBaseSign::CBaseSign()
 	m_wTypeID = 0x1139;
 	m_wIcon = 0x12D3;
 
-	m_dwCategory = 0x80; //miscellaneous
+	m_ItemType = TYPE_MISC;
 }
 
 void CBaseSign::Precache()

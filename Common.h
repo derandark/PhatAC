@@ -134,5 +134,9 @@ typedef struct heading_s
 } heading_t;
 #pragma pack(pop)
 
-
+typedef struct placement_s
+{
+	loc_t origin;
+	heading_t angles;
+} placement_t;
 

@@ -7,8 +7,11 @@
 #include "Network.h"
 #include "NetFood.h"
 #include "ChatMsgs.h"
+#include "Database2.h"
 
 CDatabase *g_pDB = 0;
+CMYSQLDatabase *g_pDB2 = 0;
+CGameDatabase *g_pGameDatabase = 0;
 CWorld *g_pWorld = 0;
 CNetwork *g_pNetwork = 0;
 TURBINEPORTAL *g_pPortal = 0;
@@ -35,9 +38,13 @@ CPhatServer::CPhatServer(in_addr hostmachine, u_short hostport)
 	g_pPortal = new TURBINEPORTAL();
 	g_pCell = new TURBINECELL();
 	g_pGameRules = new GAMERULES();
-	g_pDB = new CDatabase;
-	g_pWorld = new CWorld;
+	g_pDB = new CDatabase; // Old, dumb, bad
+	g_pDB2 = new CMYSQLDatabase("127.0.0.1", 0, "root", "", "phatac"); // Newer, shiny, makes pancakes in the morning
+	g_pGameDatabase = new CGameDatabase();
+	g_pWorld = new CWorld();
 	g_pNetwork = new CNetwork(m_sockets, m_socketCount);
+
+	g_pGameDatabase->Init();
 
 	OutputConsole("The server is now online.\r\n");
 }
@@ -51,6 +58,8 @@ CPhatServer::~CPhatServer()
 		SafeDelete(g_pNetwork);
 	}
 	SafeDelete(g_pWorld);
+	SafeDelete(g_pGameDatabase);
+	SafeDelete(g_pDB2);
 	SafeDelete(g_pDB);
 	SafeDelete(g_pGameRules);
 	SafeDelete(g_pCell);

@@ -541,8 +541,8 @@ void CPacketController::ProcessBlob(BlobPacket_s *blob)
 	if (dwFlags & BT_TIMEUPDATE) //0x00100000
 	{
 #ifdef _DEBUG
-		if (dwFlags & BT_FRAGMENTS)
-			OutputConsole("Fragments? %s %u\r\n", __FILE__, __LINE__);
+		//if (dwFlags & BT_FRAGMENTS)
+		//	OutputConsole("Fragments? %s %u\r\n", __FILE__, __LINE__);
 #endif
 		if (dwSize < 8)
 		{

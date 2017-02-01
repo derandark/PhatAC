@@ -59,6 +59,11 @@ BOOL DATDisk::Open()
 	return TRUE;
 }
 
+const DATHeader *DATDisk::GetHeader()
+{
+	return &m_DATHeader;
+}
+
 void DATDisk::FindFileIDsWithinRange(DWORD Min, DWORD Max, void(*FileCallback)(void *, DWORD, BTreeEntry *), void(*ProgressCallback)(void *, float), void *CallbackArg)
 {
 	// double startTime = g_pGlobals->Time();

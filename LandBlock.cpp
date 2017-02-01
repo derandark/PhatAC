@@ -543,6 +543,21 @@ void CLandBlock::ClearSpawns()
 	}
 }
 
+void CLandBlock::EnumNearby(CPhysicsObj *pSource, float fRange, std::list<CPhysicsObj *> *pResults)
+{
+	for (EntityMap::iterator i = m_mEntities.begin(); i != m_mEntities.end(); i++)
+	{
+		CPhysicsObj *pOther = i->second;
+
+		if (pSource == pOther)
+			continue;
+
+		if ((Vector(pSource->m_Origin) - Vector(pOther->m_Origin)).Length() <= fRange)
+		{
+			pResults->push_back(pOther);
+		}
+	}
+}
 
 
 

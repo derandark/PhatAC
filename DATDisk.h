@@ -11,38 +11,41 @@
 #ifdef PRE_TOD_DATA_FILES
 struct DATHeader
 {
-	DWORD    FileType;        // 0x00 'TB' !
-	DWORD    BlockSize;        // 0x04 0x400 for PORTAL : 0x100 for CELL
-	DWORD    FileSize;        // 0x08 Should match file size.
-	DWORD    Iteration;        // 0x0C Version iteration.
-	DWORD    FreeHead;        // 0x10
-	DWORD    FreeTail;        // 0x14
-	DWORD    FreeCount;        // 0x18
-	DWORD    BTree;            // 0x1C BTree offset
-	DWORD    Unknown0;        // 0x20
-	DWORD    Unknown1;        // 0x24
-	DWORD    Unknown2;        // 0x28
+	DWORD FileType; // 0x00 'TB' !
+	DWORD BlockSize; // 0x04 0x400 for PORTAL : 0x100 for CELL
+	DWORD FileSize; // 0x08 Should match file size.
+	DWORD Iteration; // 0x0C Version iteration.
+	DWORD FreeHead; // 0x10
+	DWORD FreeTail; // 0x14
+	DWORD FreeCount; // 0x18
+	DWORD BTree; // 0x1C BTree offset
+	DWORD Unknown0; // 0x20
+	DWORD Unknown1; // 0x24
+	DWORD Unknown2; // 0x28
 };
 #else
+#pragma pack(push, 4)
 struct DATHeader
 {
-	DWORD    FileType;
-	DWORD    BlockSize;
-	DWORD    FileSize;
-	DWORD    Iteration;
-	DWORD    Iteration2;
-	DWORD    FreeHead;
-	DWORD    FreeTail;
-	DWORD    FreeCount;
-	DWORD    BTree;
-	DWORD    Unknown0;
-	DWORD    Unknown1;
-	DWORD    Unknown2;
-	DWORD    Unknown3;
-	DWORD    Unknown4;
-	DWORD    Unknown5;
-	DWORD    Unknown6;
+	DWORD FileType;
+	DWORD BlockSize;
+	DWORD FileSize;
+	DWORD DataSet; // 1 = portal
+	DWORD DataSubset;
+	DWORD FreeHead;
+	DWORD FreeTail;
+	DWORD FreeCount;
+	DWORD BTree;
+	DWORD NewLRU; // 0
+	DWORD OldLRU; // 0
+	bool bUseLRU; // False
+	DWORD MasterMapID;
+	DWORD EnginePackVersion;
+	DWORD GamePackVersion; // 0
+	BYTE VersionMajor[16];
+	DWORD VersionMinor;
 };
+#pragma pack(pop)
 #endif
 
 #ifdef PRE_TOD_DATA_FILES
@@ -66,10 +69,10 @@ struct BTreeEntry
 
 struct BTreeData
 {
-	DWORD        BlockSpacer;
-	DWORD        Branches[0x3E];
-	DWORD        EntryCount;
-	BTreeEntry    Entries[0x3D];
+	DWORD BlockSpacer;
+	DWORD Branches[0x3E];
+	DWORD EntryCount;
+	BTreeEntry Entries[0x3D];
 };
 
 class BlockLoader;
@@ -151,7 +154,7 @@ public:
 private:
 
 	DATHeader *m_pHeader;
-	DiskDev    m_DiskDev;
+	DiskDev m_DiskDev;
 
 };
 
@@ -177,6 +180,8 @@ public:
 	BOOL GetData(DWORD ID, DATEntry *pEntry);
 	BOOL GetDataEx(DWORD BlockHead, void *Data, DWORD Length);
 	void FindFileIDsWithinRange(DWORD Min, DWORD Max, void(*FileCallback)(void *, DWORD, BTreeEntry *), void(*ProgressCallback)(void *, float), void *CallbackArg);
+
+	const DATHeader *GetHeader();
 
 private:
 

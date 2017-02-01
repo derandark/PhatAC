@@ -14,7 +14,6 @@ CBaseDoor::CBaseDoor()
 	m_bOpen = FALSE;
 	m_wOpenAnim = DOOR_OPEN;
 	m_wCloseAnim = DOOR_CLOSED;
-	m_fApproachDist = 2.0f;
 
 	m_strName = "Door";
 	m_wTypeID = 0x19C;
@@ -26,7 +25,9 @@ CBaseDoor::CBaseDoor()
 	m_fScale = 1.0f;
 
 	m_VisFlags = VF_DOOR | VF_NORMAL;	//who the hell knows, collision related.
-	m_dwCategory = eMiscellaneous;
+	m_ItemType = TYPE_MISC;
+	m_Usability = m_Usability;
+	m_UseDistance = USEDISTANCE_ANYWHERE;
 
 	m_dwAnimationSet = DOOR_ANIMSET;
 	m_wForwardAnim = m_wCloseAnim;
@@ -95,7 +96,7 @@ void CBaseDoor::Use(CPhysicsObj *pEntity)
 DWORD CBaseDoor::GetDescFlags()
 {
 	//0x1000 = I'm a door.
-	return (CPhysicsObj::GetDescFlags() | 0x1000);
+	return (CPhysicsObj::GetDescFlags() | BF_DOOR);
 }
 
 

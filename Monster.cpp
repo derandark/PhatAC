@@ -7,7 +7,7 @@
 
 CBaseMonster::CBaseMonster()
 {
-	m_dwCategory = eMonster;
+	m_ItemType = TYPE_CREATURE;
 }
 
 CBaseMonster::~CBaseMonster()

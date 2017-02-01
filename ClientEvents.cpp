@@ -204,7 +204,7 @@ void CClientEvents::SendTellByName(const char* szText, const char* szName)
 
 void CClientEvents::ClientText(char* szText)
 {
-	if (strlen(szText) > 180)
+	if (strlen(szText) > 1000)
 		return;
 
 	//should really check for invalid characters and such ;]
@@ -336,7 +336,7 @@ void CClientEvents::EquipItem(DWORD dwItemID, DWORD dwCoverage)
 	if (pItem->HasOwner())
 		m_pPlayer->Container_ReleaseItem(pItem, FALSE);
 
-	if (pItem->m_dwCategory != eArmor)
+	if (pItem->m_ItemType != TYPE_ARMOR)
 		pItem->SetWorldWielder(dwCell, m_pPlayer);
 	pItem->SetWorldContainer(dwCell, NULL);
 	pItem->SetWorldCoverage(dwCell, dwCoverage);
@@ -349,7 +349,7 @@ void CClientEvents::EquipItem(DWORD dwItemID, DWORD dwCoverage)
 
 	UpdateBurdenUI();
 
-	if (pItem->m_dwCategory == eArmor)
+	if (pItem->m_ItemType == TYPE_ARMOR)
 		m_pPlayer->UpdateModel();
 }
 
@@ -404,7 +404,7 @@ void CClientEvents::StoreItem(DWORD dwItemID, DWORD dwContainer, char cSlot)
 
 	UpdateBurdenUI();
 
-	if (pItem->m_dwCategory == eArmor)
+	if (pItem->m_ItemType == TYPE_ARMOR)
 		m_pPlayer->UpdateModel();
 }
 
@@ -442,7 +442,7 @@ void CClientEvents::DropItem(DWORD dwItemID)
 
 	UpdateBurdenUI();
 
-	if (pItem->m_dwCategory == eArmor)
+	if (pItem->m_ItemType == TYPE_ARMOR)
 		m_pPlayer->UpdateModel();
 }
 

@@ -66,6 +66,7 @@ public:
 	CBasePlayer* FindPlayer(DWORD);
 	CBasePlayer* FindPlayer(const char *);
 	CPhysicsObj* FindWithinPVS(CPhysicsObj *pSource, DWORD dwGUID);
+	void EnumNearby(CPhysicsObj *pSource, float fRange, std::list<CPhysicsObj *> *pResults);
 
 	//
 	DWORD GenerateGUID(eGUIDClass);

@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <time.h>
 #include "zlib/zlib.h"
+#include "mysql/mysql.h"
 
 //STL
 #include <vector>
@@ -32,13 +33,18 @@
 class CPhysicsObj;
 class CBasePlayer;
 
+#define DEBUGOUT OutputConsole
+
+#include "Enums.h"
 #include "Common.h"
-#include "math.h"
+#include "Math.h"
 #include "Util.h"
 #include "Globals.h"
 #include "Killable.h"
 
 extern class CDatabase *g_pDB;
+extern class CMYSQLDatabase *g_pDB2;
+extern class CGameDatabase *g_pGameDatabase;
 extern class CWorld *g_pWorld;
 extern class CNetwork *g_pNetwork;
 
