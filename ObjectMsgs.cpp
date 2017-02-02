@@ -604,16 +604,18 @@ NetFood *LoginCharacter(CBasePlayer *pPlayer)
 	delete SkillInfo;
 
 	//spellbook:
-	//LC->WriteWORD( 3000 );
-	LC->WriteWORD(1);
-	LC->WriteWORD(0x40);
-	LC->WriteDWORD(2366);
-	LC->WriteFloat(2.0f);
-	//for (int i = 0; i < 3000; i++)
-	//{
-	//	LC->WriteDWORD( i );
-	//	LC->WriteFloat( 2.0f );
-	//}
+	//LC->WriteWORD( 55 );
+	LC->WriteWORD(6); // Number of spells
+	LC->WriteWORD(0x40); // Required ?
+
+	LC->WriteDWORD(2366); //Spell ID
+	LC->WriteFloat(2.0f); //Unknown
+
+	for (int i = 0; i < 5; i++) //Add 6 starter spells
+	{
+		LC->WriteDWORD( i );
+		LC->WriteFloat( 2.0f ); 
+	}
 
 	LC->WriteDWORD(0x0070); //loginmask3
 	LC->WriteDWORD(0x11C4E56A);

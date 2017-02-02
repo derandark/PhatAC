@@ -121,7 +121,19 @@ CLIENT_COMMAND(arwic, "", "Teleports you to Arwic.", BASIC_ACCESS)
 
 	return false;
 }
-
+CLIENT_COMMAND(removethis, "", "Remove Item", BASIC_ACCESS)
+{
+	std::string itemRemoved = pPlayer->RemoveLastAssessedItem();
+	if (itemRemoved != "") {
+		pPlayer->SendText(std::string("Removed Item: ").append(itemRemoved).c_str(),1);
+	}
+	else
+	{
+		pPlayer->SendText(std::string("Please assess the thing you want to remove!").append(itemRemoved).c_str(), 1);
+		return true;
+	}
+	return false;
+}
 CLIENT_COMMAND(tele, "<player name>", "Teleports you to a player.", BASIC_ACCESS)
 {
 	if (argc < 1)
@@ -139,7 +151,33 @@ CLIENT_COMMAND(tele, "<player name>", "Teleports you to a player.", BASIC_ACCESS
 
 	return false;
 }
+CLIENT_COMMAND(teletown, "<town name>", "Teleports you to a town.", BASIC_ACCESS)
+{
+	if (argc == 0) {
+		pPlayer->SendText("Your teleporting choices are:", 1);
+		pPlayer->SendText(g_pWorld->GetTeleportList().c_str(), 1);
+		return true;
+	}
+	std::string cmdString = argv[0];
+	for (int i = 1; i < argc; i++)
+	{
+		cmdString.append(" ");
+		cmdString.append(argv[i]);
+	}
 
+	TeleTownList_s var = g_pWorld->GetTeleportLocation(cmdString);
+	if (var.m_teleString != "")
+	{
+		pPlayer->SendText(std::string("Portaling To: ").append(var.m_teleString).c_str(), 1);
+		pPlayer->Movement_Teleport(var.loc, var.heading);
+		return false;
+	}
+	else
+		pPlayer->SendText("Town Not Found! Try again...", 1);
+
+	return true;
+
+}
 CLIENT_COMMAND(teleto, "<coords>", "Teleports you to coordinates.", BASIC_ACCESS)
 {
 	if (argc < 2)
@@ -469,7 +507,19 @@ SERVER_COMMAND(kick, "<player name>", "Kicks the specified player.", ADMIN_ACCES
 
 	return false;
 }
+/*
+CLIENT_COMMAND(AddSpellByID, "id", "Adds a spell by ID", ADMIN_ACCESS)
+{
+	if (argc < 1)
+		return true;
+	
+	int id = atoi(argv[0]);
+	pPlayer->AddSpellByID(id);
+	
+	return false;
 
+}
+*/
 CLIENT_COMMAND(test, "<index>", "Performs the specified test.", ADMIN_ACCESS)
 {
 	if (argc < 1)
@@ -591,7 +641,35 @@ CLIENT_COMMAND(animation, "<index> [speed=1]", "Plays a primary animation.", BAS
 
 	return false;
 }
+CLIENT_COMMAND(setmodel, "<model>", "Allows you to set your model", BASIC_ACCESS)
+{
+	if (argc < 1)
+		return true;
 
+	WORD wIndex = atoi(argv[0]);
+
+	pPlayer->m_dwModel = 0x02000000 + wIndex;
+
+	return false;
+}
+CLIENT_COMMAND(invisible, "", "Go Invisible", BASIC_ACCESS)
+{
+
+	WORD wIndex = 160;
+	float fSpeed = (argc >= 2) ? (float)atof(argv[1]) : 1.0f;
+	float fDelay = 0.5f;
+	pPlayer->Animation_PlayPrimary(wIndex, fSpeed, fDelay);
+	return false;
+}
+CLIENT_COMMAND(visible, "", "Go Visible", BASIC_ACCESS)
+{
+
+	WORD wIndex = 161;
+	float fSpeed = (argc >= 2) ? (float)atof(argv[1]) : 1.0f;
+	float fDelay = 0.5f;
+	pPlayer->Animation_PlayPrimary(wIndex, fSpeed, fDelay);
+	return false;
+}
 CLIENT_COMMAND(motion, "<index> [speed=1]", "Plays a sequenced animation.", BASIC_ACCESS)
 {
 	if (argc < 1)

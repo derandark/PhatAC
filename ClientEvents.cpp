@@ -516,6 +516,8 @@ void CClientEvents::Identify(DWORD dwObjectID)
 	if (pSource)
 		pSource->Identify(m_pPlayer);
 
+	m_pPlayer->SetLastAssessedItem(pSource);
+
 	ActionComplete();
 }
 
