@@ -95,13 +95,13 @@ struct ModelInfo
 	BinaryWriter *NetData();
 
 	BYTE bUnknown;
-	WORD dwBasePalette;
+	DWORD dwBasePalette;
 
 	PaletteRList lPalettes;
 	TextureRList lTextures;
 	ModelRList lModels;
 
-	inline void SetBasePalette(WORD _dwBasePalette)
+	inline void SetBasePalette(DWORD _dwBasePalette)
 	{
 		dwBasePalette = _dwBasePalette;
 	}

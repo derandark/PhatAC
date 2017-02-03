@@ -542,14 +542,16 @@ void CBasePlayer::ChangeVIS(DWORD dwFlags)
 {
 	CBaseMonster::ChangeVIS(dwFlags | PhysicsState::GRAVITY_PS);
 }
+
 void CBasePlayer::AddSpellByID(DWORD id)
 {
-	NetFood AddSpellToSpellbook;
+	BinaryWriter AddSpellToSpellbook;
 	AddSpellToSpellbook.WriteDWORD(0x02C1);
 	AddSpellToSpellbook.WriteDWORD(id);
 	AddSpellToSpellbook.WriteDWORD(0x0);
 	SendMessage(AddSpellToSpellbook.GetData(), AddSpellToSpellbook.GetSize(), EVENT_MSG,true);
 }
+
 void CBasePlayer::EnterPortal()
 {
 	ChangeVIS(PhysicsState::HIDDEN_PS | PhysicsState::IGNORE_COLLISIONS_PS | PhysicsState::EDGE_SLIDE_PS);

@@ -630,7 +630,8 @@ void CGameDatabase::LoadTeleTownList()
 				t.heading.z = ParseFloatFromStringHex(ResultRow[10]);
 				g_pWorld->InsertTeleportLocation(t);
 			}
-			DEBUGOUT("Added %d Teleport Locations.\r\n", Result->ResultRows());
+
+			LOG(Temp, Normal, "Added %d teleport locations.\n", Result->ResultRows());
 		}
 	}
 }

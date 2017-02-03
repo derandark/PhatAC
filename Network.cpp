@@ -70,8 +70,10 @@ void CNetwork::SendPacket(SOCKADDR_IN *peer, void *data, DWORD len)
 	SOCKET socket = m_sockets[0];
 	if (socket == INVALID_SOCKET) return;
 
+#ifdef _DEBUG
 	LOG(Network, Verbose, "Sent:\n");
 	LOG_BYTES(Network, Verbose, data, len);
+#endif
 
 	sendto(socket, (char *)data, len, 0, (sockaddr *)peer, sizeof(SOCKADDR_IN));
 	g_pGlobals->PacketSent(len);
@@ -117,8 +119,10 @@ void CNetwork::ThinkSocket(SOCKET socket)
 
 		blob->header.dwCRC -= CalcTransportCRC((DWORD *)blob);
 
+#ifdef _DEBUG
 		LOG(Network, Verbose, "Received:\n");
 		LOG_BYTES(Network, Verbose, &blob->header, blob->header.wSize + sizeof(blob->header));
+#endif
 
 		if (!wRecID)
 		{
@@ -454,11 +458,6 @@ void CNetwork::ProcessConnectionless(sockaddr_in *peer, BlobPacket_s *blob)
 {
 	DWORD dwFlags = blob->header.dwFlags;
 
-	/*
-	if (dwFlags & BT_WAKE)
-		return;
-		*/
-
 	if (dwFlags == BT_LOGIN)
 	{
 		//if (blob->header.dwSequence != 1)
@@ -471,8 +470,7 @@ void CNetwork::ProcessConnectionless(sockaddr_in *peer, BlobPacket_s *blob)
 		return;
 	}
 
-	LOG(Temp, Normal, "Unknown connectionless packet received: %08X Look into this\n", dwFlags);
-	// OutputConsoleBytes(blob->data, blob->header.wSize);
+	LOG(Network, Verbose, "Unhandled connectionless packet received: 0x%08X Look into this\n", dwFlags);
 }
 
 BOOL CNetwork::IsBannedIP(in_addr ip)

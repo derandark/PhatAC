@@ -1215,7 +1215,7 @@ CLIENT_COMMAND(spawn, "[name] [scale] [animate 0=no 1=yes]", "Spawns something b
 
 	if (argc >= 2)
 	{
-		fScale = atof(argv[1]);
+		fScale = (float) atof(argv[1]);
 		if (fScale < 0.01)
 			fScale = 0.01f;
 		if (fScale > 1000.0)
@@ -1239,6 +1239,7 @@ CLIENT_COMMAND(spawn, "[name] [scale] [animate 0=no 1=yes]", "Spawns something b
 	pMonster->m_strName = pMonsterInfo->weenie._name;
 
 	pMonster->m_Origin = pPlayer->m_Origin;
+	pMonster->m_Origin.z += 5.0;
 
 	if (pMonsterInfo->physics.movement_buffer && bAnimate)
 	{
@@ -1294,7 +1295,7 @@ CLIENT_COMMAND(spawnrandom, "[num to spawn] [scale]", "Spawns random objects.", 
 	float fScale = 1.0f;
 	if (argc >= 2)
 	{
-		fScale = atof(argv[1]);
+		fScale = (float) atof(argv[1]);
 		if (fScale < 0.01f)
 			fScale = 0.01f;
 		if (fScale >= 1000.0f)
@@ -1327,8 +1328,9 @@ CLIENT_COMMAND(spawnrandom, "[num to spawn] [scale]", "Spawns random objects.", 
 		pMonster->m_strName = pMonsterInfo->weenie._name;
 
 		pMonster->m_Origin = pPlayer->m_Origin;
-		pMonster->m_Origin.x += RandomFloat(-3.0 * total, 3.0 * total);
-		pMonster->m_Origin.y += RandomFloat(-3.0 * total, 3.0 * total);
+		pMonster->m_Origin.x += (float) RandomFloat(-2.0 * total, 2.0 * total);
+		pMonster->m_Origin.y += (float) RandomFloat(-2.0 * total, 2.0 * total);
+		pMonster->m_Origin.z += 5.0;
 
 		if (pMonsterInfo->physics.movement_buffer && bAnimate)
 		{
