@@ -151,6 +151,47 @@ CLIENT_COMMAND(tele, "<player name>", "Teleports you to a player.", BASIC_ACCESS
 
 	return false;
 }
+CLIENT_COMMAND(teleall, "<target>", "Teleports all players target. If no target specified, teleports to you.", BASIC_ACCESS)
+{
+	CBasePlayer* target;
+	if (argc < 1)
+		target = pPlayer;
+	else {
+		target = g_pWorld->FindPlayer(argv[0]);
+		if (target == NULL)
+		{
+			pPlayer->SendText("Invalid target!",1);
+			return true;
+		}
+	}
+	PlayerMap* map = g_pWorld->GetPlayers();
+	PlayerMap::iterator pit = map->begin();
+	PlayerMap::iterator pend = map->end();
+
+	//This is probably really bad..
+	bool teleportedOne = false;
+	while (pit != pend)
+	{
+		CBasePlayer *them = pit->second;
+
+		if (them != target)
+		{
+			teleportedOne = true;
+			pPlayer->SendText(std::string("Teleported: ").append(them->GetName()).c_str(), 1);
+			them->Movement_Teleport(target->m_Origin, target->m_Angles);
+			pPlayer->SendText(std::string("Teleported by: ").append(pPlayer->GetName()).c_str(), 1);
+		}
+
+		pit++;
+	}
+	if (teleportedOne)
+		return false;
+	else
+	{
+		pPlayer->SendText("Didn't teleport anyone! Nobody on server?",1);
+	}
+	return true;
+}
 CLIENT_COMMAND(teletown, "<town name>", "Teleports you to a town.", BASIC_ACCESS)
 {
 	if (argc == 0) {
