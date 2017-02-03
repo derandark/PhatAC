@@ -34,6 +34,46 @@ char *timestamp()
 	return result;
 }
 
+unsigned long ResolveIPFromHost(const char *host)
+{
+	ULONG ipaddr;
+
+	// Check if it's in IP format.
+	ipaddr = ::inet_addr(host);
+
+	if (ipaddr && ipaddr != INADDR_NONE)
+		return (unsigned long)ipaddr;
+
+	// Try to resolve an IP address.
+
+	LPHOSTENT lphost;
+	lphost = gethostbyname(host);
+
+	if (lphost != NULL)
+	{
+		ipaddr = ((LPIN_ADDR)lphost->h_addr)->s_addr;
+
+		if (ipaddr && ipaddr != INADDR_NONE)
+			return (unsigned long)ipaddr;
+	}
+
+	return 0;
+}
+
+unsigned long GetLocalIP()
+{
+	char hostname[256];
+	gethostname(hostname, 256);
+	DWORD hostaddr = *((DWORD *)gethostbyname(hostname)->h_addr);
+
+	return *(unsigned long *)gethostbyname(hostname)->h_addr;
+}
+
+std::string GetLocalIPString()
+{
+	unsigned long localIP = GetLocalIP();
+	return inet_ntoa(*(in_addr *)&localIP);
+}
 
 std::string DebugBytesToString(void *_data, unsigned int len)
 {

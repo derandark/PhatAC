@@ -8,6 +8,9 @@
 #include "ChatMsgs.h"
 
 #include "Item.h"
+#include "Player.h"
+#include "Client.h"
+#include "ClientCommands.h"
 
 CPhysicsObj::CPhysicsObj()
 {
@@ -270,6 +273,19 @@ void CPhysicsObj::SpeakLocal(const char* szText, long lColor)
 {
 	if (HasOwner())
 		return;
+
+	extern bool g_bSilence;
+	if (g_bSilence)
+	{
+		if (IsPlayer())
+		{
+			CBasePlayer *pPlayer = (CBasePlayer *)this;
+			if (pPlayer->GetClient()->GetAccessLevel() < ADMIN_ACCESS)
+			{
+				return;
+			}
+		}
+	}
 
 	BinaryWriter *LC = LocalChat(szText, GetName(), m_dwGUID, lColor);
 	g_pWorld->BroadcastPVS(GetLandcell(), LC->GetData(), LC->GetSize(), PRIVATE_MSG);

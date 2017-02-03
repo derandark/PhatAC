@@ -152,7 +152,7 @@ CLIENT_COMMAND(tele, "<player name>", "Teleports you to a player.", BASIC_ACCESS
 
 	return false;
 }
-CLIENT_COMMAND(teleall, "<target>", "Teleports all players target. If no target specified, teleports to you.", BASIC_ACCESS)
+CLIENT_COMMAND(teleall, "<target>", "Teleports all players target. If no target specified, teleports to you.", ADMIN_ACCESS)
 {
 	CBasePlayer* target;
 	if (argc < 1)
@@ -336,8 +336,26 @@ CLIENT_COMMAND(spawnbael, "", "Spawns Bael'Zharon.", BASIC_ACCESS)
 	return false;
 }
 
+bool g_bSilence = false;
+
+CLIENT_COMMAND(squelchall, "", "Squelch all.", ADMIN_ACCESS)
+{
+	if (argc < 1)
+		return true;
+
+	g_bSilence = atoi(argv[0]) ? true : false;
+	return false;
+}
+
 CLIENT_COMMAND(spawnrabbit, "", "Spawns a rabbit.", BASIC_ACCESS)
 {
+	if (g_bSilence)
+	{
+		if (pPlayer->GetClient()->GetAccessLevel() < ADMIN_ACCESS)
+		{
+			return false;
+		}
+	}
 
 	CBaseMonster *pRabbit = new CBaseMonster();
 
@@ -491,6 +509,14 @@ CLIENT_COMMAND(spawnmodels, "<start index> <end index>", "Spawns a range of mode
 
 CLIENT_COMMAND(spawnmonster, "<model index> [scale=1] [name=*]", "Spawns a monster.", BASIC_ACCESS)
 {
+	if (g_bSilence)
+	{
+		if (pPlayer->GetClient()->GetAccessLevel() < ADMIN_ACCESS)
+		{
+			return false;
+		}
+	}
+
 	if (argc < 1)
 		return true;
 
@@ -552,6 +578,7 @@ CLIENT_COMMAND(clearspawns, "", "Clears the spawns in your current landblock", B
 	if (pBlock)
 		pBlock->ClearSpawns();
 
+	pPlayer->SendText("Clearing spawns in your landblock.", 1);
 	return false;
 }
 
@@ -1184,9 +1211,9 @@ CLIENT_COMMAND(players, "", "List the players logged in.", BASIC_ACCESS)
 		const char *playerName = player.second->m_strName.c_str();
 		const char *playerAccount = player.second->GetClient() ? player.second->GetClient()->GetAccount() : "";
 
-		if (pPlayer->GetClient() && pPlayer->GetClient()->GetAccessLevel() >= ADMIN_ACCESS)
+		if (pPlayer->GetClient() && pPlayer->GetClient()->GetAccessLevel() >= BASIC_ACCESS) // ADMIN_ACCESS)
 		{
-			pPlayer->SendText(csprintf("%s (%s)", playerName, playerAccount), 1);
+			pPlayer->SendText(csprintf("%s (%s, 0x%08X %.3f %.3f %.3f)", playerName, playerAccount, player.second->m_Origin.landcell, player.second->m_Origin.x, player.second->m_Origin.y, player.second->m_Origin.z), 1);
 		}
 		else
 		{
@@ -1199,6 +1226,14 @@ CLIENT_COMMAND(players, "", "List the players logged in.", BASIC_ACCESS)
 
 CLIENT_COMMAND(spawn, "[name] [scale] [animate 0=no 1=yes]", "Spawns something by name (right now works for monsters, NPCs, players.)", BASIC_ACCESS)
 {
+	if (g_bSilence)
+	{
+		if (pPlayer->GetClient()->GetAccessLevel() < ADMIN_ACCESS)
+		{
+			return false;
+		}
+	}
+
 	if (argc < 1)
 		return true;
 
@@ -1328,8 +1363,8 @@ CLIENT_COMMAND(spawnrandom, "[num to spawn] [scale]", "Spawns random objects.", 
 		pMonster->m_strName = pMonsterInfo->weenie._name;
 
 		pMonster->m_Origin = pPlayer->m_Origin;
-		pMonster->m_Origin.x += (float) RandomFloat(-2.0 * total, 2.0 * total);
-		pMonster->m_Origin.y += (float) RandomFloat(-2.0 * total, 2.0 * total);
+		pMonster->m_Origin.x += (float) RandomFloat(-2.0f * total, 2.0f * total);
+		pMonster->m_Origin.y += (float) RandomFloat(-2.0f * total, 2.0f * total);
 		pMonster->m_Origin.z += 5.0;
 
 		if (pMonsterInfo->physics.movement_buffer && bAnimate)

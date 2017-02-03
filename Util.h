@@ -30,6 +30,11 @@ extern void strtrim(char *szText); //specified buffer
 extern BOOL strmask(const char* szTest, const char* szMask);
 extern long fsize(FILE* fp); //returns a FILE* size
 
+unsigned long ResolveIPFromHost(const char *host);
+
+unsigned long GetLocalIP();
+std::string GetLocalIPString();
+
 extern std::string DebugBytesToString(void *data, unsigned int len);
 extern void _OutputConsole(const char* format, ...);
 #define _DebugMe() LOG(Temp, Normal, "Debug me: %s %u\n", __FUNCTION__, __LINE__);

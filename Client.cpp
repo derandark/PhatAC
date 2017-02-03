@@ -233,7 +233,7 @@ void CClient::UpdateLoginScreen()
 	ServerName.WriteLong(0xF7E1);
 	ServerName.WriteLong(0x32); // Num connections
 	ServerName.WriteLong(-1); // Max connections
-	ServerName.WriteString("Peaville");
+	ServerName.WriteString("PhatAC");
 	SendMessage(ServerName.GetData(), ServerName.GetSize(), 9);
 
 	BinaryWriter ServerUnk;

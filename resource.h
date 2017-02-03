@@ -45,6 +45,9 @@
 #define IDC_WEBSITE                     1027
 #define IDC_BANNER                      1028
 #define IDC_CREDITS                     1029
+#define IDC_SERVERHOST                  1031
+#define IDC_EDIT2                       1032
+#define IDC_CONNECTLINK                 1032
 #define IDM_EXIT                        40002
 #define IDM_STATUS                      40004
 #define IDM_LAUNCHER                    40007
@@ -54,9 +57,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        111
+#define _APS_NEXT_RESOURCE_VALUE        112
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         1031
+#define _APS_NEXT_CONTROL_VALUE         1033
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

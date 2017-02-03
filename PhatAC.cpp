@@ -328,6 +328,21 @@ void OutputConsole(int category, int level, const char *text)
 	SendMessage(hWndConsole, EM_SETSEL, start, end);
 }
 
+void SetWindowStringText(HWND hWnd, const char *text)
+{
+	SendMessage(hWnd, WM_SETTEXT, 0, (LPARAM)text);
+}
+
+std::string GetWindowStringText(HWND hWnd)
+{
+	char text[300];
+	text[0] = '\0';
+	SendMessage(hWnd, WM_GETTEXT, 300, (LPARAM)text);
+	text[299] = '\0';
+
+	return text;
+}
+
 int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
@@ -346,12 +361,9 @@ int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 		SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 		SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
 		DeleteObject(hIcon);
-
-		char hostname[256];
-		gethostname(hostname, 256);
-		DWORD hostaddr = *((DWORD *)gethostbyname(hostname)->h_addr);
-		SendMessage(GetDlgItem(hDlg, IDC_SERVERIP), IPM_SETADDRESS, 0, ntohl(hostaddr));
-		SendMessage(GetDlgItem(hDlg, IDC_SERVERPORT), WM_SETTEXT, 0, (LPARAM)"9050");
+		
+		SetWindowStringText(GetDlgItem(hDlg, IDC_SERVERHOST), GetLocalIPString().c_str());
+		SetWindowStringText(GetDlgItem(hDlg, IDC_SERVERPORT), "9050");
 		return TRUE;
 	}
 	case WM_COMMAND:
@@ -383,41 +395,16 @@ int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 		case IDC_CLEARLOG:
-		{
-			if (wEvent == BN_CLICKED)
 			{
-				HWND hWndConsole = GetDlgItem(hDlg, IDC_CONSOLE);
-
-				SetWindowText(hWndConsole, "");
-				LOG(Temp, Normal, "Console cleared.\n");
-			}
-		}
-		break;
-		case IDC_SAVELOG:
-		{
-			if (wEvent == BN_CLICKED)
-			{
-				HWND hWndConsole = GetDlgItem(hDlg, IDC_CONSOLE);
-
-				int console_len = GetWindowTextLength(hWndConsole) + 1;
-				char* console_text = new char[console_len];
-				GetWindowText(GetDlgItem(hDlg, IDC_CONSOLE), console_text, console_len);
-
-				FILE *fp = fopen(csprintf("%s\\console.txt", g_pGlobals->GetGameDirectory()), "wt");
-				if (fp)
+				if (wEvent == BN_CLICKED)
 				{
-					fprintf(fp, "Console Log:\n\n");
-					fprintf(fp, "%s\n", console_text);
-					fprintf(fp, "End of Console Log.\n");
-					fclose(fp);
+					HWND hWndConsole = GetDlgItem(hDlg, IDC_CONSOLE);
 
-					LOG(Temp, Normal, "Console log saved.\n");
+					SetWindowText(hWndConsole, "");
+					LOG(Temp, Normal, "Console cleared.\n");
 				}
-				else
-					LOG(Temp, Normal, "Failed to open console file.\n");
 			}
-		}
-		break;
+			break;
 		case IDC_BROADCAST:
 			if (wEvent == BN_CLICKED)
 			{
@@ -477,17 +464,16 @@ int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					MsgBox("You might want to start the server first. ;)");
 					break;
 				}
-				char szServerPort[10];
-				DWORD dwServerIP;
-				DWORD dwFields = (DWORD)SendMessage(GetDlgItem(hDlg, IDC_SERVERIP), IPM_GETADDRESS, 0, (LPARAM)&dwServerIP);
-				SendMessage(GetDlgItem(hDlg, IDC_SERVERPORT), WM_GETTEXT, 10, (LPARAM)&szServerPort);
-
-				if (dwFields != 0)
+				
+				std::string serverHost = GetLocalIPString();
+				SetWindowStringText(GetDlgItem(hDlg, IDC_SERVERHOST), serverHost.c_str());
+				int serverPort = atoi(GetWindowStringText(GetDlgItem(hDlg, IDC_SERVERPORT)).c_str());
+				
+				if (serverHost.length() != 0 && serverPort != 0)
 				{
-					dwServerIP = htonl(dwServerIP);
 					char szLaunch[256];
 					char szLaunchDir[MAX_PATH + 10];
-					sprintf(szLaunch, "-h %s -p %u -a admin:%06lu", inet_ntoa(*((in_addr *)&dwServerIP)), atol(szServerPort), g_dwMagicNumber);
+					sprintf(szLaunch, "-h %s -p %u -a admin:%06lu", serverHost.c_str(), serverPort, g_dwMagicNumber);
 
 					DWORD dwLen = MAX_PATH + 10;
 					memset(szLaunchDir, 0, dwLen);
@@ -532,7 +518,7 @@ int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				}
 				else
 				{
-					MsgBox("Please specify the server's external IP.");
+					MsgBox("Please specify the server host and port.");
 				}
 			}
 			break;
@@ -541,16 +527,18 @@ int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			{
 				if (!g_pPhatServer)
 				{
-					char szServerPort[10];
-					DWORD dwServerIP;
-					DWORD dwFields = (DWORD)SendMessage(GetDlgItem(hDlg, IDC_SERVERIP), IPM_GETADDRESS, 0, (LPARAM)&dwServerIP);
-					SendMessage(GetDlgItem(hDlg, IDC_SERVERPORT), WM_GETTEXT, 10, (LPARAM)&szServerPort);
+					std::string serverHost = GetLocalIPString();
+					SetWindowStringText(GetDlgItem(hDlg, IDC_SERVERHOST), serverHost.c_str());
 
-					if (dwFields != 0)
+					unsigned long serverIP = GetLocalIP();
+					int serverPort = atoi(GetWindowStringText(GetDlgItem(hDlg, IDC_SERVERPORT)).c_str());
+
+					if (serverIP != 0 && serverPort != 0)
 					{
-						dwServerIP = htonl(dwServerIP);
-						g_pPhatServer = new CPhatServer(*((in_addr *)&dwServerIP), atoi(szServerPort));
+						serverIP = htonl(serverIP);
+						g_pPhatServer = new CPhatServer(*((in_addr *)&serverIP), serverPort);
 						SetWindowText(GetDlgItem(hDlg, IDC_TOGGLE), "Stop");
+						SetWindowText(GetDlgItem(hDlg, IDC_CONNECTLINK), csprintf("acclient.exe -h %s -p %d -a username:password", serverHost.c_str(), serverPort));
 					}
 					else
 						MsgBox("Please specify the server's external IP.");
@@ -567,6 +555,7 @@ int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					SendMessage(GetDlgItem(hDlg, IDC_NETWORKLOADBAR), PBM_SETPOS, 0, 0);
 					SendMessage(GetDlgItem(hDlg, IDC_CPULOADBAR), PBM_SETRANGE, 0, MAKELPARAM(0, 100));
 					SendMessage(GetDlgItem(hDlg, IDC_CPULOADBAR), PBM_SETPOS, 0, 0);
+					SetWindowText(GetDlgItem(hDlg, IDC_CONNECTLINK), "");
 
 					LOG(Temp, Normal, "Server shutdown.\n");
 				}
