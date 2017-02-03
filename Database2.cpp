@@ -311,6 +311,7 @@ CGameDatabase::~CGameDatabase()
 void CGameDatabase::Init()
 {
 	LoadPortals();
+	LoadTeleTownList();
 }
 
 DWORD ParseDWORDFromStringHex(const char *hex)
@@ -324,6 +325,35 @@ float ParseFloatFromStringHex(const char *hex)
 	return *((float *)&hexVal);
 }
 
+void CGameDatabase::LoadTeleTownList()
+{
+	bool bQuerySuccess = g_pDB2->Query("SELECT `ID`, `Description`, `Command`, `Landblock`, `Position_X`, `Position_Y`, `Position_Z`, `Orientation_W`, `Orientation_X`, `Orientation_Y`, `Orientation_Z` from tele_locations");
+	
+	if (bQuerySuccess)
+	{
+		CSQLResult *Result = g_pDB2->GetResult();
+
+		if (Result)
+		{
+			SQLResultRow_t ResultRow;
+			while (ResultRow = Result->FetchRow())
+			{
+				TeleTownList_t t;
+				t.m_teleString = ResultRow[2];
+				t.loc.landcell = ParseDWORDFromStringHex(ResultRow[3]);
+				t.loc.x = ParseFloatFromStringHex(ResultRow[4]);
+				t.loc.y = ParseFloatFromStringHex(ResultRow[5]);
+				t.loc.z = ParseFloatFromStringHex(ResultRow[6]);
+				t.heading.w = ParseFloatFromStringHex(ResultRow[7]);
+				t.heading.x = ParseFloatFromStringHex(ResultRow[8]);
+				t.heading.y = ParseFloatFromStringHex(ResultRow[9]);
+				t.heading.z = ParseFloatFromStringHex(ResultRow[10]);
+				g_pWorld->InsertTeleportLocation(t);
+			}
+			DEBUGOUT("Added %d Teleport Locations.\r\n", Result->ResultRows());
+		}
+	}
+}
 void CGameDatabase::LoadPortals()
 {
 	// From database Miach provided.
@@ -339,12 +369,29 @@ void CGameDatabase::LoadPortals()
 
 			SQLResultRow_t ResultRow;
 			while (ResultRow = Result->FetchRow())
-			{				
+			{
 				CPortal *pPortal = new CPortal();
 				pPortal->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
 
 				pPortal->m_strName = ResultRow[0];
-				// ResultRow[1] TODO: Use color
+				// ResultRow[1] Color by cmoski
+				std::string strColor = ResultRow[1];
+				if (strColor == "blue")
+					pPortal->m_dwModel = 0x20005D2;
+				else if (strColor == "green")
+					pPortal->m_dwModel = 0x20005D3;
+				else if (strColor == "orange")
+					pPortal->m_dwModel = 0x20005D4;
+				else if (strColor == "red")
+					pPortal->m_dwModel = 0x20005D5;
+				else if (strColor == "yellow")
+					pPortal->m_dwModel = 0x20005D6;
+				else if (strColor == "purple")
+					pPortal->m_dwModel = 0x20001B3;
+				else if (strColor == "white")
+					pPortal->m_dwModel = 0x20001B3;
+				else
+					pPortal->m_dwModel = 0x20001B3;
 
 				pPortal->m_Origin.landcell = ParseDWORDFromStringHex(ResultRow[2]);
 				pPortal->m_Origin.x = ParseFloatFromStringHex(ResultRow[3]);
@@ -378,4 +425,29 @@ void CGameDatabase::LoadPortals()
 		}
 	}
 }
+
+void CGameDatabase::LoadMonsterTemplates()
+{
+	// From database Miach provided.
+	bool bQuerySuccess = g_pDB2->Query("SELECT name, color, Landblock, Position_X, Position_Y, Position_Z, Orientation_W, Orientation_X, Orientation_Y, Orientation_Z, Dest_Landblock, Dest_Position_X, Dest_Position_Y, Dest_Position_Z, Dest_Orientation_W, Dest_Orientation_X, Dest_Orientation_Y, Dest_Orientation_Z FROM gameobjects_portals ORDER BY ID ASC");
+
+	if (bQuerySuccess)
+	{
+		CSQLResult *Result = g_pDB2->GetResult();
+
+		if (Result)
+		{
+			int portalCount = 0;
+
+			SQLResultRow_t ResultRow;
+			while (ResultRow = Result->FetchRow())
+			{
+				CBaseMonster *pMonster = new CBaseMonster();
+				//pMonster->m_miBaseModel.lTextures
+			}
+		}
+	}
+}
+
+
 

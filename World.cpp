@@ -26,7 +26,6 @@ CWorld::CWorld()
 	LoadStateFile();
 	LoadDungeonsFile();
 	LoadMOTD();
-
 	EnumerateDungeonsFromCellData();
 
 	m_fLastSave = g_pGlobals->Time();
@@ -414,6 +413,42 @@ void CWorld::CreateEntity(CPhysicsObj *pEntity)
 
 	pEntity->MakeAware(pEntity);
 	pEntity->Spawn();
+}
+
+void CWorld::InsertTeleportLocation(TeleTownList_s l)
+{
+	m_vTeleTown.push_back(l);
+}
+std::string CWorld::GetTeleportList()
+{
+	std::string result;
+
+	for each (TeleTownList_s var in m_vTeleTown)
+	{
+		result.append(var.m_teleString).append(", ");
+	}
+	if (result.back() == 0x20) { //Get out behind of bad formatting
+		result.pop_back();
+		result.pop_back();
+	}
+
+	return result;
+}
+TeleTownList_s CWorld::GetTeleportLocation(std::string location)
+{
+	TeleTownList_s val;
+	std::transform(location.begin(), location.end(), location.begin(), ::tolower);
+	for each (TeleTownList_s var in m_vTeleTown)
+	{
+		//Lets waste a bunch of time with this.. Hey, if its the first one on the list its O(1)
+		std::string town = var.m_teleString;
+		std::transform(town.begin(), town.end(), town.begin(), ::tolower);
+		if (town.find(location) != std::string::npos) {
+			val = var;
+			break;
+		}
+	}
+	return val;
 }
 
 void CWorld::InsertEntity(CPhysicsObj *pEntity, BOOL bSilent)

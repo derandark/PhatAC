@@ -242,7 +242,7 @@ iterate:
 		}
 
 		// PUT THIS BACK IN
-		// g_pNetwork->SendConnectlessBlob(m_pPeer, p, BT_REQUESTLOST, NULL, GetElapsedTime());
+		 g_pNetwork->SendConnectlessBlob(m_pPeer, p, BT_REQUESTLOST, NULL, GetElapsedTime());
 
 		DELETEBLOB(p);
 		m_in.lastrequest = g_pGlobals->Time();

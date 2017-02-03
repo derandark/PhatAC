@@ -41,6 +41,8 @@ public:
 	virtual void MakeAware(CPhysicsObj *);
 	virtual void ChangeVIS(DWORD);
 
+	void AddSpellByID(DWORD id);
+
 	//Network events.
 	virtual void SendMessage(void *_data, DWORD _len, WORD _group, BOOL _event = 0);
 	virtual void SendMessage(NetFood *_food, WORD _group, BOOL _event = 0, BOOL del = 1);
@@ -56,6 +58,11 @@ public:
 	virtual DWORD GetObjectStat(eObjectStat index);
 	virtual DWORD SetObjectStat(eObjectStat index, DWORD value);
 
+	//cmoski -- remove last assessed item
+	void SetLastAssessedItem(CPhysicsObj * obj);
+	std::string RemoveLastAssessedItem();
+	//
+
 	void EmitSoundUI(DWORD dwIndex, float fSpeed);
 
 	CClient *GetClient() { return m_pClient; }
@@ -67,7 +74,7 @@ public:
 
 protected:
 	CClient *m_pClient;
-
+	CPhysicsObj* ppoLastAssessedItem = 0;
 	BYTE m_bStatSequence;
 };
 

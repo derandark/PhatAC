@@ -102,7 +102,8 @@ public:
 
 protected:
 	void LoadPortals();
-	
+	void LoadMonsterTemplates();
+	void LoadTeleTownList();
 	bool m_bLoadedPortals;
 };
 
