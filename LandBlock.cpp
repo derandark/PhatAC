@@ -393,7 +393,7 @@ void CLandBlock::Destroy(CPhysicsObj *pEntity)
 
 	m_pWorld->BroadcastPVS(pEntity->GetLandcell(), RemoveObject, sizeof(RemoveObject));
 
-	//OutputConsole("Removing entity %08X %04X @ %08X \r\n", pEntity->m_dwGUID, pEntity->m_wInstance, pEntity->GetLandcell());
+	// LOG(Temp, Normal, "Removing entity %08X %04X @ %08X \n", pEntity->m_dwGUID, pEntity->m_wInstance, pEntity->GetLandcell());
 #endif
 
 	DELETE_ENTITY(pEntity);

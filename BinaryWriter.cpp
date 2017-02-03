@@ -1,10 +1,10 @@
 
 #include "StdAfx.h"
-#include "NetFood.h"
+#include "BinaryWriter.h"
 
-//Expandable buffer with AC-style data casting.
+// Expandable buffer with AC style data IO
 
-NetFood::NetFood()
+BinaryWriter::BinaryWriter()
 {
 	m_pbData = new BYTE[0x20];
 	m_dwDataSize = 0x20;
@@ -13,12 +13,16 @@ NetFood::NetFood()
 	m_dwSize = 0;
 }
 
-NetFood::~NetFood()
+BinaryWriter::~BinaryWriter()
 {
-	SafeDeleteArray(m_pbData);
+	if (m_pbData)
+	{
+		delete[] m_pbData;
+		m_pbData = NULL;
+	}
 }
 
-void NetFood::ExpandBuffer(size_t len)
+void BinaryWriter::ExpandBuffer(size_t len)
 {
 	if (m_dwDataSize < len)
 	{
@@ -38,7 +42,7 @@ void NetFood::ExpandBuffer(size_t len)
 	}
 }
 
-void NetFood::AppendString(const char *szString)
+void BinaryWriter::AppendString(const char *szString)
 {
 	if (szString)
 	{
@@ -52,7 +56,7 @@ void NetFood::AppendString(const char *szString)
 	Align();
 }
 
-void NetFood::AppendData(const void *pData, size_t len)
+void BinaryWriter::AppendData(const void *pData, size_t len)
 {
 	ExpandBuffer(m_dwSize + len);
 
@@ -61,7 +65,7 @@ void NetFood::AppendData(const void *pData, size_t len)
 	m_dwSize += (DWORD)len;
 }
 
-void NetFood::Align(void)
+void BinaryWriter::Align(void)
 {
 	DWORD offset = DWORD(m_pbDataPos - m_pbData);
 
@@ -77,12 +81,12 @@ void NetFood::Align(void)
 	}
 }
 
-BYTE* NetFood::GetData(void)
+BYTE* BinaryWriter::GetData(void)
 {
 	return m_pbData;
 }
 
-DWORD NetFood::GetSize(void)
+DWORD BinaryWriter::GetSize(void)
 {
 	return m_dwSize;
 }

@@ -59,7 +59,7 @@ struct FragPacket_s
 #define BT_DENY 0x00002000 //
 #define BT_ACKSEQUENCE 0x00004000 //
 #define BT_DISCONNECT 0x00008000 //
-// #define BT_TIMESYNC 0x00000040 //
+#define BT_CONNECTIONACK 0x00080000 //
 // #define BT_CRCUPDATE 0x00000100 Not sure what this is now //
 #define BT_FRAGMENTS 0x00000004 // 0x00000200 //
 #define BT_RESETTIME 0x00000400 //
@@ -79,7 +79,7 @@ struct FragPacket_s
 #define OBJECT_MSG 10 // 0x03
 #define PRIVATE_MSG 9 // 0x04
 #define FELLOW_MSG 0x05
-#define EVENT_MSG 0x07
+#define EVENT_MSG 5 // 0x07
 
 #define MAX_BLOB_LEN 0x1E8
 #define MAX_FRAGMENT_LEN 0x1C0

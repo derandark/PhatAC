@@ -36,6 +36,8 @@ public:
 	virtual bool Query(const char *query) = 0;
 	virtual unsigned int LastError() = 0;
 	virtual CSQLResult *GetResult() = 0;
+
+	static int s_NumConnectAttempts;
 };
 
 class CMYSQLConnection : public CSQLConnection
@@ -90,6 +92,38 @@ private:
 	bool m_bDisabled;
 };
 
+#include "ModelInfo.h"
+#include "PhysicsDesc.h"
+#include "PublicWeenieDesc.h"
+
+class CCapturedWorldObjectInfo
+{
+public:
+	CCapturedWorldObjectInfo() {
+		m_ObjData = NULL;
+		m_ObjDataLen = 0;
+	}
+	~CCapturedWorldObjectInfo() {
+		Free();
+	}
+	void Free() {
+		if (m_ObjData)
+		{
+			delete[] m_ObjData;
+			m_ObjData = NULL;
+		}
+	}
+
+	std::string m_ObjName;
+	BYTE *m_ObjData;
+	unsigned m_ObjDataLen;
+
+	DWORD dwGUID;
+	ModelInfo appearance;
+	PhysicsDesc physics;
+	PublicWeenieDesc weenie;
+};
+
 class CGameDatabase
 {
 public:
@@ -99,11 +133,22 @@ public:
 	void Init();
 
 	bool LoadedPortals() { return m_bLoadedPortals; }
+	CCapturedWorldObjectInfo *GetCapturedMonsterData(const char *name);
+	CCapturedWorldObjectInfo *GetRandomCapturedMonsterData();
+
+	void SpawnAerfalle();
 
 protected:
+
 	void LoadPortals();
+	void LoadAerfalle();
+	void LoadCapturedMonsterData();
 	
 	bool m_bLoadedPortals;
+
+	std::list<CCapturedWorldObjectInfo *> m_CapturedAerfalleData;
+	std::map<std::string, CCapturedWorldObjectInfo *> m_CapturedMonsterData;
+	std::vector<CCapturedWorldObjectInfo *> m_CapturedMonsterDataList;
 };
 
 extern CGameDatabase *g_pGameDatabase;

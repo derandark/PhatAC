@@ -5,8 +5,8 @@
 
 //Network access.
 #include "crc.h"
-#include "NetFood.h"
-#include "NetMeal.h"
+#include "BinaryWriter.h"
+#include "BinaryReader.h"
 #include "Network.h"
 #include "FragStack.h"
 #include "PacketController.h"
@@ -90,6 +90,8 @@ BOOL CPacketController::SendMessage(void *data, DWORD length, WORD group)
 		case 0x0000F74C:	dwRPC = 0x0023CE75;	break;
 		case 0x0000F658:	dwRPC = 0x030BA655; break;
 		case 0x0000F7E1:	dwRPC = 0x030BA656; break;
+
+		case 0x0000F7E2:	dwRPC = 0x030B5C8D; break;
 		}
 	}
 
@@ -241,12 +243,11 @@ iterate:
 			requestPos++;
 		}
 
-		// PUT THIS BACK IN
-		// g_pNetwork->SendConnectlessBlob(m_pPeer, p, BT_REQUESTLOST, NULL, GetElapsedTime());
+		g_pNetwork->SendConnectlessBlob(m_pPeer, p, BT_REQUESTLOST, NULL, GetElapsedTime());
 
 		DELETEBLOB(p);
 		m_in.lastrequest = g_pGlobals->Time();
-		//OutputConsole("Requesting lost packets..\r\n");
+		LOG(Network, Verbose, "Requesting %d lost packets for %s..\n", lostSequences.size(), m_pClient->GetDescription());
 	}
 }
 
@@ -255,21 +256,25 @@ void CPacketController::ThinkOutbound(void)
 	//Now for the output
 	double time = g_pGlobals->Time();
 
-	if (0)//m_out.loginsyncs < 10)
+	if (0)//m_out.loginsyncs < 2)
 	{
+		/*
 		if (m_out.loginsyncs >= 0)
 		{
-			if ((m_out.lastloginsync + 2.0f) < time)
-				PerformLoginSync();
+			//if ((m_out.lastloginsync + 2.0f) < time)
+			//	PerformLoginSync();
 		}
+		*/
 	}
 	else
 	{
 		if ((m_out.lastflush + 3.0f) < time)
 			FlushPeerCache();
 
+		/*
 		if ((m_out.lasttimeupdate + 3.0f) < time)
 			UpdatePeerTime();
+			*/
 
 		if (!m_out.fragqueue.empty())
 			FlushFragments();
@@ -281,13 +286,13 @@ void CPacketController::Think(void)
 	if (!IsAlive())
 		return;
 
-	//Handle the input first.
+	// Handle the input first.
 	ThinkInbound();
 
-	//Cleanup before we clutter the cache with new stuff.
+	// Cleanup before we clutter the cache with new stuff.
 	Cleanup();
 
-	//Handle the output last.
+	// Handle the output last.
 	ThinkOutbound();
 
 	if ((g_pGlobals->Time() - m_in.lastactivity) >= 30.0f)
@@ -298,7 +303,7 @@ void CPacketController::Think(void)
 
 BOOL CPacketController::HasConnection()
 {
-	return (m_out.loginsyncs >= 10) ? TRUE : FALSE;
+	return TRUE; //  (m_out.loginsyncs >= 2) ? TRUE : FALSE;
 }
 
 void CPacketController::PerformLoginSync()
@@ -310,7 +315,7 @@ void CPacketController::PerformLoginSync()
 	memset( &LoginSync->data[8], 0, 0xDE );
 	*((double *)LoginSync->data) = g_pGlobals->Time();
 
-	g_pNetwork->SendConnectlessBlob(m_pPeer, LoginSync, BT_TIMESYNC, NULL, GetElapsedTime());
+	g_pNetwork->SendConnectlessBlob(m_pPeer, LoginSync, BT_CONNECTIONACK, NULL, GetElapsedTime());
 	DELETEBLOB( LoginSync );
 	*/
 }
@@ -321,24 +326,25 @@ void CPacketController::FlushPeerCache()
 
 	//
 	CREATEBLOB(p, sizeof(DWORD));
+
 	*((DWORD *)p->data) = m_in.activesequence;
 
-	// PUT THIS BACK IN
-	// g_pNetwork->SendConnectlessBlob(m_pPeer, p, BT_FLUSH, m_out.sequence, GetElapsedTime());
+	g_pNetwork->SendConnectlessBlob(m_pPeer, p, BT_ACKSEQUENCE, m_out.sequence, GetElapsedTime());
 	DELETEBLOB(p);
 }
 
 void CPacketController::UpdatePeerTime()
 {
-	m_out.lasttimeupdate = g_pGlobals->Time();
+	/* Piggy back instead
 
+	m_out.lasttimeupdate = g_pGlobals->Time();
 	//
 	CREATEBLOB(tupdate, sizeof(double));
 	*((double *)tupdate->data) = g_pGlobals->Time();
 
 	BlobHeader_s *header = &tupdate->header;
 
-	header->dwSequence = GetNextSequence();
+	header->dwSequence = m_out.sequence;
 	header->dwFlags = BT_TIMEUPDATE | BT_USES_CRC;
 	header->dwCRC = 0;
 	header->wRecID = g_pNetwork->GetServerID();
@@ -354,6 +360,7 @@ void CPacketController::UpdatePeerTime()
 	//Cache for later use.
 	header->dwCRC = dwXOR;
 	m_out.blobcache.push_back(tupdate);
+	*/
 }
 
 WORD CPacketController::GetElapsedTime()
@@ -366,7 +373,7 @@ void CPacketController::EvilClient(const char* szSource, DWORD dwLine, BOOL bKil
 {
 #ifdef _DEBUG
 	if (szSource)
-		OutputConsole("Evil client @ %u of %s!!!\r\n", dwLine, szSource);
+		LOG(Temp, Normal, "Evil client @ %u of %s!!!\n", dwLine, szSource);
 #endif
 
 	if (bKill && IsAlive())
@@ -389,13 +396,13 @@ void CPacketController::ProcessBlob(BlobPacket_s *blob)
 	{
 		if (dwSize >= 4)
 		{
-			//OutputConsole("Client requesting lost packets.\r\n");
+			//LOG(Temp, Normal, "Client requesting lost packets.\n");
 			DWORD dwLostPackets = *((DWORD *)pbData);
 
 			pbData += sizeof(DWORD);
 			dwSize -= sizeof(DWORD);
 
-			if (dwSize == (dwLostPackets * sizeof(DWORD)))
+			if (dwSize >= (dwLostPackets * sizeof(DWORD)))
 			{
 				DWORD dwDenySize = 0;
 				DWORD dwDenyBlobs[0x50];
@@ -405,10 +412,7 @@ void CPacketController::ProcessBlob(BlobPacket_s *blob)
 
 					if (dwRequested < 2 || dwRequested > m_out.sequence)
 					{
-						if (dwRequested == 1)
-							OutputConsole("Evil client wants ACCOUNT response!?\r\n");
-
-						//Sequence out of range.
+						// Sequence out of range.
 						FlagEvilClient();
 						continue;
 					}
@@ -433,12 +437,16 @@ void CPacketController::ProcessBlob(BlobPacket_s *blob)
 							dwDenySize++;
 						}
 						else
+						{
+							// Too many
 							FlagEvilClient();
+						}
 					}
 				}
 
 				if (dwDenySize > 0)
 				{
+
 					DWORD dwLength = dwDenySize * sizeof(DWORD);
 					CREATEBLOB(p, sizeof(DWORD) + dwLength);
 
@@ -449,15 +457,21 @@ void CPacketController::ProcessBlob(BlobPacket_s *blob)
 
 					DELETEBLOB(p);
 				}
+
+				pbData += sizeof(DWORD) * dwLostPackets;
+				dwSize -= sizeof(DWORD) * dwLostPackets;
 			}
 			else
+			{
 				FlagEvilClient();
-
+				return;
+			}
 		}
 		else
+		{
 			FlagEvilClient();
-
-		return;
+			return;
+		}
 	}
 
 	if (dwFlags & BT_DENY) //0x00000008
@@ -506,6 +520,8 @@ void CPacketController::ProcessBlob(BlobPacket_s *blob)
 			FlagEvilClient();
 			return;
 		}
+		
+		m_in.flushsequence = *((DWORD *)pbData);
 
 		dwSize -= 4;
 		pbData += 4;
@@ -521,16 +537,16 @@ void CPacketController::ProcessBlob(BlobPacket_s *blob)
 	}
 	*/
 
-	/* PUT THIS BACK IN?
-	if (dwFlags & BT_TIMESYNC) //0x00000040
+	/*
+	if (dwFlags & BT_CONNECTIONACK) //0x00000040
 	{
 		if (m_out.loginsyncs >= 0)
 		{
 			m_out.loginsyncs++;
-			if (m_out.loginsyncs < 10)
+			if (m_out.loginsyncs < 2)
 			{
 				m_in.lastactivity = g_pGlobals->Time();
-				PerformLoginSync();
+				// PerformLoginSync();
 			}
 		}
 
@@ -542,7 +558,7 @@ void CPacketController::ProcessBlob(BlobPacket_s *blob)
 	{
 #ifdef _DEBUG
 		//if (dwFlags & BT_FRAGMENTS)
-		//	OutputConsole("Fragments? %s %u\r\n", __FILE__, __LINE__);
+		//	LOG(Temp, Normal, "Fragments? %s %u\n", __FILE__, __LINE__);
 #endif
 		if (dwSize < 8)
 		{
@@ -560,7 +576,7 @@ void CPacketController::ProcessBlob(BlobPacket_s *blob)
 				const char* account = m_pClient->GetAccount( );
 				SOCKADDR_IN *ip = m_pClient->GetHostAddress( );
 
-				OutputConsole("Detected client(%s @ %s) using gear. Killing!\r\n", (account ? account : "???"), (ip ? inet_ntoa(ip->sin_addr) : "???") );
+				LOG(Temp, Normal, "Detected client(%s @ %s) using gear. Killing!\n", (account ? account : "???"), (ip ? inet_ntoa(ip->sin_addr) : "???") );
 
 				g_pNetwork->KickClient( m_pClient->GetIndex() );
 			}
@@ -580,6 +596,37 @@ void CPacketController::ProcessBlob(BlobPacket_s *blob)
 			FlagEvilClient();
 			return;
 		}
+
+		DWORD echoValue = *((DWORD *)pbData);
+
+		/*
+		CREATEBLOB(tupdate, sizeof(DWORD));
+		*((DWORD *)tupdate->data) = echoValue;
+
+		BlobHeader_s *header = &tupdate->header;
+
+		header->dwSequence = m_out.sequence;
+		header->dwFlags = BT_ECHORESPONSE | BT_USES_CRC;
+		header->dwCRC = 0;
+		header->wRecID = g_pNetwork->GetServerID();
+		header->wTime = GetElapsedTime();
+		header->wTable = 0x01;
+
+		DWORD dwXOR = GetSendXORVal(m_out.servercrc);
+		header->dwCRC = BlobCRC(tupdate, dwXOR);
+
+		//Off you go.
+		g_pNetwork->SendPacket(m_pPeer, tupdate, BLOBLEN(tupdate));
+
+		//Cache for later use.
+		header->dwCRC = dwXOR;
+		m_out.blobcache.push_back(tupdate);
+		*/
+
+		CREATEBLOB(tupdate, sizeof(DWORD));
+		*((DWORD *)tupdate->data) = echoValue;
+
+		g_pNetwork->SendConnectlessBlob(m_pPeer, tupdate, BT_ECHORESPONSE, m_out.sequence, GetElapsedTime());
 
 		pbData += sizeof(DWORD);
 		dwSize -= sizeof(DWORD);
@@ -615,7 +662,7 @@ void CPacketController::ProcessBlob(BlobPacket_s *blob)
 			WORD wElapsed = *((WORD *)pbData);
 			pbData += sizeof(WORD);
 
-			//OutputConsole("Flow: %u bytes over %u seconds\r\n", dwBytes, wElapsed );
+			//LOG(Temp, Normal, "Flow: %u bytes over %u seconds\n", dwBytes, wElapsed );
 		}
 
 		dwSize -= 6;
@@ -647,8 +694,9 @@ void CPacketController::ProcessBlob(BlobPacket_s *blob)
 				DWORD dwLogicalID = frag->header.dwID;
 
 				if (dwLogicalID != 0x80000000)
-					OutputConsole("Client sent ID %08X\r\n");
+					LOG(Temp, Normal, "Client sent ID %08X\n");
 
+				bool bCompleted = false;
 				for (it = m_in.fragstack.begin(); it != m_in.fragstack.end(); it++)
 				{
 					FragmentStack *s = *it;
@@ -662,16 +710,21 @@ void CPacketController::ProcessBlob(BlobPacket_s *blob)
 							delete s;
 
 							m_in.fragstack.erase(it);
+							bCompleted = true;
 						}
 						break;
 					}
 				}
 
-				//No existing group matches, create one
-				if (it == m_in.fragstack.end())
-				{
-					FragmentStack *s = new FragmentStack(frag);
-					m_in.fragstack.push_back(s);
+				
+				if (!bCompleted)
+				{					
+					if (it == m_in.fragstack.end())
+					{
+						// No existing group matches, create one
+						FragmentStack *s = new FragmentStack(frag);
+						m_in.fragstack.push_back(s);
+					}
 				}
 			}
 		}
@@ -748,17 +801,15 @@ void CPacketController::IncomingBlob(BlobPacket_s *blob)
 		Kill(__FILE__, __LINE__);
 		return;
 	}
-
-	/* PUT THIS BACK IN
+	
 	if (dwFlags & BT_REQUESTLOST)
 	{
-		ProcessBlob( blob );
+		ProcessBlob(blob);
 		return;
 	}
-	*/
 
-	/* PUT THIS BACK IN
-	if (dwFlags & BT_FLUSH)
+	/*
+	if (dwFlags & BT_ACKSEQUENCE)
 	{
 		if (dwSize < 4)
 			FlagEvilClient();

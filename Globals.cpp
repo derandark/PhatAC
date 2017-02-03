@@ -5,9 +5,10 @@
 bool g_bDebugToggle = false;
 CGlobals *g_pGlobals = NULL;
 
-CGlobals::CGlobals(HWND hWindow)
+CGlobals::CGlobals()
 {
-	m_hWnd = hWindow;
+	m_hWnd = NULL;
+	m_hConsoleWnd = NULL;
 
 	QueryPerformanceFrequency((LARGE_INTEGER *)&m_CounterFreq);
 	QueryPerformanceCounter((LARGE_INTEGER *)&m_CounterStart);
@@ -30,14 +31,37 @@ CGlobals::~CGlobals()
 {
 }
 
-char* CGlobals::GetGameDirectory()
+const char *CGlobals::GetGameDirectory()
 {
 	return (char *)m_GameDir;
+}
+
+std::string CGlobals::GetGameFile(const char *filename)
+{
+	std::string filepath = GetGameDirectory();
+	filepath += "\\";
+	filepath += filename;
+	return filepath;
+}
+
+void CGlobals::SetWindowHandle(HWND hWnd)
+{
+	m_hWnd = hWnd;
 }
 
 HWND CGlobals::GetWindowHandle()
 {
 	return (HWND)m_hWnd;
+}
+
+void CGlobals::SetConsoleWindowHandle(HWND hConsoleWnd)
+{
+	m_hConsoleWnd = hConsoleWnd;
+}
+
+HWND CGlobals::GetConsoleWindowHandle()
+{
+	return (HWND)m_hConsoleWnd;
 }
 
 void CGlobals::SetClientCount(WORD wCount)

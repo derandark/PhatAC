@@ -11,7 +11,7 @@
 #include "CharacterDatabase.h"
 
 // Network helpers
-#include "NetFood.h"
+#include "BinaryWriter.h"
 #include "ChatMsgs.h"
 #include "ObjectMsgs.h"
 
@@ -103,9 +103,9 @@ void CClientEvents::LoginCharacter(DWORD dwGUID, const char *szAccount)
 
 	if (m_pPlayer)
 	{
-		// OutputConsole("Character already logged in!\r\n");
+		// LOG(Temp, Normal, "Character already logged in!\n");
 		LoginError(13);
-		OutputConsole("Character already logged in!\r\n");
+		LOG(Client, Warning, "Login request, but character already logged in!\n");
 		return;
 	}
 
@@ -115,7 +115,7 @@ void CClientEvents::LoginCharacter(DWORD dwGUID, const char *szAccount)
 	if (stricmp(szAccount, desc.szAccount))
 	{
 		LoginError(15);
-		OutputConsole("Bad account: %s - %s\r\n", szAccount, desc.szAccount);
+		LOG(Client, Warning, "Bad account for login: \"%s\" \"%s\"\n", szAccount, desc.szAccount);
 		return;
 	}
 
@@ -216,7 +216,7 @@ void CClientEvents::ClientText(char* szText)
 
 	if (szText[0] == '!' || szText[0] == '@' || szText[0] == '/')
 	{
-		CommandBase::Execute(++szText, m_pPlayer, ADMIN_ACCESS);
+		CommandBase::Execute(++szText, m_pPlayer, m_pClient->GetAccessLevel());
 	}
 	else
 		m_pPlayer->SpeakLocal(szText);
@@ -286,7 +286,9 @@ void CClientEvents::ChannelText(DWORD dwChannel, const char* szText)
 	}
 
 	if (dwChannel == 0x800)
-		OutputConsole("[%s] %s says, \"%s\"\r\n", timestamp(), m_pPlayer->GetName(), szText);
+	{
+		LOG(Client, Normal, "[%s] %s says, \"%s\"\n", timestamp(), m_pPlayer->GetName(), szText);
+	}
 }
 
 void CClientEvents::RequestHealthUpdate(DWORD dwGUID)
@@ -571,7 +573,7 @@ void CClientEvents::MarketplaceRecall()
 }
 
 // This is it!
-void CClientEvents::ProcessEvent(NetMeal *in)
+void CClientEvents::ProcessEvent(BinaryReader *in)
 {
 	if (!m_pPlayer)	return;
 
@@ -803,7 +805,9 @@ void CClientEvents::ProcessEvent(NetMeal *in)
 				DWORD dwRunUnk = in->ReadDWORD();
 	#ifdef _DEBUG
 				if (dwRunUnk != 2)
-					OutputConsole("RunUnk is %08X??\r\n", dwRunUnk);
+				{
+					LOG(Temp, Normal, "RunUnk is %08X??\n", dwRunUnk);
+				}
 				else
 	#endif
 					bRun = TRUE;
@@ -844,7 +848,7 @@ void CClientEvents::ProcessEvent(NetMeal *in)
 					//0x13 = drink something
 
 					if ((dwForwardAnim >> 24) != 0x45)
-						OutputConsole("Forward: %08X\r\n", dwForwardAnim);
+						LOG(Temp, Normal, "Forward: %08X\n", dwForwardAnim);
 
 					flForwardMod = 1.0000f;
 					break;
@@ -858,7 +862,7 @@ void CClientEvents::ProcessEvent(NetMeal *in)
 				if (dwAutorunUnk != 2)
 				{
 					SendText("You cannot use right-click movement at this time!", 1);
-					OutputConsole("Autorun is %08X?\r\n", dwAutorunUnk);
+					LOG(Temp, Normal, "Autorun is %08X?\n", dwAutorunUnk);
 				}
 				else
 				{
@@ -890,7 +894,10 @@ void CClientEvents::ProcessEvent(NetMeal *in)
 					break;
 				default:
 					if ((dwStrafAnim >> 24) != 0x65)
-						DebugMe();
+					{
+						// DebugMe();
+						LOG(Animation, Warning, "Strafe anim == 0x%02X", dwStrafAnim >> 24);
+					}
 
 					flStrafMod = 1.0000f;
 					break;
@@ -915,7 +922,9 @@ void CClientEvents::ProcessEvent(NetMeal *in)
 					break;
 				default:
 					if ((dwTurnAnim >> 24) != 0x65)
-						DebugMe();
+					{
+						LOG(Animation, Warning, "Turn anim == 0x%02X", dwTurnAnim >> 24);
+					}
 
 					break;
 				}
@@ -942,8 +951,8 @@ void CClientEvents::ProcessEvent(NetMeal *in)
 
 			if (in->GetLastError())
 			{
-				OutputConsole("Bad animation message:\r\n");
-				OutputConsoleBytes(in->GetDataStart(), in->GetDataLen());
+				LOG(Animation, Verbose, "Bad animation message:\n");
+				LOG_BYTES(Animation, Verbose, in->GetDataStart(), in->GetDataLen());
 				break;
 			}
 
@@ -993,7 +1002,7 @@ void CClientEvents::ProcessEvent(NetMeal *in)
 			if (in->GetLastError()) break;
 			if (instance != m_pPlayer->m_wInstance)
 			{
-				OutputConsole("Bad instance!!!!!!!!!!!!\r\n");
+				LOG(Temp, Normal, "Bad instance!!!!!!!!!!!!\n");
 				break;
 			}
 
@@ -1006,7 +1015,7 @@ void CClientEvents::ProcessEvent(NetMeal *in)
 		default:
 		{
 			//Unknown Event
-			//OutputConsole("Unknown event %04X:\r\n", dwEvent );
+			//LOG(Temp, Normal, "Unknown event %04X:\n", dwEvent );
 			//OutputConsoleBytes( in->GetDataPtr(), in->GetDataEnd() - in->GetDataPtr() );
 		}
 	}

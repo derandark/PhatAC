@@ -283,7 +283,7 @@ CBaelZharon::CBaelZharon()
 
 	m_strName = "Bael'Zharon";
 
-	m_miBaseModel.wBasePalette = 0x1071;
+	m_miBaseModel.dwBasePalette = 0x1071;
 	m_miBaseModel.lPalettes.push_back(PaletteRpl(0x1072, 0x00, 0x00));
 	SetThink(&CBaelZharon::CrazyThink);
 }

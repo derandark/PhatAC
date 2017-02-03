@@ -275,7 +275,7 @@ LRESULT CALLBACK LauncherProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 					}
 					else
 					{
-						//OutputConsole("Launching %s %s\r\n", szLaunch, szLaunchDir);
+						//LOG(Temp, Normal, "Launching %s %s\n", szLaunch, szLaunchDir);
 						ShellExecute(0, "open", "acclient.exe", szLaunch, szLaunchDir, SW_SHOW);
 					}
 				}
@@ -308,7 +308,25 @@ LRESULT CALLBACK LauncherProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 	return FALSE;
 }
 
-//#define vsnmsg(x) __TIMESTAMP__ " : " ##x
+void OutputConsole(int category, int level, const char *text)
+{
+	if (level < LOGLEVEL_Normal)
+	{
+		return;
+	}
+
+	HWND hWndConsole = g_pGlobals->GetConsoleWindowHandle();
+
+	if (!hWndConsole)
+		return;
+
+	int len = (int)SendMessage(hWndConsole, WM_GETTEXTLENGTH, 0, 0);
+	DWORD start, end;
+	SendMessage(hWndConsole, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
+	SendMessage(hWndConsole, EM_SETSEL, len, len);
+	SendMessage(hWndConsole, EM_REPLACESEL, FALSE, (LPARAM)text);
+	SendMessage(hWndConsole, EM_SETSEL, start, end);
+}
 
 int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -316,6 +334,11 @@ int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_INITDIALOG:
 	{
+		g_pGlobals->SetWindowHandle(hDlg);
+		g_pGlobals->SetConsoleWindowHandle(GetDlgItem(hDlg, IDC_CONSOLE));
+
+		g_Logger.AddLogCallback(OutputConsole);
+
 		HWND hVersion = GetDlgItem(hDlg, IDC_VERSION);
 		SetWindowText(hVersion, "PhatAC compiled " __TIMESTAMP__);
 
@@ -366,7 +389,7 @@ int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				HWND hWndConsole = GetDlgItem(hDlg, IDC_CONSOLE);
 
 				SetWindowText(hWndConsole, "");
-				OutputConsole("Console cleared.\r\n");
+				LOG(Temp, Normal, "Console cleared.\n");
 			}
 		}
 		break;
@@ -380,7 +403,7 @@ int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				char* console_text = new char[console_len];
 				GetWindowText(GetDlgItem(hDlg, IDC_CONSOLE), console_text, console_len);
 
-				FILE *fp = fopen(csprintf("%s\\console.txt", g_pGlobals->GetGameDirectory()), "at");
+				FILE *fp = fopen(csprintf("%s\\console.txt", g_pGlobals->GetGameDirectory()), "wt");
 				if (fp)
 				{
 					fprintf(fp, "Console Log:\n\n");
@@ -388,10 +411,10 @@ int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					fprintf(fp, "End of Console Log.\n");
 					fclose(fp);
 
-					OutputConsole("Console log saved.\r\n");
+					LOG(Temp, Normal, "Console log saved.\n");
 				}
 				else
-					OutputConsole("Failed to open console file.\r\n");
+					LOG(Temp, Normal, "Failed to open console file.\n");
 			}
 		}
 		break;
@@ -400,7 +423,7 @@ int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 			{
 				if (!g_pPhatServer)
 				{
-					OutputConsole("You must be running a server to broadcast a system message.\r\n");
+					LOG(Temp, Normal, "You must be running a server to broadcast a system message.\n");
 					break;
 				}
 
@@ -503,7 +526,7 @@ int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					}
 					else
 					{
-						//OutputConsole("Launching %s %s\r\n", szLaunch, szLaunchDir);
+						//LOG(Temp, Normal, "Launching %s %s\n", szLaunch, szLaunchDir);
 						ShellExecute(0, "open", "acclient.exe", szLaunch, szLaunchDir, SW_SHOW);
 					}
 				}
@@ -545,7 +568,7 @@ int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 					SendMessage(GetDlgItem(hDlg, IDC_CPULOADBAR), PBM_SETRANGE, 0, MAKELPARAM(0, 100));
 					SendMessage(GetDlgItem(hDlg, IDC_CPULOADBAR), PBM_SETPOS, 0, 0);
 
-					OutputConsole("Server shutdown.\r\n");
+					LOG(Temp, Normal, "Server shutdown.\n");
 				}
 			}
 			break;
@@ -571,6 +594,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_NORMAL);
 	srand((unsigned int)time(NULL));
 
+	g_pGlobals = new CGlobals();
+	g_Logger.Open();
+
 	INITCOMMONCONTROLSEX iccex;
 	iccex.dwSize = sizeof(INITCOMMONCONTROLSEX);
 	iccex.dwICC = ICC_INTERNET_CLASSES;
@@ -589,10 +615,10 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 		return 0;
 	}
 
-	g_pGlobals = new CGlobals(g_hWndMain);
 	g_dwMagicNumber = RandomLong(0, 1234567890);
 
-	OutputConsole("Welcome to PhatAC..\r\n");
+	LOG(UserInterface, Normal, "Welcome to PhatAC..\n");
+
 	ShowWindow(g_hWndMain, nCmdShow);
 
 	MSG msg;

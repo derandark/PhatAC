@@ -114,12 +114,6 @@
     <ClCompile Include="FragStack.cpp">
       <Filter>Source Files\Network</Filter>
     </ClCompile>
-    <ClCompile Include="NetFood.cpp">
-      <Filter>Source Files\Network</Filter>
-    </ClCompile>
-    <ClCompile Include="NetMeal.cpp">
-      <Filter>Source Files\Network</Filter>
-    </ClCompile>
     <ClCompile Include="Network.cpp">
       <Filter>Source Files\Network</Filter>
     </ClCompile>
@@ -201,6 +195,15 @@
     <ClCompile Include="Database2.cpp">
       <Filter>Source Files\Database 2.0</Filter>
     </ClCompile>
+    <ClCompile Include="BinaryWriter.cpp">
+      <Filter>Source Files\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="BinaryReader.cpp">
+      <Filter>Source Files\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Logging.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="crcwheel.h">
@@ -235,9 +238,6 @@
     </ClInclude>
     <ClInclude Include="TurbineXPTable.h">
       <Filter>Source Files\Turbine Data Files</Filter>
-    </ClInclude>
-    <ClInclude Include="zlib\ioapi.h">
-      <Filter>Source Files\ZLib</Filter>
     </ClInclude>
     <ClInclude Include="zlib\zconf.h">
       <Filter>Source Files\ZLib</Filter>
@@ -288,12 +288,6 @@
       <Filter>Source Files\Database</Filter>
     </ClInclude>
     <ClInclude Include="FragStack.h">
-      <Filter>Source Files\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="NetFood.h">
-      <Filter>Source Files\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="NetMeal.h">
       <Filter>Source Files\Network</Filter>
     </ClInclude>
     <ClInclude Include="Network.h">
@@ -382,6 +376,21 @@
     </ClInclude>
     <ClInclude Include="Database2.h">
       <Filter>Source Files\Database 2.0</Filter>
+    </ClInclude>
+    <ClInclude Include="BinaryWriter.h">
+      <Filter>Source Files\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="BinaryReader.h">
+      <Filter>Source Files\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysicsDesc.h">
+      <Filter>Source Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="PublicWeenieDesc.h">
+      <Filter>Source Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

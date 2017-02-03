@@ -5,7 +5,7 @@
 #include "Database.h"
 #include "World.h"
 #include "Network.h"
-#include "NetFood.h"
+#include "BinaryWriter.h"
 #include "ChatMsgs.h"
 #include "Database2.h"
 
@@ -46,7 +46,124 @@ CPhatServer::CPhatServer(in_addr hostmachine, u_short hostport)
 
 	g_pGameDatabase->Init();
 
-	OutputConsole("The server is now online.\r\n");
+	LOG(Temp, Normal, "The server is now online.\n");
+
+	int missing = 0;
+	int has = 0;
+	int missingE = 0;
+	int hasE = 0;
+	int hasD = 0;
+	int missingD = 0;
+	int hasUD = 0;
+	int hasUDT = 0;
+	int hasM = 0;
+	int missingM = 0;
+	FILE *fp = NULL;
+
+#if 0 // ndef _DEBUG
+	if (GetAsyncKeyState(VK_F12))
+	{
+		fp = fopen("missingCells.txt", "wt");
+	}
+
+	for (int i = 0; i <= 0xFFFF; i++)
+	{
+		if (!g_pCell->FileExists((i << 16) | 0xFFFF))
+		{
+			missing++;
+		}
+		else
+		{
+			has++;
+
+			if (TURBINEFILE *pCell = g_pCell->GetFile((i << 16) | 0xFFFF))
+			{
+				if (pCell->GetLength() >= 8)
+				{
+					DWORD value = ((DWORD *)pCell->GetData())[1];
+
+					if (value)
+					{
+						if (!g_pCell->FileExists((i << 16) | 0xFFFE))
+						{
+							missingE++;
+						}
+						else
+						{
+							hasE++;
+
+							if (TURBINEFILE *pCellData = g_pCell->GetFile((i << 16) | 0xFFFE))
+							{
+								DWORD value = ((DWORD *)pCellData->GetData())[1];
+
+								if (value >= 10000)
+								{
+									__asm int 3;
+								}
+
+								for (unsigned int j = 0; j < value; j++)
+								{
+									if (g_pCell->FileExists((i << 16) | (0x100 + j)))
+									{
+										if (TURBINEFILE *pEnvData = g_pCell->GetFile((i << 16) | (0x100 + j)))
+										{
+											BYTE *ptr = pEnvData->GetData();
+
+											ptr += 12;
+
+											BYTE numSurface = *ptr;
+											ptr += 4;
+											ptr += 2 * numSurface;
+
+											WORD envID = *(WORD *)ptr;
+
+											if (g_pPortal->FileExists(0x0D000000UL | envID))
+											{
+												hasM++;
+											}
+											else
+											{
+												missingM++;
+											}
+
+											delete pEnvData;
+										}
+
+										hasD++;
+									}
+									else
+									{
+
+										if (fp)
+										{
+											fprintf(fp, "%08X\n", (i << 16) | (0x100 + j));
+										}
+
+										missingD++;
+									}
+								}
+
+								delete pCellData;
+							}
+						}
+					}
+				}
+
+				delete pCell;
+			}
+		}
+	}
+
+	if (fp)
+	{
+		fclose(fp);
+	}
+
+	LOG(Temp, Normal, "Has %u landblocks, missing %u (%.2f%%)\n", has, missing, ((float)has / (has+missing)) * 100.00);
+	LOG(Temp, Normal, "Has %u landblock environments, missing %u of the ones known (%.2f%%)\n", hasE, missingE, ((float)hasE / (hasE + missingE)) * 100.00);
+	LOG(Temp, Normal, "Has %u dungeon cells, missing %u of the ones known (%.2f%%)\n", hasD, missingD, ((float)hasD / (hasD + missingD)) * 100.00);
+	LOG(Temp, Normal, "Resolved %u dungeon meshes, missing %u of the ones attempted (%.2f%%)\n", hasM, missingM, ((float)hasM / (hasM + missingM)) * 100.00);
+#endif
 }
 
 CPhatServer::~CPhatServer()
@@ -90,16 +207,16 @@ void CPhatServer::InitializeSocket(u_short port)
 		localhost.sin_port = htons(port);
 		if (!bind(m_sockets[0], (struct sockaddr *)&localhost, sizeof(SOCKADDR_IN)))
 		{
-			OutputConsole("Bound to port %u!\r\n", port);
+			LOG(Temp, Normal, "Bound to port %u!\n", port);
 			break;
 		}
-		OutputConsole("Failed bind on port %u!\r\n", port);
+		LOG(Temp, Normal, "Failed bind on port %u!\n", port);
 		port++;
 	}
 
 	if (port == 9080)
 	{
-		OutputConsole("Failure to bind socket!\r\n");
+		LOG(Temp, Normal, "Failure to bind socket!\n");
 	}
 	else
 	{
@@ -113,7 +230,7 @@ void CPhatServer::InitializeSocket(u_short port)
 			localhost.sin_port = htons(basePort + i);
 			if (bind(m_sockets[i], (struct sockaddr *)&localhost, sizeof(SOCKADDR_IN)))
 			{
-				OutputConsole("Failure to bind socket port %d!\r\n", basePort + i);
+				LOG(Temp, Normal, "Failure to bind socket port %d!\n", basePort + i);
 			}
 		}
 	}
@@ -131,7 +248,7 @@ void CPhatServer::SystemBroadcast(char *text)
 	if (!g_pNetwork || !g_pWorld)
 		return;
 
-	OutputConsole("Broadcast, \"%s\"\r\n", text);
+	LOG(Temp, Normal, "Broadcast, \"%s\"\n", text);
 	g_pWorld->BroadcastGlobal(ServerBroadcast("System", text, 1), PRIVATE_MSG);
 }
 

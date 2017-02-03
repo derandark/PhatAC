@@ -4,6 +4,7 @@
 #include "AccountDatabase.h"
 #include "CharacterDatabase.h"
 #include "World.h"
+#include "ClientCommands.h"
 
 CAccountDatabase::CAccountDatabase(CDatabase *DB)
 {
@@ -42,11 +43,13 @@ BOOL ValidAccountText(const char *account, const char *password)
 
 extern DWORD g_dwMagicNumber;
 
-BOOL CAccountDatabase::CheckAccount(const char *account, const char *password)
+BOOL CAccountDatabase::CheckAccount(const char *account, const char *password, int *accessLevel)
 {
+	*accessLevel = BASIC_ACCESS;
+
 	if (!ValidAccountText(account, password))
 	{
-		OutputConsole("!ValidAccountText(%s, %s)\r\n", account, password);
+		LOG(Database, Normal, "Invalid characters in account/password! Username: %s Password: %s\n", account, password);
 		return FALSE;
 	}
 
@@ -55,7 +58,10 @@ BOOL CAccountDatabase::CheckAccount(const char *account, const char *password)
 	{
 		_snprintf(szCorrectPassword, 50, "%06lu", g_dwMagicNumber);
 		if (!strcmp(password, szCorrectPassword))
+		{
+			*accessLevel = ADMIN_ACCESS;
 			return TRUE;
+		}
 	}
 	szCorrectPassword[0] = '\0';
 
@@ -77,16 +83,16 @@ BOOL CAccountDatabase::CheckAccount(const char *account, const char *password)
 	{
 		if (!strcmp(szCorrectPassword, password))
 		{
-			//OutputConsole("Successful login from %s:%s\r\n", account, password);
+			//LOG(Temp, Normal, "Successful login from %s:%s\n", account, password);
 			return TRUE;
 		}
 		else
-			OutputConsole("Bad password on %s:%s (guess: %s)\r\n", account, szCorrectPassword, password);
+			LOG(Database, Normal, "Bad password on %s:%s (guess: %s)\n", account, szCorrectPassword, password);
 	}
 	else
 	{
 		char *accountlwr = _strlwr(_strdup(account));
-		OutputConsole("Creating new account %s:%s\r\n", accountlwr, password);
+		LOG(Database, Normal, "Creating new account %s:%s\n", accountlwr, password);
 		command = csprintf("INSERT INTO Accounts (Username, Password) VALUES (\'%s\', \'%s\');", accountlwr, password);
 
 		SQLPrepare(m_hSTMT, (unsigned char *)command, SQL_NTS);

@@ -11,7 +11,7 @@ CPortal::CPortal()
 
 	m_dwModel = 0x20001B3;
 
-	m_VisFlags = 0xC0C;
+	m_PhysicsState = 0xC0C;
 	m_ItemType = TYPE_PORTAL;
 
 	m_Usability = USEABLE_REMOTE;

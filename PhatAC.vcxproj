@@ -64,7 +64,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ws2_32.lib;comctl32.lib;zlib\zlibstat.lib;mysql\libmysql.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;comctl32.lib;zlib\zlib.lib;mysql\libmysql.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)PhatAC.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)PhatAC.pdb</ProgramDatabaseFile>
@@ -87,7 +87,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>ws2_32.lib;comctl32.lib;zlib\zlibstat.lib;mysql\libmysql.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;comctl32.lib;zlib\zlib.lib;mysql\libmysql.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)PhatAC.exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -105,6 +105,7 @@
     <ClCompile Include="Animate.cpp" />
     <ClCompile Include="Attributes.cpp" />
     <ClCompile Include="Database2.cpp" />
+    <ClCompile Include="Logging.cpp" />
     <ClCompile Include="PhysicsObj.cpp" />
     <ClCompile Include="CharacterDatabase.cpp" />
     <ClCompile Include="Client.cpp" />
@@ -126,8 +127,8 @@
     <ClCompile Include="ModelInfo.cpp" />
     <ClCompile Include="Monster.cpp" />
     <ClCompile Include="Moves.cpp" />
-    <ClCompile Include="NetFood.cpp" />
-    <ClCompile Include="NetMeal.cpp" />
+    <ClCompile Include="BinaryWriter.cpp" />
+    <ClCompile Include="BinaryReader.cpp" />
     <ClCompile Include="Network.cpp" />
     <ClCompile Include="ObjectMsgs.cpp" />
     <ClCompile Include="PacketController.cpp" />
@@ -164,6 +165,8 @@
     <ClInclude Include="Attributes.h" />
     <ClInclude Include="Database2.h" />
     <ClInclude Include="Enums.h" />
+    <ClInclude Include="Logging.h" />
+    <ClInclude Include="PhysicsDesc.h" />
     <ClInclude Include="PhysicsObj.h" />
     <ClInclude Include="CharacterDatabase.h" />
     <ClInclude Include="Client.h" />
@@ -186,14 +189,15 @@
     <ClInclude Include="ModelInfo.h" />
     <ClInclude Include="Monster.h" />
     <ClInclude Include="Moves.h" />
-    <ClInclude Include="NetFood.h" />
-    <ClInclude Include="NetMeal.h" />
+    <ClInclude Include="BinaryWriter.h" />
+    <ClInclude Include="BinaryReader.h" />
     <ClInclude Include="Network.h" />
     <ClInclude Include="ObjectMsgs.h" />
     <ClInclude Include="PacketController.h" />
     <ClInclude Include="Pet.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Portal.h" />
+    <ClInclude Include="PublicWeenieDesc.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Rules.h" />
     <ClInclude Include="Server.h" />
@@ -214,7 +218,6 @@
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="Vitals.h" />
     <ClInclude Include="World.h" />
-    <ClInclude Include="zlib\ioapi.h" />
     <ClInclude Include="zlib\zconf.h" />
     <ClInclude Include="zlib\zlib.h" />
   </ItemGroup>

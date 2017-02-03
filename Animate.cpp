@@ -140,7 +140,7 @@ void CPhysicsObj::Animation_Jump(float fPower, float fDir1, float fDir2, float f
 	if (HasOwner())
 		return;
 
-	NetFood JumpMove;
+	BinaryWriter JumpMove;
 	JumpMove.WriteDWORD(0xF74E);
 	JumpMove.WriteDWORD(m_dwGUID);
 	JumpMove.WriteFloat(fDir1);
@@ -261,12 +261,12 @@ void CPhysicsObj::Animation_PlayAnimation(animation_t* data)
 	Animation_Update();
 }
 
-NetFood* CPhysicsObj::Animation_GetAnimationInfo()
+BinaryWriter* CPhysicsObj::Animation_GetAnimationInfo()
 {
 	BYTE	bType;
 	DWORD	dwTarget;
 
-	NetFood* AnimInfo = new NetFood;
+	BinaryWriter* AnimInfo = new BinaryWriter;
 
 	if (m_lAnimQueue.empty())
 	{
@@ -289,7 +289,7 @@ NetFood* CPhysicsObj::Animation_GetAnimationInfo()
 	{
 	case 255:
 	case 0:
-		NetFood *Desc = new NetFood;
+		BinaryWriter *Desc = new BinaryWriter;
 		DWORD dwFlags = 0;
 
 		if (m_wStance != 0x3D)
@@ -374,7 +374,7 @@ void CPhysicsObj::Animation_Update()
 	if (HasOwner())
 		return;
 
-	NetFood AnimUpdate;
+	BinaryWriter AnimUpdate;
 	AnimUpdate.WriteDWORD(0xF74C);
 	AnimUpdate.WriteDWORD(m_dwGUID);
 	AnimUpdate.WriteWORD(m_wInstance);
@@ -384,7 +384,7 @@ void CPhysicsObj::Animation_Update()
 	AnimUpdate.WriteWORD((m_bForced) ? FALSE : TRUE);
 	m_bForced = FALSE;
 
-	NetFood *AnimInfo = Animation_GetAnimationInfo();
+	BinaryWriter *AnimInfo = Animation_GetAnimationInfo();
 	AnimUpdate.AppendData(AnimInfo->GetData(), AnimInfo->GetSize());
 	delete AnimInfo;
 

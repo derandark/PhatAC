@@ -1,16 +1,13 @@
 
 #pragma once
 
-// For data input
-
 #define MAX_MEALSTRING_LEN 0x0800
 
-class NetMeal
+class BinaryReader
 {
 public:
-	NetMeal(BYTE *pData, DWORD dwSize);
-	NetMeal(BlobPacket_s *bp);
-	~NetMeal();
+	BinaryReader(BYTE *pData, DWORD dwSize);
+	~BinaryReader();
 
 #define BOUND_CHECK(x) \
 	if ( !(x) ) \
@@ -38,6 +35,35 @@ public:
 	STREAM_OUT(ReadFloat, float);
 	STREAM_OUT(ReadDouble, double);
 
+	STREAM_OUT(ReadByte, BYTE);
+	STREAM_OUT(ReadInt8, char);
+	STREAM_OUT(ReadUInt8, BYTE);
+	STREAM_OUT(ReadInt16, short);
+	STREAM_OUT(ReadUInt16, WORD);
+	STREAM_OUT(ReadInt32, int);
+	STREAM_OUT(ReadUInt32, DWORD);
+
+	STREAM_OUT(ReadSingle, float);
+
+	__forceinline DWORD ReadPackedDWORD()
+	{
+		DWORD ret;
+		BOUND_CHECK((m_pData + sizeof(WORD)) <= m_pEnd);
+		ret = *((WORD *)m_pData);
+		if (ret & 0x8000)
+		{
+			BOUND_CHECK((m_pData + sizeof(DWORD)) <= m_pEnd);
+			DWORD src = *((DWORD *)m_pData);
+			ret = (((src & 0x3FFF) << 16) | (src >> 16));
+			m_pData += sizeof(DWORD);
+		}
+		else
+		{
+			m_pData += sizeof(WORD);
+		}
+		return ret;
+	}
+
 	void ReadAlign(void);
 	void *ReadArray(size_t size);
 	char *ReadString(void);
@@ -48,6 +74,7 @@ public:
 	DWORD GetDataLen(void);
 	DWORD GetOffset(void);
 	DWORD GetLastError(void);
+	DWORD GetDataRemaining(void);
 
 private:
 	DWORD m_dwErrorCode;
@@ -57,3 +84,4 @@ private:
 	BYTE *m_pEnd;
 	std::list<char *> m_lStrings;
 };
+

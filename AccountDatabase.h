@@ -6,7 +6,7 @@ class CAccountDatabase
 public:
 	CAccountDatabase(CDatabase *);
 
-	BOOL CheckAccount(const char *, const char *);
+	BOOL CheckAccount(const char *, const char *, int *accessLevel);
 
 private:
 	CDatabase *m_DB;

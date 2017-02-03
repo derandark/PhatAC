@@ -163,7 +163,7 @@ BOOL CPhysicsObj::Container_CanEquip(CBaseItem* pItem, DWORD dwCoverage)
 		return FALSE;
 
 	if (pItem->GetCoverage1() != dwCoverage)
-		OutputConsole("Debug: GC1()==%08X and C==%08X\r\n", pItem->GetCoverage1(), dwCoverage);
+		LOG(Temp, Normal, "Debug: GC1()==%08X and C==%08X\n", pItem->GetCoverage1(), dwCoverage);
 
 	char index = 0;
 	while (index < (sizeof(dwCoverage) << 3))
@@ -198,7 +198,7 @@ void CPhysicsObj::Container_EquipItem(DWORD dwCell, CBaseItem* pItem, DWORD dwCo
 
 	if (pItem->m_ItemType != TYPE_ARMOR)
 	{
-		NetFood Blah;
+		BinaryWriter Blah;
 		Blah.WriteDWORD(0xF749);
 		Blah.WriteDWORD(m_dwGUID);
 		Blah.WriteDWORD(pItem->m_dwGUID);
@@ -299,7 +299,7 @@ char CPhysicsObj::Container_InsertInventoryItem(DWORD dwCell, CBaseItem* pItem, 
 
 	pItem->m_wNumMovements++;
 
-	NetFood Blah;
+	BinaryWriter Blah;
 
 	Blah.WriteDWORD(0xF74A);
 	Blah.WriteDWORD(pItem->m_dwGUID);

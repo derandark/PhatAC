@@ -7,8 +7,8 @@
 // Network access
 #include "Network.h"
 #include "PacketController.h"
-#include "NetMeal.h"
-#include "NetFood.h"
+#include "BinaryReader.h"
+#include "BinaryWriter.h"
 
 // Database access
 #include "Database.h"
@@ -23,12 +23,15 @@
 #include "Monster.h"
 #include "Player.h"
 
+// Command access
+#include "ClientCommands.h"
+
 
 ///////////
 // Name: CClient
 // Desc: Presents an interface for client/server interaction.
 ///////////
-CClient::CClient(SOCKADDR_IN *peer, WORD slot, char *account)
+CClient::CClient(SOCKADDR_IN *peer, WORD slot, char *account, int accessLevel)
 {
 	memcpy(&m_vars.addr, peer, sizeof(SOCKADDR_IN));
 	m_vars.slot = slot;
@@ -37,6 +40,8 @@ CClient::CClient(SOCKADDR_IN *peer, WORD slot, char *account)
 	m_vars.initdats = FALSE;
 	m_vars.inworld = FALSE;
 	m_vars.needchars = TRUE;
+
+	m_AccessLevel = accessLevel;
 
 	m_pPC = new CPacketController(this);
 	m_pEvents = new CClientEvents(this);
@@ -66,8 +71,10 @@ void CClient::Think()
 
 	if (m_pPC)
 	{
-		//if ( m_pPC->HasConnection() )
-		WorldThink();
+		if (m_pPC->HasConnection())
+		{
+			WorldThink();
+		}
 
 		m_pPC->Think();
 
@@ -97,7 +104,7 @@ void CClient::WorldThink()
 		if (!m_vars.initdats)
 		{
 			//'PHAT AC'
-			NetFood EraseFile;
+			BinaryWriter EraseFile;
 
 			/*
 			EraseFile.WriteDWORD( 0xF7BB );
@@ -122,7 +129,7 @@ void CClient::WorldThink()
 
 				sscanf(data.cFileName, "cell-%08X", &dwID);
 
-				NetFood CustomBlocks;
+				BinaryWriter CustomBlocks;
 				CustomBlocks.WriteDWORD(dwID);
 
 				while (g_pDB->DataFileFindNext(&data))
@@ -137,18 +144,18 @@ void CClient::WorldThink()
 					}
 				}
 
-				NetFood EraseCustomBlocks;
+				BinaryWriter EraseCustomBlocks;
 				EraseCustomBlocks.WriteDWORD(0xF7BB);
 				EraseCustomBlocks.WriteDWORD(dwCount);
 				EraseCustomBlocks.AppendData(CustomBlocks.GetData(), CustomBlocks.GetSize());
 
-				//OutputConsole("Erasing custom blocks: %lu\r\n", dwCount);
+				// LOG(Temp, Normal, "Erasing custom blocks: %lu\n", dwCount);
 				SendMessage(EraseCustomBlocks.GetData(), EraseCustomBlocks.GetSize(), EVENT_MSG);
 
 				g_pDB->DataFileFindClose();
 			}
 
-			NetFood UpdateDats;
+			BinaryWriter UpdateDats;
 
 			UpdateDats.WriteLong(0xF7B8);
 			UpdateDats.WriteLong(m_vars.portalstamp);
@@ -181,7 +188,7 @@ void CClient::UpdateLoginScreen()
 	DWORD pdwGUIDs[5];
 	DWORD dwCount = g_pDB->CharDB()->GetCharacters(account, pdwGUIDs);
 
-	NetFood CharacterList;
+	BinaryWriter CharacterList;
 	CharacterList.WriteLong(0xF658);
 	CharacterList.WriteLong(0);
 	CharacterList.WriteLong(dwCount);
@@ -197,9 +204,10 @@ void CClient::UpdateLoginScreen()
 	}
 
 	CharacterList.WriteLong(0);
-	CharacterList.WriteLong(5);
+	CharacterList.WriteLong(11);
 	CharacterList.WriteString(account);
-	CharacterList.WriteLong(0);
+	CharacterList.WriteLong(1);
+	CharacterList.WriteLong(1);
 	SendMessage(CharacterList.GetData(), CharacterList.GetSize(), 9);
 
 	/*std::string strMOTD = "You are in the world of PHATAC.\n\n";
@@ -214,33 +222,29 @@ void CClient::UpdateLoginScreen()
 	strMOTD += "Mon 03/01/2004\n=============\nEmulator is born.\n\n\n";*/
 
 	/*
-	NetFood ServerMOTD;
+	BinaryWriter ServerMOTD;
 	ServerMOTD.WriteLong( 0xF65A );
 	ServerMOTD.WriteString( csprintf("Currently %u clients connected.\n", g_pGlobals->GetClientCount() ) );
 	ServerMOTD.WriteString( g_pWorld->GetMOTD() );
 	SendMessage(ServerMOTD.GetData(), ServerMOTD.GetSize(), PRIVATE_MSG);
 	*/
 
-	NetFood ServerName;
+	BinaryWriter ServerName;
 	ServerName.WriteLong(0xF7E1);
-	ServerName.WriteLong(0x32);
-	ServerName.WriteLong(-1);
+	ServerName.WriteLong(0x32); // Num connections
+	ServerName.WriteLong(-1); // Max connections
 	ServerName.WriteString("Peaville");
 	SendMessage(ServerName.GetData(), ServerName.GetSize(), 9);
 
-	NetFood ServerUnk;
+	BinaryWriter ServerUnk;
 	ServerUnk.WriteLong(0xF7E5);
-	ServerUnk.WriteLong(1);
-	ServerUnk.WriteLong(1);
-	ServerUnk.WriteLong(1);
-	ServerUnk.WriteLong(2);
-	ServerUnk.WriteLong(0);
-	ServerUnk.WriteLong(1);
+	ServerUnk.WriteLong(1); // servers region
+	ServerUnk.WriteLong(1); // name rule language
+	ServerUnk.WriteLong(1); // product id
+	ServerUnk.WriteLong(2); // supports languages (2)
+	ServerUnk.WriteLong(0); // language #1
+	ServerUnk.WriteLong(1); // language #2
 	SendMessage(ServerUnk.GetData(), ServerUnk.GetSize(), 5);
-
-	NetFood ServerUnk2;
-	ServerUnk2.WriteLong(0xF7EA);
-	SendMessage(ServerUnk2.GetData(), ServerUnk2.GetSize(), 5);
 }
 
 void CClient::EnterWorld()
@@ -248,7 +252,7 @@ void CClient::EnterWorld()
 	DWORD EnterWorld = 0xF7DF; // 0xF7C7;
 
 	SendMessage(&EnterWorld, sizeof(DWORD), 9);
-	OutputConsole("Client #%u is entering the world.\r\n", m_vars.slot);
+	LOG(Client, Normal, "Client #%u is entering the world.\n", m_vars.slot);
 
 	m_vars.inworld = TRUE;
 }
@@ -257,7 +261,7 @@ void CClient::ExitWorld()
 {
 	DWORD ExitWorld = 0xF653;
 	SendMessage(&ExitWorld, sizeof(DWORD), PRIVATE_MSG);
-	OutputConsole("Client #%u is exiting the world.\r\n", m_vars.slot);
+	LOG(Client, Normal, "Client #%u is exiting the world.\n", m_vars.slot);
 
 	m_pPC->ResetEvent();
 
@@ -266,7 +270,7 @@ void CClient::ExitWorld()
 	m_vars.inworld = FALSE;
 }
 
-void CClient::SendMessage(NetFood* pMessage, WORD group, BOOL event, BOOL del)
+void CClient::SendMessage(BinaryWriter* pMessage, WORD group, BOOL event, BOOL del)
 {
 	if (!pMessage)
 		return;
@@ -332,7 +336,7 @@ BOOL CClient::CheckNameValidity(const char *name)
 	return FALSE;
 }
 
-void CClient::CreateCharacter(NetMeal *in)
+void CClient::CreateCharacter(BinaryReader *in)
 {
 	DWORD dwError = 5;
 
@@ -426,7 +430,7 @@ void CClient::CreateCharacter(NetMeal *in)
 
 		if (dwGUID != 0)
 		{
-			NetFood Success;
+			BinaryWriter Success;
 			Success.WriteDWORD(0xF643);
 			Success.WriteDWORD(1);
 			Success.WriteDWORD(dwGUID);
@@ -436,7 +440,7 @@ void CClient::CreateCharacter(NetMeal *in)
 		}
 		else
 		{
-			NetFood BadCharGen;
+			BinaryWriter BadCharGen;
 			BadCharGen.WriteDWORD(0xF643);
 			BadCharGen.WriteDWORD(3); // name already exists
 			SendMessage(BadCharGen.GetData(), BadCharGen.GetSize(), PRIVATE_MSG);
@@ -445,11 +449,35 @@ void CClient::CreateCharacter(NetMeal *in)
 	return;
 BadData:
 	{
-		NetFood BadCharGen;
+		BinaryWriter BadCharGen;
 		BadCharGen.WriteDWORD(0xF643);
 		BadCharGen.WriteDWORD(dwError);
 		SendMessage(BadCharGen.GetData(), BadCharGen.GetSize(), PRIVATE_MSG);
 	}
+}
+
+void outputCompressed(BYTE *srcData, DWORD srcLen, DWORD dstLen_, BYTE **result_)
+{
+	BYTE *dest = new BYTE[100000];
+	DWORD destLen = dstLen_;
+
+	int result = 0;
+	if (Z_OK == (result = uncompress(dest, &destLen, srcData, srcLen)))
+	{
+		LOG(Temp, Debug, "Decompress:\n");
+		LOG_BYTES(Temp, Debug, dest, destLen);
+	}
+	else
+	{
+		LOG(Temp, Debug, "Failed decompress: %d\n", result);
+	}
+
+	if (destLen != dstLen_)
+	{
+		__asm int 3;
+	}
+
+	*result_ = dest;
 }
 
 void CClient::SendLandblock(DWORD dwFileID)
@@ -466,7 +494,9 @@ void CClient::SendLandblock(DWORD dwFileID)
 	}
 
 	if ((dwFileID & 0xFFFF) != 0xFFFF)
-		OutputConsole("dwFileID == %08X ??\r\n", dwFileID);
+	{
+		LOG(Client, Warning, "Client requested landblock %08X - should end in 0xFFFF\n", dwFileID);
+	}
 
 	TURBINEFILE* pObjData = NULL;
 	DWORD		dwObjFileID = 0;
@@ -479,56 +509,75 @@ void CClient::SendLandblock(DWORD dwFileID)
 		pObjData = g_pCell->GetFile(dwObjFileID);
 	}
 
-	NetFood BlockPackage;
-
-	BlockPackage.WriteDWORD(0xF7AB);
-	if (pObjData)
-	{
-		DWORD dwFileSize = pObjData->GetLength();
-		BYTE* pbFileData = pObjData->GetData();
-
-		DWORD dwPackageSize = (DWORD)((dwFileSize * 1.02f) + 12 + 1);
-		BYTE* pbPackageData = new BYTE[dwPackageSize];
-
-		if (Z_OK != compress(pbPackageData, &dwPackageSize, pbFileData, dwFileSize))
-			OutputConsole("Error compressing landobject package!\r\n");
-
-		BlockPackage.WriteDWORD(dwObjFileID);
-		BlockPackage.WriteDWORD(dwPackageSize);
-		BlockPackage.WriteDWORD(dwFileSize);
-		BlockPackage.AppendData(pbPackageData, dwPackageSize);
-
-		delete[] pbPackageData;
-		delete pObjData;
-
-		//OutputConsole("Sent objectblock %08X ..\r\n", dwObjFileID);
-	}
-	else BlockPackage.WriteDWORD(0);
-
 	if (pLandData)
 	{
+		BinaryWriter BlockPackage;
+
+		BlockPackage.WriteDWORD(0xF7E2);
+
 		DWORD dwFileSize = pLandData->GetLength();
 		BYTE* pbFileData = pLandData->GetData();
 
 		DWORD dwPackageSize = (DWORD)((dwFileSize * 1.02f) + 12 + 1);
 		BYTE* pbPackageData = new BYTE[dwPackageSize];
 
-		if (Z_OK != compress(pbPackageData, &dwPackageSize, pbFileData, dwFileSize))
-			OutputConsole("Error compressing landdata package!\r\n");
+		if (Z_OK != compress2(pbPackageData, &dwPackageSize, pbFileData, dwFileSize, Z_BEST_COMPRESSION))
+		{
+			LOG(Client, Error, "Error compressing LandBlock package!\n");
+		}
 
+		BlockPackage.WriteDWORD(1);
+		BlockPackage.WriteDWORD(2);
+		BlockPackage.WriteDWORD(1);
 		BlockPackage.WriteDWORD(dwFileID);
-		BlockPackage.WriteDWORD(dwPackageSize);
+		BlockPackage.WriteDWORD(1);
+		BlockPackage.WriteBYTE(1); // Compressed
+		BlockPackage.WriteDWORD(2);
+		BlockPackage.WriteDWORD(dwPackageSize + sizeof(DWORD) * 2);
 		BlockPackage.WriteDWORD(dwFileSize);
 		BlockPackage.AppendData(pbPackageData, dwPackageSize);
 
 		delete[] pbPackageData;
 		delete pLandData;
 
-		//OutputConsole("Sent landblock %08X ..\r\n", dwFileID);
+		//LOG(Temp, Normal, "Sent landblock %08X ..\n", dwFileID);
+		SendMessage(BlockPackage.GetData(), BlockPackage.GetSize(), EVENT_MSG, FALSE);
 	}
-	else BlockPackage.WriteDWORD(0);
 
-	SendMessage(BlockPackage.GetData(), BlockPackage.GetSize(), EVENT_MSG, FALSE);
+	if (pObjData)
+	{
+		BinaryWriter BlockInfoPackage;
+
+		BlockInfoPackage.WriteDWORD(0xF7E2);
+
+		DWORD dwFileSize = pObjData->GetLength();
+		BYTE* pbFileData = pObjData->GetData();
+
+		DWORD dwPackageSize = (DWORD)((dwFileSize * 1.02f) + 12 + 1);
+		BYTE* pbPackageData = new BYTE[dwPackageSize];
+
+		if (Z_OK != compress2(pbPackageData, &dwPackageSize, pbFileData, dwFileSize, Z_BEST_COMPRESSION))
+		{
+			LOG(Client, Error, "Error compressing LandBlockInfo package!\n");
+		}
+
+		BlockInfoPackage.WriteDWORD(1);
+		BlockInfoPackage.WriteDWORD(2);
+		BlockInfoPackage.WriteDWORD(2); // 1 for 0xFFFF, 2 for 0xFFFE
+		BlockInfoPackage.WriteDWORD(dwObjFileID);
+		BlockInfoPackage.WriteDWORD(1);
+		BlockInfoPackage.WriteBYTE(1);
+		BlockInfoPackage.WriteDWORD(2);
+		BlockInfoPackage.WriteDWORD(dwPackageSize + sizeof(DWORD) * 2);
+		BlockInfoPackage.WriteDWORD(dwFileSize);
+		BlockInfoPackage.AppendData(pbPackageData, dwPackageSize);
+
+		delete[] pbPackageData;
+		delete pObjData;
+
+		//LOG(Temp, Normal, "Sent objectblock %08X ..\n", dwObjFileID);
+		SendMessage(BlockInfoPackage.GetData(), BlockInfoPackage.GetSize(), EVENT_MSG, FALSE);
+	}
 
 	//if (m_pEvents)
 	//	m_pEvents->SendText( csprintf("The server has sent you block #%04X!", dwFileID >> 16), 1);
@@ -547,33 +596,42 @@ void CClient::SendLandcell(DWORD dwFileID)
 		return;
 	}
 
-	NetFood CellPackage;
-
-	CellPackage.WriteDWORD(0xF7AC);
 	if (pCellData)
 	{
+		BinaryWriter CellPackage;
+
+		CellPackage.WriteDWORD(0xF7E2);
+
 		DWORD dwFileSize = pCellData->GetLength();
 		BYTE* pbFileData = pCellData->GetData();
 
 		DWORD dwPackageSize = (DWORD)((dwFileSize * 1.02f) + 12 + 1);
 		BYTE* pbPackageData = new BYTE[dwPackageSize];
 
-		if (Z_OK != compress(pbPackageData, &dwPackageSize, pbFileData, dwFileSize))
-			OutputConsole("Error compressing celldata package!\r\n");
+		if (Z_OK != compress2(pbPackageData, &dwPackageSize, pbFileData, dwFileSize, Z_BEST_COMPRESSION))
+		{
+			// These are CEnvCell if I recall correctly
+			LOG(Client, Error, "Error compressing landcell package!\n");
+		}
 
+		CellPackage.WriteDWORD(1);
+		CellPackage.WriteDWORD(2);
+		CellPackage.WriteDWORD(3);
 		CellPackage.WriteDWORD(dwFileID);
-		CellPackage.WriteDWORD(dwPackageSize);
+		CellPackage.WriteDWORD(1);
+		CellPackage.WriteBYTE(1);
+		CellPackage.WriteDWORD(2);
+		CellPackage.WriteDWORD(dwPackageSize + sizeof(DWORD) * 2);
 		CellPackage.WriteDWORD(dwFileSize);
 		CellPackage.AppendData(pbPackageData, dwPackageSize);
 
 		delete[] pbPackageData;
 		delete pCellData;
 
-		//OutputConsole("Sent cell %08X ..\r\n", dwFileID);
-	}
-	else CellPackage.WriteDWORD(0);
+		//LOG(Temp, Normal, "Sent cell %08X ..\n", dwFileID);
 
-	SendMessage(CellPackage.GetData(), CellPackage.GetSize(), EVENT_MSG, FALSE);
+		SendMessage(CellPackage.GetData(), CellPackage.GetSize(), EVENT_MSG, FALSE);
+	}
 
 	//if (m_pEvents)
 	//	m_pEvents->SendText( csprintf("The server has sent you cell #%04X!", dwFileID >> 16), 1);
@@ -581,113 +639,159 @@ void CClient::SendLandcell(DWORD dwFileID)
 
 void CClient::ProcessMessage(BYTE *data, DWORD length, WORD group)
 {
-	NetMeal in(data, length);
+	BinaryReader in(data, length);
 
 	DWORD dwMessageCode = in.ReadDWORD();
 
 	if (in.GetLastError())
 	{
-		OutputConsole("Fragmented message.\r\n");
+		LOG(Client, Warning, "Error processing message.\n");
 		return;
 	}
 	switch (dwMessageCode)
 	{
-	case 0xF653:
-	{
-		if (m_vars.inworld)
-			m_pEvents->BeginLogout();
-	}
-	break;
-	case 0xF656: //Create Character
-	{
-		if (!m_vars.inworld)
-			CreateCharacter(&in);
-	}
-	break;
-	case 0xF6EA: //Request Object
-	{
-		if (m_vars.inworld)
+		case 0xF653:
 		{
-			DWORD dwEID = in.ReadDWORD();
-			if (in.GetLastError()) break;
-
-			CBasePlayer *pPlayer;
-
-			if ((m_pEvents) && (pPlayer = m_pEvents->GetPlayer()))
+			if (m_vars.inworld)
 			{
-				CPhysicsObj *pTarget = pPlayer->FindChild(dwEID);
-
-				if (!pTarget)
-					pTarget = g_pWorld->FindWithinPVS(pPlayer, dwEID);
-
-				if (pTarget)
-					pPlayer->MakeAware(pTarget);
+				m_pEvents->BeginLogout();
 			}
-		}
-	}
-	break;
-	case 0xF7A9: //Request File Data
-	{
-		if (m_vars.inworld)
-		{
-			DWORD dwFileID = in.ReadDWORD();
-			DWORD dwFileClass = in.ReadDWORD();
-			if (in.GetLastError()) break;
 
-			switch (dwFileClass)
-			{
-			default:
-				OutputConsole("Unknown download request: %08X %lu\r\n", dwFileID, dwFileClass);
-				break;
-			case 0:
-				//
-				SendLandblock(dwFileID);
-				break;
-			case 2:
-				//
-				SendLandcell(dwFileID);
-				break;
-			}
+			break;
 		}
-	}
-	break;
-	case 0xF7B1:
-	{
-		//should check the sequence
-		if (m_vars.inworld)
-			m_pEvents->ProcessEvent(&in);
-	}
-	break;
-	case 0xF7C8:
-	{
-		if (!m_vars.inworld)
-			EnterWorld();
-	}
-	break;
-	case 0xF657:
-	{
-		if (m_vars.inworld)
-		{
-			DWORD dwGUID = in.ReadDWORD();
-			char* szName = in.ReadString();
-			if (in.GetLastError()) break;
-
-			m_pEvents->LoginCharacter(dwGUID, /*szName*/GetAccount());
-		}
-	}
-	break;
-	default:
-		OutputConsole("Unknown message %08X from the client.\r\n", dwMessageCode);
 		break;
+		case 0xF656: // Create Character
+		{
+			if (!m_vars.inworld)
+			{
+				CreateCharacter(&in);
+			}
+
+			break;
+		}
+
+		case 0xF6EA: // Request Object
+		{
+			if (m_vars.inworld)
+			{
+				DWORD dwEID = in.ReadDWORD();
+				if (in.GetLastError()) break;
+
+				CBasePlayer *pPlayer;
+
+				if ((m_pEvents) && (pPlayer = m_pEvents->GetPlayer()))
+				{
+					CPhysicsObj *pTarget = pPlayer->FindChild(dwEID);
+
+					if (!pTarget)
+						pTarget = g_pWorld->FindWithinPVS(pPlayer, dwEID);
+
+					if (pTarget)
+						pPlayer->MakeAware(pTarget);
+				}
+			}
+			break;
+		}
+
+		case 0xF7E6:
+		{
+			BinaryWriter ServerUnk2;
+			ServerUnk2.WriteLong(0xF7EA);
+			SendMessage(ServerUnk2.GetData(), ServerUnk2.GetSize(), 5);
+			break;
+		}
+
+		case 0xF7EA:
+		{
+			//BinaryWriter EndDDD;
+			//EndDDD.WriteDWORD(0xF7EA);
+			//SendMessage(EndDDD.GetData(), EndDDD.GetSize(), EVENT_MSG);
+
+			break;
+		}
+
+		case 0xF7E3: // Request File Data was 0xF7A9
+		{
+			// This doesn't work for some reason.
+			break;
+
+			if (m_vars.inworld)
+			{
+				DWORD dwFileClass = in.ReadDWORD();
+				DWORD dwFileID = in.ReadDWORD();				
+				if (in.GetLastError()) break;
+
+				switch (dwFileClass)
+				{
+				default:
+					LOG(Client, Warning, "Unknown download request: %08X %d\n", dwFileID, dwFileClass);
+					break;
+
+				case 1:
+					SendLandblock(dwFileID); // 1 is landblock 0xFFFF
+					break;
+
+				// 2 is 0xFFFE the landblock environment info I believe, but client never requests it directly, it is sent with landblocks
+
+				case 3:
+					SendLandcell(dwFileID); // 0x100+
+					break;
+				}
+			}
+
+			break;
+		}
+
+		case 0xF7B1:
+		{
+			//should check the sequence
+			if (m_vars.inworld)
+			{
+				m_pEvents->ProcessEvent(&in);
+			}
+
+			break;
+		}
+		case 0xF7C8:
+		{
+			if (!m_vars.inworld)
+			{
+				EnterWorld();
+			}
+
+			break;
+		}
+
+		case 0xF657:
+		{
+			if (m_vars.inworld)
+			{
+				DWORD dwGUID = in.ReadDWORD();
+				char* szName = in.ReadString();
+				if (in.GetLastError()) break;
+
+				m_pEvents->LoginCharacter(dwGUID, /*szName*/GetAccount());
+			}
+
+			break;
+		}
+		default:
+			LOG(Client, Warning, "Unhandled message %08X from the client.\n", dwMessageCode);
+			break;
 	}
 
 	//if ( dwMessageCode != 0xF7B1 )
-	//	OutputConsole("Received message %04X\r\n", dwMessageCode);
+	//	LOG(Temp, Normal, "Received message %04X\n", dwMessageCode);
 }
 
 BOOL CClient::CheckAccount(const char* cmp)
 {
 	return !strcmp(m_vars.account.c_str(), cmp);
+}
+
+int CClient::GetAccessLevel()
+{
+	return m_AccessLevel;
 }
 
 BOOL CClient::CheckAddress(SOCKADDR_IN *peer)
@@ -708,8 +812,7 @@ const char* CClient::GetAccount()
 const char* CClient::GetDescription()
 {
 	// Must lead with index or the kick/ban feature won't function.
-	const char *text = csprintf("%04u - %s - %s", m_vars.slot, inet_ntoa(m_vars.addr.sin_addr), m_vars.account.c_str());
-	return text;
+	return csprintf("#%u %s \"%s\"", m_vars.slot, inet_ntoa(m_vars.addr.sin_addr), m_vars.account.c_str());
 }
 
 void CClient::SetLoginData(DWORD dwUnixTime, DWORD dwPortalStamp, DWORD dwCellStamp)

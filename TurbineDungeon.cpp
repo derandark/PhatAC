@@ -102,7 +102,7 @@ void TurbineDungeon::Initialize(BYTE *pbData, DWORD dwLength)
 			WORD polyNum = *((WORD *)pbData);
 			if (polyNum != j)
 			{
-				DebugMe();
+				// DebugMe();
 			}
 
 			DUNGEONTRIFAN*	pTriFan = &pPortal->m_pTriFans[polyNum];
@@ -196,7 +196,9 @@ void TurbineDungeon::Initialize(BYTE *pbData, DWORD dwLength)
 				break;
 			}
 			else
-				DebugMe();
+			{
+				_DebugMe();
+			}
 
 			//k++;
 		}
@@ -324,15 +326,15 @@ BOOL TurbineDungeon::IsLandingZone(DUNGEONVERTEX* pVertex1, DUNGEONVERTEX* pVert
 
 	/*if ( m_dwID == 0x0D0003EA )
 	{
-		OutputConsole("--\r\n%.01f %.01f %.01f, %.01f %.01f %.01f\r\n",
+		LOG(Temp, Normal, "--\n%.01f %.01f %.01f, %.01f %.01f %.01f\n",
 			pVertex1->x, pVertex1->y, pVertex1->z,
 			pVertex1->nx, pVertex1->ny, pVertex1->nz );
 
-		OutputConsole("%.01f %.01f %.01f, %.01f %.01f %.01f\r\n",
+		LOG(Temp, Normal, "%.01f %.01f %.01f, %.01f %.01f %.01f\n",
 			pVertex2->x, pVertex2->y, pVertex2->z,
 			pVertex2->nx, pVertex2->ny, pVertex2->nz );
 
-		OutputConsole("%.01f %.01f %.01f, %.01f %.01f %.01f\r\n",
+		LOG(Temp, Normal, "%.01f %.01f %.01f, %.01f %.01f %.01f\n",
 			pVertex3->x, pVertex3->y, pVertex3->z,
 			pVertex3->nx, pVertex3->ny, pVertex3->nz );
 	}*/
@@ -363,15 +365,15 @@ BOOL TurbineDungeon::IsLandingZone(DUNGEONVERTEX* pVertex1, DUNGEONVERTEX* pVert
 
 	/*if ( m_dwID == 0x0D00011B )
 	{
-		OutputConsole("--\r\n%.01f %.01f %.01f, %.01f %.01f %.01f\r\n",
+		LOG(Temp, Normal, "--\n%.01f %.01f %.01f, %.01f %.01f %.01f\n",
 			pVertex1->x, pVertex1->y, pVertex1->z,
 			pVertex1->nx, pVertex1->ny, pVertex1->nz );
 
-		OutputConsole("%.01f %.01f %.01f, %.01f %.01f %.01f\r\n",
+		LOG(Temp, Normal, "%.01f %.01f %.01f, %.01f %.01f %.01f\n",
 			pVertex2->x, pVertex2->y, pVertex2->z,
 			pVertex2->nx, pVertex2->ny, pVertex2->nz );
 
-		OutputConsole("%.01f %.01f %.01f, %.01f %.01f %.01f\r\n",
+		LOG(Temp, Normal, "%.01f %.01f %.01f, %.01f %.01f %.01f\n",
 			pVertex3->x, pVertex3->y, pVertex3->z,
 			pVertex3->nx, pVertex3->ny, pVertex3->nz );
 	}*/
@@ -386,7 +388,7 @@ loc_t TurbineDungeon::FindLandingZone(WORD wPortal)
 
 	if (wPortal > m_dwNumPortals)
 	{
-		DebugMe();
+		_DebugMe();
 		return LZ;
 	}
 
@@ -394,7 +396,7 @@ loc_t TurbineDungeon::FindLandingZone(WORD wPortal)
 
 	if (!pPortal)
 	{
-		OutputConsole("Missing portal %u in %08X.\r\n", wPortal, GetID());
+		LOG(Temp, Normal, "Missing portal %u in %08X.\n", wPortal, GetID());
 	}
 	else
 	{
@@ -404,7 +406,7 @@ loc_t TurbineDungeon::FindLandingZone(WORD wPortal)
 
 			if ( !pVertex )
 			{
-				OutputConsole("Missing vertex zone!\r\n");
+				LOG(Temp, Normal, "Missing vertex zone!\n");
 				continue;
 			}
 
@@ -414,7 +416,7 @@ loc_t TurbineDungeon::FindLandingZone(WORD wPortal)
 				LZ.x	= pVertex->x;
 				LZ.y	= pVertex->y;
 				LZ.z	= pVertex->z;
-				//OutputConsole("Found landing zone.\r\n");
+				//LOG(Temp, Normal, "Found landing zone.\n");
 				//return LZ;
 			}
 		}*/
@@ -424,12 +426,12 @@ loc_t TurbineDungeon::FindLandingZone(WORD wPortal)
 			DUNGEONTRIFAN* pTriFan = &pPortal->m_pTriFans[i];
 			if (!pTriFan)
 			{
-				DebugMe();
+				_DebugMe();
 				continue;
 			}
 			if (!pTriFan->m_cNumVertices)
 			{
-				DebugMe();
+				_DebugMe();
 				continue;
 			}
 
@@ -443,7 +445,7 @@ loc_t TurbineDungeon::FindLandingZone(WORD wPortal)
 				if (!IsLandingZone(pBaseVertex, pVertex2, pVertex3))
 					continue;
 
-				//OutputConsole("Found landing zone! %f %f %f %f %f %f\r\n",
+				//LOG(Temp, Normal, "Found landing zone! %f %f %f %f %f %f\n",
 				//	pVertex2->nx, pVertex2->ny, pVertex2->nz,
 				//	pVertex3->nx, pVertex3->ny, pVertex3->nz);
 				LZ.landcell = TRUE;
@@ -456,7 +458,7 @@ loc_t TurbineDungeon::FindLandingZone(WORD wPortal)
 				return LZ;
 			}
 		}
-		//OutputConsole("Couldn't find landing zone.\r\n");
+		//LOG(Temp, Normal, "Couldn't find landing zone.\n");
 	}
 
 	return LZ;

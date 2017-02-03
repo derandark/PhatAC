@@ -3,6 +3,9 @@
 #include "Database2.h"
 #include "World.h"
 #include "Portal.h"
+#include "PhysicsDesc.h"
+#include "PublicWeenieDesc.h"
+#include "Door.h"
 
 CMYSQLResult::CMYSQLResult(MYSQL_RES *Result)
 {
@@ -43,6 +46,8 @@ uint64_t CMYSQLResult::ResultRows()
 	return (uint64_t)mysql_num_rows(m_Result);
 }
 
+int CSQLConnection::s_NumConnectAttempts = 0;
+
 CMYSQLConnection::CMYSQLConnection(MYSQL *connection)
 {
 	m_InternalConnection = connection;
@@ -68,13 +73,15 @@ CMYSQLConnection *CMYSQLConnection::Create(const char *host, unsigned int port, 
 	MYSQL *sqlconnection;
 
 	{
+		s_NumConnectAttempts++;
+
 		CStopWatch connectTiming;
 
 		sqlconnection = mysql_real_connect(sqlobject, host, user, password, defaultdatabase, port, NULL, 0);
 
-		if (connectTiming.GetElapsed() >= 1.0)
+		if (sqlconnection && connectTiming.GetElapsed() >= 1.0)
 		{
-			DEBUGOUT("mysql_real_connect() took %.1f s!", connectTiming.GetElapsed());
+			LOG(Database, Warning, "mysql_real_connect() took %.1f s!\n", connectTiming.GetElapsed());
 		}
 	}
 
@@ -94,30 +101,36 @@ CMYSQLConnection *CMYSQLConnection::Create(const char *host, unsigned int port, 
 			int connect_timeout = MYSQL_CONNECT_TIMEOUT;
 			mysql_options(sqlobject, MYSQL_OPT_CONNECT_TIMEOUT, (char *)&connect_timeout);
 
+			s_NumConnectAttempts++;
+
 			CStopWatch connectTiming;
 
 			sqlconnection = mysql_real_connect(sqlobject, host, user, password, defaultdatabase, port, NULL, 0);
 
-			if (connectTiming.GetElapsed() >= 1.0)
+			if (sqlconnection && connectTiming.GetElapsed() >= 1.0)
 			{
-				DEBUGOUT("mysql_real_connect() re-attempt took %.1f s!", connectTiming.GetElapsed());
+				LOG(Database, Warning, "mysql_real_connect() re-attempt took %.1f s!\n", connectTiming.GetElapsed());
 			}
 
 			if (sqlconnection == NULL)
 			{
-				DEBUGOUT("Failed to create mysql connection after two tries:\n%s\n", mysql_error(sqlobject));
+				LOG(Database, Warning, "Failed to create mysql connection after two tries:\n%s\n", mysql_error(sqlobject));
 
 				mysql_close(sqlobject);
 				return NULL;
 			}
 			else
 			{
-				DEBUGOUT("Received EINTR while attempting to connect to mysql, but re-attempt succeeded.\n");
+				LOG(Database, Normal, "Received EINTR while attempting to connect to mysql, but re-attempt succeeded.\n");
 			}
 		}
 		else
 		{
-			DEBUGOUT("mysql_real_connect() failed:\n%s\n", mysql_error(sqlobject));
+			if (CSQLConnection::s_NumConnectAttempts > 1)
+			{
+				// Only show warning if not the first connection attempt
+				LOG(Database, Warning, "mysql_real_connect() failed:\n%s\n", mysql_error(sqlobject));
+			}
 
 			mysql_close(sqlobject);
 			return NULL;
@@ -160,13 +173,13 @@ bool CMYSQLConnection::Query(const char *query)
 
 		if (queryTiming.GetElapsed() >= 1.0)
 		{
-			DEBUGOUT("MYSQL query \"%s\" took %f seconds.\n", query, queryTiming.GetElapsed());
+			LOG(Database, Warning, "MYSQL query \"%s\" took %f seconds.\n", query, queryTiming.GetElapsed());
 		}
 	}
 
 	if (errorCode != 0)
 	{
-		DEBUGOUT("MYSQL query errored %d for \"%s\"\n", errorCode, query);
+		LOG(Database, Error, "MYSQL query errored %d for \"%s\"\n", errorCode, query);
 		return false;
 	}
 
@@ -268,7 +281,7 @@ CMYSQLDatabase::CMYSQLDatabase(const char *host, unsigned int port, const char *
 	if (!m_pConnection)
 	{
 		// If we can't connect the first time, just disable this feature.
-		DEBUGOUT("MySQL database functionality disabled.\r\n");
+		LOG(Database, Warning, "MySQL database functionality disabled.\n");
 		m_bDisabled = true;
 	}
 }
@@ -306,11 +319,273 @@ CGameDatabase::CGameDatabase()
 
 CGameDatabase::~CGameDatabase()
 {
+	for (auto &data : m_CapturedAerfalleData)
+	{
+		delete data;
+	}
+
+	for (auto &data : m_CapturedMonsterData)
+	{
+		delete data.second;
+	}
 }
 
 void CGameDatabase::Init()
 {
 	LoadPortals();
+	LoadAerfalle();
+	LoadCapturedMonsterData();
+	SpawnAerfalle();
+}
+
+void CGameDatabase::SpawnAerfalle()
+{
+	for (auto pSpawnInfo : m_CapturedAerfalleData)
+	{
+		CPhysicsObj *pSpawn;
+
+		if (pSpawnInfo->weenie._bitfield & BitfieldIndex::BF_CORPSE)
+			continue;
+		if (pSpawnInfo->weenie._bitfield & BitfieldIndex::BF_PLAYER)
+			continue;
+		if (pSpawnInfo->physics.state & PhysicsState::MISSILE_PS)
+			continue;
+
+		if (pSpawnInfo->weenie._bitfield & BitfieldIndex::BF_DOOR)
+			pSpawn = new CBaseDoor();
+		else if (pSpawnInfo->weenie._type == ITEM_TYPE::TYPE_CREATURE)
+			pSpawn = new CBaseMonster();
+		else
+			pSpawn = new CPhysicsObj();
+
+		pSpawn->m_dwGUID = pSpawnInfo->dwGUID; // g_pWorld->GenerateGUID(eDynamicGUID);
+		pSpawn->m_miBaseModel = pSpawnInfo->appearance;
+		pSpawn->m_dwModel = pSpawnInfo->physics.setup_id;
+		pSpawn->m_dwAnimationSet = pSpawnInfo->physics.mtable_id;
+		pSpawn->m_dwSoundSet = pSpawnInfo->physics.stable_id;
+		pSpawn->m_dwEffectSet = pSpawnInfo->physics.phstable_id;
+		pSpawn->m_fScale = pSpawnInfo->physics.object_scale;
+		pSpawn->m_ItemType = pSpawnInfo->weenie._type;
+		pSpawn->m_strName = pSpawnInfo->weenie._name;
+		
+		pSpawn->m_Origin.landcell = pSpawnInfo->physics.pos.objcell_id;
+		pSpawn->m_Origin.x = pSpawnInfo->physics.pos.frame.m_fOrigin.x;
+		pSpawn->m_Origin.y = pSpawnInfo->physics.pos.frame.m_fOrigin.y;
+		pSpawn->m_Origin.z = pSpawnInfo->physics.pos.frame.m_fOrigin.z;
+		pSpawn->m_Angles.w = pSpawnInfo->physics.pos.frame.qw;
+		pSpawn->m_Angles.x = pSpawnInfo->physics.pos.frame.qx;
+		pSpawn->m_Angles.y = pSpawnInfo->physics.pos.frame.qy;
+		pSpawn->m_Angles.z = pSpawnInfo->physics.pos.frame.qz;
+
+		if (pSpawnInfo->physics.movement_buffer)
+		{
+			pSpawn->m_AnimOverrideData = pSpawnInfo->physics.movement_buffer;
+			pSpawn->m_AnimOverrideDataLen = pSpawnInfo->physics.movement_buffer_length;
+			pSpawn->m_AutonomousMovement = pSpawnInfo->physics.autonomous_movement;
+		}
+
+		g_pWorld->CreateEntity(pSpawn);
+	}
+}
+
+void CGameDatabase::LoadAerfalle()
+{
+	FILE *fp = fopen("aerfalle.dat", "rb");
+
+	if (fp)
+	{
+		fseek(fp, 0, SEEK_END);
+		unsigned int len = (unsigned)ftell(fp);
+		fseek(fp, 0, SEEK_SET);
+		BYTE *data = new BYTE[len];
+		fread(data, len, 1, fp);
+
+		BinaryReader reader(data, len);
+		unsigned int count = reader.ReadDWORD();
+
+		for (unsigned int i = 0; i < count; i++)
+		{
+			reader.ReadString();
+
+			CCapturedWorldObjectInfo *pMonsterInfo = new CCapturedWorldObjectInfo;
+
+			// make all lowercase and ignore spaces for searching purposes
+
+			DWORD a = reader.ReadDWORD(); // size of this
+			DWORD b = reader.ReadDWORD(); // 0xf745
+			pMonsterInfo->dwGUID = reader.ReadDWORD(); // GUID
+
+											   //if (dwGUID == 0xD851865B)
+											   //	__asm int 3;
+
+			reader.ReadBYTE();
+			BYTE numPalette = reader.ReadBYTE();
+			BYTE numTex = reader.ReadBYTE();
+			BYTE numModel = reader.ReadBYTE();
+
+			if (numPalette)
+			{
+				pMonsterInfo->appearance.dwBasePalette = reader.ReadPackedDWORD(); // actually packed, fix this
+				for (int j = 0; j < numPalette; j++)
+				{
+					DWORD replacement = reader.ReadPackedDWORD(); // actually packed, fix this
+					BYTE offset = reader.ReadBYTE();
+					BYTE range = reader.ReadBYTE();
+					pMonsterInfo->appearance.lPalettes.push_back(PaletteRpl(replacement, offset, range));
+				}
+			}
+
+			for (int j = 0; j < numTex; j++)
+			{
+				BYTE index = reader.ReadBYTE();
+				DWORD oldT = reader.ReadPackedDWORD();
+				DWORD newT = reader.ReadPackedDWORD();
+				pMonsterInfo->appearance.lTextures.push_back(TextureRpl(index, oldT, newT));
+			}
+
+
+			for (int j = 0; j < numModel; j++)
+			{
+				BYTE index = reader.ReadBYTE();
+				DWORD newM = reader.ReadPackedDWORD();
+				pMonsterInfo->appearance.lModels.push_back(ModelRpl(index, newM));
+			}
+
+			reader.ReadAlign();
+
+			pMonsterInfo->physics.Unpack(reader);
+			pMonsterInfo->weenie.Unpack(reader);
+
+			if (!reader.GetLastError())
+			{
+				m_CapturedAerfalleData.push_back(pMonsterInfo);
+			}
+			else
+			{
+				delete pMonsterInfo;
+				break;
+			}
+		}
+
+		fclose(fp);
+		delete[]data;
+	}
+}
+
+CCapturedWorldObjectInfo *CGameDatabase::GetRandomCapturedMonsterData()
+{
+	DWORD numMonsters = m_CapturedMonsterDataList.size();
+	if (numMonsters < 1)
+		return NULL;
+
+	int monster = RandomLong(0, numMonsters - 1);
+
+	return m_CapturedMonsterDataList[monster];
+}
+
+CCapturedWorldObjectInfo *CGameDatabase::GetCapturedMonsterData(const char *name)
+{
+	std::string searchName = name;
+	std::transform(searchName.begin(), searchName.end(), searchName.begin(), ::tolower);
+	searchName.erase(remove_if(searchName.begin(), searchName.end(), isspace), searchName.end());
+
+	std::map<std::string, CCapturedWorldObjectInfo *>::iterator i = m_CapturedMonsterData.find(searchName);
+
+	if (i == m_CapturedMonsterData.end())
+		return NULL;
+
+	return i->second;
+}
+
+void CGameDatabase::LoadCapturedMonsterData()
+{
+	FILE *fp = fopen("monsters.dat", "rb");
+
+	if (fp)
+	{
+		fseek(fp, 0, SEEK_END);
+		unsigned int len = (unsigned) ftell(fp);
+		fseek(fp, 0, SEEK_SET);
+		BYTE *data = new BYTE[len];
+		fread(data, len, 1, fp);
+
+		BinaryReader reader(data, len);
+		unsigned int count = reader.ReadDWORD();
+
+		for (unsigned int i = 0; i < count; i++)
+		{
+			CCapturedWorldObjectInfo *pMonsterInfo = new CCapturedWorldObjectInfo;
+			pMonsterInfo->m_ObjName = reader.ReadString();
+
+			std::transform(pMonsterInfo->m_ObjName.begin(), pMonsterInfo->m_ObjName.end(), pMonsterInfo->m_ObjName.begin(), ::tolower);
+			pMonsterInfo->m_ObjName.erase(remove_if(pMonsterInfo->m_ObjName.begin(), pMonsterInfo->m_ObjName.end(), isspace), pMonsterInfo->m_ObjName.end());
+
+			// make all lowercase and ignore spaces for searching purposes
+			
+			DWORD a = reader.ReadDWORD(); // size of this
+			DWORD b = reader.ReadDWORD(); // 0xf745
+			DWORD dwGUID = reader.ReadDWORD(); // GUID
+			
+			//if (dwGUID == 0xD851865B)
+			//	__asm int 3;
+
+			reader.ReadBYTE();
+			BYTE numPalette = reader.ReadBYTE();
+			BYTE numTex = reader.ReadBYTE();
+			BYTE numModel = reader.ReadBYTE();
+
+			if (numPalette)
+			{
+				pMonsterInfo->appearance.dwBasePalette = reader.ReadPackedDWORD(); // actually packed, fix this
+				for (int j = 0; j < numPalette; j++)
+				{
+					DWORD replacement = reader.ReadPackedDWORD(); // actually packed, fix this
+					BYTE offset = reader.ReadBYTE();
+					BYTE range = reader.ReadBYTE();
+					pMonsterInfo->appearance.lPalettes.push_back(PaletteRpl(replacement, offset, range));
+				}
+			}
+
+			for (int j = 0; j < numTex; j++)
+			{
+				BYTE index = reader.ReadBYTE();
+				DWORD oldT = reader.ReadPackedDWORD();
+				DWORD newT = reader.ReadPackedDWORD();
+				pMonsterInfo->appearance.lTextures.push_back(TextureRpl(index, oldT, newT));
+			}
+
+
+			for (int j = 0; j < numModel; j++)
+			{
+				BYTE index = reader.ReadBYTE();
+				DWORD newM = reader.ReadPackedDWORD();
+				pMonsterInfo->appearance.lModels.push_back(ModelRpl(index, newM));
+			}
+
+			reader.ReadAlign();
+
+			pMonsterInfo->physics.Unpack(reader);
+			pMonsterInfo->weenie.Unpack(reader);
+
+			if (!reader.GetLastError())
+			{
+				m_CapturedMonsterData.insert(std::pair<std::string, CCapturedWorldObjectInfo*>(pMonsterInfo->m_ObjName, pMonsterInfo));
+				
+				if (!(pMonsterInfo->weenie._bitfield & BitfieldIndex::BF_PLAYER))
+				{
+					m_CapturedMonsterDataList.push_back(pMonsterInfo);
+				}
+			}
+			else
+			{
+				delete pMonsterInfo;
+				break;
+			}
+		}
+
+		fclose(fp);
+		delete[]data;
+	}
 }
 
 DWORD ParseDWORDFromStringHex(const char *hex)
@@ -368,7 +643,7 @@ void CGameDatabase::LoadPortals()
 				portalCount++;
 			}
 
-			DEBUGOUT("Spawned %d portals.\r\n", portalCount);
+			LOG(World, Verbose, "Spawned %d portals.\n", portalCount);
 			delete Result;
 
 			if (portalCount > 0)

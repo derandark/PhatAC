@@ -19,14 +19,14 @@ CBaseDoor::CBaseDoor()
 	m_wTypeID = 0x19C;
 	m_wIcon = 0x1317;
 
-	m_dwModel = 0x0200027C;
+	m_dwModel = 0x0200027C; //0x19FF
 	m_dwSoundSet = 0x20000023;
 	m_dwEffectSet = 0x3400002B;
 	m_fScale = 1.0f;
 
-	m_VisFlags = VF_DOOR | VF_NORMAL;	//who the hell knows, collision related.
+	m_PhysicsState = HAS_PHYSICS_BSP_PS | PhysicsState::REPORT_COLLISIONS_PS;	//who the hell knows, collision related.
 	m_ItemType = TYPE_MISC;
-	m_Usability = m_Usability;
+	m_Usability = USEABLE_REMOTE;
 	m_UseDistance = USEDISTANCE_ANYWHERE;
 
 	m_dwAnimationSet = DOOR_ANIMSET;

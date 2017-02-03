@@ -3,8 +3,8 @@
 
 class CClientEvents;
 class CPacketController;
-class NetFood;
-class NetMeal;
+class BinaryWriter;
+class BinaryReader;
 typedef struct DungeonDesc_s DungeonDesc_t;
 
 class CClient : public CKillable
@@ -12,7 +12,7 @@ class CClient : public CKillable
 	friend class CClientEvents;
 
 public:
-	CClient(SOCKADDR_IN *, WORD slot, char *account);
+	CClient(SOCKADDR_IN *, WORD slot, char *account, int accessLevel);
 	~CClient();
 
 	void Think();
@@ -31,10 +31,12 @@ public:
 
 	void IncomingBlob(BlobPacket_s *);
 	void ProcessMessage(BYTE *data, DWORD length, WORD);
-	void SendMessage(NetFood*, WORD group, BOOL game_event = 0, BOOL del = 1);
+	void SendMessage(BinaryWriter*, WORD group, BOOL game_event = 0, BOOL del = 1);
 	void SendMessage(void *data, DWORD length, WORD group, BOOL game_event = 0);
 
 	CClientEvents* GetEvents() { return m_pEvents; }
+
+	int GetAccessLevel();
 
 private:
 	void UpdateLoginScreen();
@@ -42,7 +44,7 @@ private:
 	// Non-world events.
 	void EnterWorld();
 	void ExitWorld();
-	void CreateCharacter(NetMeal *);
+	void CreateCharacter(BinaryReader *);
 	void SendLandblock(DWORD dwFileID);
 	void SendLandcell(DWORD dwFileID);
 
@@ -75,6 +77,8 @@ private:
 		BOOL inworld; //Is the client in the world, or not?
 
 	} m_vars;
+
+	int m_AccessLevel;
 };
 
 

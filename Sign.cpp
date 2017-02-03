@@ -5,7 +5,7 @@
 #include "sign.h"
 
 //To send server text.
-#include "NetFood.h"
+#include "BinaryWriter.h"
 #include "ChatMsgs.h"
 
 //This is getting a bit redundant.
@@ -17,7 +17,7 @@ CBaseSign::CBaseSign()
 	m_dwModel = 0x02000610;
 	m_fScale = 1.0f;
 
-	m_VisFlags = VF_PLAYER | VF_SIGN | VF_NORMAL;
+	m_PhysicsState = PhysicsState::GRAVITY_PS | PhysicsState::IGNORE_COLLISIONS_PS | PhysicsState::REPORT_COLLISIONS_PS;
 
 	m_strName = "Sign";
 	m_wTypeID = 0x1139;
@@ -35,7 +35,7 @@ void CBaseSign::Use(CPhysicsObj *pEntity)
 {
 	if (pEntity->IsPlayer())
 	{
-		NetFood *ST = ServerText("You clicked a sign, but the code isn't done yet .. so too bad!", 1);
+		BinaryWriter *ST = ServerText("You clicked a sign, but the code isn't done yet .. so too bad!", 1);
 		((CBasePlayer *)pEntity)->SendMessage(ST->GetData(), ST->GetSize(), PRIVATE_MSG);
 		delete ST;
 	}

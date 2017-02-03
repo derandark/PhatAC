@@ -112,7 +112,7 @@ private:
 			lasttimeupdate = -1000.0; // g_pGlobals->Time();
 
 			lastloginsync = 0;
-			loginsyncs = -1;
+			loginsyncs = 0; // -1;
 
 			sequence = 1;
 			fragment_counter = 1;

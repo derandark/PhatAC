@@ -7,7 +7,7 @@
 //Network access.
 #include "Client.h"
 #include "ClientEvents.h"
-#include "NetFood.h"
+#include "BinaryWriter.h"
 #include "ObjectMsgs.h"
 
 //Database access.
@@ -39,7 +39,7 @@ CBasePlayer::CBasePlayer(CClient *pClient, DWORD dwGUID)
 
 	m_bStatSequence = 0;
 
-	m_VisFlags = VF_BUBBLES | VF_NOEDGEFALL | VF_PLAYER;
+	m_PhysicsState = PhysicsState::HIDDEN_PS | PhysicsState::IGNORE_COLLISIONS_PS | PhysicsState::EDGE_SLIDE_PS | PhysicsState::GRAVITY_PS;
 
 	// Human Female by Default
 
@@ -131,7 +131,7 @@ CBasePlayer::~CBasePlayer()
 
 void CBasePlayer::Precache()
 {
-	m_miBaseModel.wBasePalette = 0x7E;
+	m_miBaseModel.dwBasePalette = 0x7E;
 
 	m_miBaseModel.lPalettes.push_back(PaletteRpl(0x4A7, 0x00, 0x18));
 	m_miBaseModel.lPalettes.push_back(PaletteRpl(0x2F2, 0x18, 0x08));
@@ -186,7 +186,7 @@ void CBasePlayer::Precache()
 			}
 			if (!stricmp("human-envoy", desc.szWorldClass))
 			{
-				m_miBaseModel.wBasePalette = 0x7E;
+				m_miBaseModel.dwBasePalette = 0x7E;
 
 				m_miBaseModel.lPalettes.clear();
 				m_miBaseModel.lPalettes.push_back(PaletteRpl(0x2BA, 0x00, 0x18));
@@ -232,7 +232,7 @@ void CBasePlayer::Precache()
 			}
 		}
 
-		OutputConsole("Loaded player %s (%u)\r\n", m_strName.c_str(), m_wInstance);
+		LOG(Temp, Normal, "Loaded player %s (%u)\n", m_strName.c_str(), m_wInstance);
 	}
 
 	Container_InitContents(MAX_PLAYER_EQUIPMENT, MAX_PLAYER_INVENTORY, MAX_PLAYER_CONTAINERS);
@@ -324,7 +324,7 @@ void CBasePlayer::Precache()
 
 void CBasePlayer::EmitSoundUI(DWORD dwIndex, float fSpeed)
 {
-	NetFood SoundMsg;
+	BinaryWriter SoundMsg;
 	SoundMsg.WriteDWORD(0xF750);
 	SoundMsg.WriteDWORD(m_dwGUID);
 	SoundMsg.WriteDWORD(dwIndex);
@@ -351,7 +351,7 @@ DWORD CBasePlayer::GiveAttributeXP(eAttribute index, DWORD dwXP)
 		SendText(szNotice, 13);
 	}
 
-	NetFood UpdateAttribute;
+	BinaryWriter UpdateAttribute;
 
 	UpdateAttribute.WriteDWORD(0x241);
 	UpdateAttribute.WriteWORD(index);
@@ -384,7 +384,7 @@ DWORD CBasePlayer::GiveVitalXP(eVital index, DWORD dwXP)
 		SendText(szNotice, 13);
 	}
 
-	NetFood UpdateVital;
+	BinaryWriter UpdateVital;
 
 	UpdateVital.WriteDWORD(0x243);
 	UpdateVital.WriteWORD(index);
@@ -418,7 +418,7 @@ DWORD CBasePlayer::GiveSkillXP(eSkill index, DWORD dwXP)
 		SendText(szNotice, 13);
 	}
 
-	NetFood UpdateSkill;
+	BinaryWriter UpdateSkill;
 
 	UpdateSkill.WriteDWORD(0x23E);
 	UpdateSkill.WriteWORD(index);
@@ -444,7 +444,7 @@ void CBasePlayer::SendMessage(void *_data, DWORD _len, WORD _group, BOOL _event)
 		m_pClient->SendMessage(_data, _len, _group, _event);
 }
 
-void CBasePlayer::SendMessage(NetFood *_food, WORD _group, BOOL _event, BOOL del)
+void CBasePlayer::SendMessage(BinaryWriter *_food, WORD _group, BOOL _event, BOOL del)
 {
 	if (m_pClient)
 		m_pClient->SendMessage(_food, _group, _event, del);
@@ -461,14 +461,14 @@ void CBasePlayer::SendText(const char* szText, long lColor)
 	}
 }
 
-NetFood* CBasePlayer::GetModelData()
+BinaryWriter* CBasePlayer::GetModelData()
 {
 	//if ( !IsHuman() )
 	{
 		return CBaseMonster::GetModelData();
 	}
 
-	NetFood *MD = new NetFood;
+	BinaryWriter *MD = new BinaryWriter;
 
 	//Fake Zyrca:
 
@@ -540,14 +540,14 @@ void CBasePlayer::Save()
 
 void CBasePlayer::ChangeVIS(DWORD dwFlags)
 {
-	CBaseMonster::ChangeVIS(dwFlags | VF_PLAYER);
+	CBaseMonster::ChangeVIS(dwFlags | PhysicsState::GRAVITY_PS);
 }
 
 void CBasePlayer::EnterPortal()
 {
-	ChangeVIS(VF_BUBBLES | VF_NOEDGEFALL);
+	ChangeVIS(PhysicsState::HIDDEN_PS | PhysicsState::IGNORE_COLLISIONS_PS | PhysicsState::EDGE_SLIDE_PS);
 
-	NetFood EnterPortal;
+	BinaryWriter EnterPortal;
 	EnterPortal.WriteDWORD(0xF751);
 	EnterPortal.WriteDWORD(m_wNumPortals);
 	SendMessage(EnterPortal.GetData(), EnterPortal.GetSize(), OBJECT_MSG);
@@ -588,7 +588,7 @@ const char* CBasePlayer::GetTitleString()
 
 void CBasePlayer::MakeAware(CPhysicsObj *pEntity)
 {
-	NetFood *CM = pEntity->CreateMessage();
+	BinaryWriter *CM = pEntity->CreateMessage();
 	if (CM)
 		SendMessage(CM, 10);
 
@@ -601,7 +601,7 @@ void CBasePlayer::MakeAware(CPhysicsObj *pEntity)
 
 	while (iit != iend)
 	{
-		NetFood *CM = ((CPhysicsObj *)(*iit))->CreateMessage();
+		BinaryWriter *CM = ((CPhysicsObj *)(*iit))->CreateMessage();
 		if (CM)
 			SendMessage(CM, 10);
 
@@ -617,19 +617,19 @@ void CBasePlayer::LoginCharacter(void)
 	SC[1] = m_dwGUID;
 	SendMessage(SC, sizeof(SC), 10);
 
-	NetFood *LC = ::LoginCharacter(this);
+	BinaryWriter *LC = ::LoginCharacter(this);
 	SendMessage(LC->GetData(), LC->GetSize(), PRIVATE_MSG, TRUE);
 	delete LC;
 }
 
 void CBasePlayer::ExitPortal()
 {
-	ChangeVIS(VF_NORMAL | VF_NOEDGEFALL);
+	ChangeVIS(REPORT_COLLISIONS_PS | PhysicsState::EDGE_SLIDE_PS);
 }
 
 void CBasePlayer::UpdateEntity(CPhysicsObj *pEntity)
 {
-	NetFood *CO = pEntity->CreateMessage();
+	BinaryWriter *CO = pEntity->CreateMessage();
 	if (CO)
 	{
 		SendMessage(CO->GetData(), CO->GetSize(), OBJECT_MSG);
@@ -652,7 +652,7 @@ DWORD CBasePlayer::SetObjectStat(eObjectStat index, DWORD value)
 	if (index >= 0x100)
 		return NULL;
 
-	NetFood UpdateStatistic;
+	BinaryWriter UpdateStatistic;
 
 	UpdateStatistic.WriteDWORD(0x237);
 	UpdateStatistic.WriteBYTE(++m_bStatSequence);

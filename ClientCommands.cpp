@@ -12,6 +12,7 @@
 #include "World.h"
 #include "ChatMsgs.h"
 #include "Portal.h"
+#include "Database2.h"
 
 CommandMap CommandBase::m_mCommands;
 
@@ -68,7 +69,7 @@ CLIENT_COMMAND(spawndoor, "", "Spawns a door at your location.", BASIC_ACCESS)
 	return false;
 }
 
-CLIENT_COMMAND(global, "<text> [color=1]", "Displays text globally.", ADMIN_ACCESS)
+CLIENT_COMMAND(global, "<text> [color=1]", "Displays text globally.", BASIC_ACCESS)
 {
 	if (argc < 1)
 		return true;
@@ -233,7 +234,7 @@ CLIENT_COMMAND(spawndoors, "", "Spawns doors at holtburg west.", BASIC_ACCESS)
 	return 0;
 }
 
-CLIENT_COMMAND(vismode, "<mode>", "Changes your visual/physical attributes.", BASIC_ACCESS)
+CLIENT_COMMAND(vismode, "<mode>", "Changes your physics state.", BASIC_ACCESS)
 {
 	if (argc < 1)
 		return true;
@@ -252,6 +253,31 @@ CLIENT_COMMAND(spawnbael, "", "Spawns Bael'Zharon.", BASIC_ACCESS)
 	pBael->m_Origin.y = pPlayer->m_Origin.y;
 	pBael->m_Origin.z = pPlayer->m_Origin.z + 10;
 	g_pWorld->CreateEntity(pBael);
+
+	return false;
+}
+
+CLIENT_COMMAND(spawnrabbit, "", "Spawns a rabbit.", BASIC_ACCESS)
+{
+
+	CBaseMonster *pRabbit = new CBaseMonster();
+
+	pRabbit->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
+	pRabbit->m_Origin = pPlayer->m_Origin;
+	pRabbit->m_Origin.z += 20.0;
+
+	pRabbit->m_dwAnimationSet = 0x09000062;
+	pRabbit->m_dwSoundSet = 0x2000003D;
+	pRabbit->m_dwEffectSet = 0x3400002D;
+	pRabbit->m_dwModel = 0x0200047B;
+	pRabbit->m_fScale = 7.0f;
+
+	pRabbit->m_strName = "Big White Rabbit";
+
+	pRabbit->m_miBaseModel.SetBasePalette(0x01B4);
+	pRabbit->m_miBaseModel.ReplacePalette(0x09AA, 0x00, 0x00);
+
+	g_pWorld->CreateEntity(pRabbit);
 
 	return false;
 }
@@ -456,9 +482,13 @@ SERVER_COMMAND(kick, "<player name>", "Kicks the specified player.", ADMIN_ACCES
 		return true;
 
 	if (pPlayer)
-		OutputConsole("\"%s\" is using the kick command.\r\n", pPlayer->GetName());
+	{
+		LOG(Command, Normal, "\"%s\" is using the kick command.\n", pPlayer->GetName());
+	}
 	else
-		OutputConsole("Server is using the kick command.\r\n");
+	{
+		LOG(Command, Normal, "Server is using the kick command.\n");
+	}
 
 	CBasePlayer *pTarget = g_pWorld->FindPlayer(argv[0]);
 
@@ -470,7 +500,7 @@ SERVER_COMMAND(kick, "<player name>", "Kicks the specified player.", ADMIN_ACCES
 	return false;
 }
 
-CLIENT_COMMAND(test, "<index>", "Performs the specified test.", ADMIN_ACCESS)
+CLIENT_COMMAND(test, "<index>", "Performs the specified test.", BASIC_ACCESS)
 {
 	if (argc < 1)
 		return true;
@@ -497,7 +527,7 @@ CLIENT_COMMAND(test, "<index>", "Performs the specified test.", ADMIN_ACCESS)
 		pSpawn->m_Origin.z = z;
 		g_pWorld->CreateEntity(pSpawn);
 
-		NetFood* co = pSpawn->CreateMessage();
+		BinaryWriter* co = pSpawn->CreateMessage();
 		//OutputConsoleBytes(co->GetData(), co->GetSize());
 		delete co;
 
@@ -512,7 +542,7 @@ CLIENT_COMMAND(test, "<index>", "Performs the specified test.", ADMIN_ACCESS)
 		pSpawn->m_Origin.z = z;
 		g_pWorld->CreateEntity(pSpawn);
 
-		NetFood* co = pSpawn->CreateMessage();
+		BinaryWriter* co = pSpawn->CreateMessage();
 		//OutputConsoleBytes(co->GetData(), co->GetSize());
 		delete co;
 
@@ -527,7 +557,7 @@ CLIENT_COMMAND(test, "<index>", "Performs the specified test.", ADMIN_ACCESS)
 		pSpawn->m_Origin.z = z;
 		g_pWorld->CreateEntity(pSpawn);
 
-		NetFood* co = pSpawn->CreateMessage();
+		BinaryWriter* co = pSpawn->CreateMessage();
 		//OutputConsoleBytes(co->GetData(), co->GetSize());
 		delete co;
 
@@ -542,7 +572,7 @@ CLIENT_COMMAND(test, "<index>", "Performs the specified test.", ADMIN_ACCESS)
 		pSpawn->m_Origin.z = z;
 		g_pWorld->CreateEntity(pSpawn);
 
-		NetFood* co = pSpawn->CreateMessage();
+		BinaryWriter* co = pSpawn->CreateMessage();
 		//OutputConsoleBytes(co->GetData(), co->GetSize());
 		delete co;
 
@@ -984,7 +1014,7 @@ CLIENT_COMMAND(player, "<command>", "Player commands.", BASIC_ACCESS)
 	return false;
 }
 
-CLIENT_COMMAND(tabletest, "", "Performs a table test.", DUMMY_ACCESS)
+CLIENT_COMMAND(tabletest, "", "Performs a table test.", BASIC_ACCESS)
 {
 	if (argc < 1)
 		return true;
@@ -992,7 +1022,6 @@ CLIENT_COMMAND(tabletest, "", "Performs a table test.", DUMMY_ACCESS)
 	long value = atol(argv[0]);
 
 	pPlayer->SendText(csprintf("Level: %lu", GetAttributeXP(value)), 1);
-
 
 	return false;
 }
@@ -1011,10 +1040,186 @@ CLIENT_COMMAND(doomshard, "[palette=0xBF7]", "Spawns a doom shard.", BASIC_ACCES
 	pDoomShard->m_strName = "Doom Shard";
 	pDoomShard->m_Origin = pPlayer->m_Origin;
 
-	pDoomShard->m_miBaseModel.wBasePalette = 0xBEF;
+	pDoomShard->m_miBaseModel.dwBasePalette = 0xBEF;
 	pDoomShard->m_miBaseModel.lPalettes.push_back(PaletteRpl(palette, 0x00, 0x00));
 
 	g_pWorld->CreateEntity(pDoomShard);
+	return false;
+}
+
+CLIENT_COMMAND(spawnaerfalle, "", "Spawn aerfalle for testing if the data is available.", BASIC_ACCESS)
+{
+	// g_pGameDatabase->SpawnAerfalle();
+	return false;
+}
+
+CLIENT_COMMAND(players, "", "List the players logged in.", BASIC_ACCESS)
+{
+	PlayerMap *pPlayers = g_pWorld->GetPlayers();
+
+	pPlayer->SendText(csprintf("Players logged in (%u)", pPlayers->size()), 1);
+
+	for (auto& player : *pPlayers)
+	{
+		const char *playerName = player.second->m_strName.c_str();
+		const char *playerAccount = player.second->GetClient() ? player.second->GetClient()->GetAccount() : "";
+
+		if (pPlayer->GetClient() && pPlayer->GetClient()->GetAccessLevel() >= ADMIN_ACCESS)
+		{
+			pPlayer->SendText(csprintf("%s (%s)", playerName, playerAccount), 1);
+		}
+		else
+		{
+			pPlayer->SendText(playerName, 1);
+		}
+	}
+
+	return false;
+}
+
+CLIENT_COMMAND(spawn, "[name] [scale] [animate 0=no 1=yes]", "Spawns something by name (right now works for monsters, NPCs, players.)", BASIC_ACCESS)
+{
+	if (argc < 1)
+		return true;
+
+	CCapturedWorldObjectInfo *pMonsterInfo = g_pGameDatabase->GetCapturedMonsterData(argv[0]);
+
+	if (!pMonsterInfo)
+	{
+		pPlayer->SendText("Couldn't find that to spawn!", 1);
+		return false;
+	}
+
+	float fScale = 1.0f;
+	bool bAnimate = true;
+
+	if (argc >= 2)
+	{
+		fScale = atof(argv[1]);
+		if (fScale < 0.01)
+			fScale = 0.01f;
+		if (fScale > 1000.0)
+			fScale = 1000;
+	}
+
+	if (argc >= 3)
+	{
+		bAnimate = atoi(argv[2]) ? true : false;
+	}
+
+	CBaseMonster *pMonster = new CBaseMonster();
+	pMonster->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
+	pMonster->m_miBaseModel = pMonsterInfo->appearance;
+	pMonster->m_dwModel = pMonsterInfo->physics.setup_id;
+	pMonster->m_dwAnimationSet = pMonsterInfo->physics.mtable_id;
+	pMonster->m_dwSoundSet = pMonsterInfo->physics.stable_id;
+	pMonster->m_dwEffectSet = pMonsterInfo->physics.phstable_id;
+	pMonster->m_fScale = pMonsterInfo->physics.object_scale * fScale;
+	pMonster->m_ItemType = pMonsterInfo->weenie._type;
+	pMonster->m_strName = pMonsterInfo->weenie._name;
+
+	pMonster->m_Origin = pPlayer->m_Origin;
+
+	if (pMonsterInfo->physics.movement_buffer && bAnimate)
+	{
+		pMonster->m_AnimOverrideData = pMonsterInfo->physics.movement_buffer;
+		pMonster->m_AnimOverrideDataLen = pMonsterInfo->physics.movement_buffer_length;
+		pMonster->m_AutonomousMovement = pMonsterInfo->physics.autonomous_movement;
+	}
+
+	g_pWorld->CreateEntity(pMonster);
+	return false;
+}
+
+CLIENT_COMMAND(spawnlist, "[num to list]", "Lists spawnable objects.", BASIC_ACCESS)
+{
+	int num = 20;
+	if (argc >= 1)
+	{
+		num = atoi(argv[0]);
+		if (num < 0)
+			num = 0;
+		if (num >= 100)
+			num = 100;
+	}
+
+	while (num > 0)
+	{
+		CCapturedWorldObjectInfo *pMonsterInfo = g_pGameDatabase->GetRandomCapturedMonsterData();
+
+		if (!pMonsterInfo)
+		{
+			pPlayer->SendText("Couldn't find anything to spawn!", 1);
+			return false;
+		}
+
+		pPlayer->SendText(pMonsterInfo->weenie._name.c_str(), 1);
+		num--;
+	}
+	return false;
+}
+
+
+CLIENT_COMMAND(spawnrandom, "[num to spawn] [scale]", "Spawns random objects.", BASIC_ACCESS)
+{
+	if (argc < 1)
+		return true;
+
+	int num = atoi(argv[0]);
+	if (num < 0)
+		num = 0;
+	if (num >= 20)
+		num = 20;
+	
+	float fScale = 1.0f;
+	if (argc >= 2)
+	{
+		fScale = atof(argv[1]);
+		if (fScale < 0.01f)
+			fScale = 0.01f;
+		if (fScale >= 1000.0f)
+			fScale = 1000.0f;
+	}
+
+	int total = num;
+
+	while (num > 0)
+	{
+		CCapturedWorldObjectInfo *pMonsterInfo = g_pGameDatabase->GetRandomCapturedMonsterData();
+
+		if (!pMonsterInfo)
+		{
+			pPlayer->SendText("Couldn't find anything to spawn!", 1);
+			return false;
+		}
+
+		bool bAnimate = false;
+
+		CBaseMonster *pMonster = new CBaseMonster();
+		pMonster->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
+		pMonster->m_miBaseModel = pMonsterInfo->appearance;
+		pMonster->m_dwModel = pMonsterInfo->physics.setup_id;
+		pMonster->m_dwAnimationSet = pMonsterInfo->physics.mtable_id;
+		pMonster->m_dwSoundSet = pMonsterInfo->physics.stable_id;
+		pMonster->m_dwEffectSet = pMonsterInfo->physics.phstable_id;
+		pMonster->m_fScale = pMonsterInfo->physics.object_scale * fScale;
+		pMonster->m_ItemType = pMonsterInfo->weenie._type;
+		pMonster->m_strName = pMonsterInfo->weenie._name;
+
+		pMonster->m_Origin = pPlayer->m_Origin;
+		pMonster->m_Origin.x += RandomFloat(-3.0 * total, 3.0 * total);
+		pMonster->m_Origin.y += RandomFloat(-3.0 * total, 3.0 * total);
+
+		if (pMonsterInfo->physics.movement_buffer && bAnimate)
+		{
+			pMonster->m_AnimOverrideData = pMonsterInfo->physics.movement_buffer;
+			pMonster->m_AnimOverrideDataLen = pMonsterInfo->physics.movement_buffer_length;
+			pMonster->m_AutonomousMovement = pMonsterInfo->physics.autonomous_movement;
+		}
+
+		g_pWorld->CreateEntity(pMonster);
+		num--;
+	}
 	return false;
 }
 

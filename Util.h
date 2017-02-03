@@ -11,8 +11,8 @@
 
 #include <math.h>
 
-#include "NetFood.h"
-#include "NetMeal.h"
+#include "BinaryWriter.h"
+#include "BinaryReader.h"
 
 class CClient;
 struct BlockData;
@@ -30,9 +30,9 @@ extern void strtrim(char *szText); //specified buffer
 extern BOOL strmask(const char* szTest, const char* szMask);
 extern long fsize(FILE* fp); //returns a FILE* size
 
-extern void OutputConsole(const char* format, ...);
-extern void OutputConsoleBytes(void *_data, unsigned int len);
-#define DebugMe() OutputConsole("Debug me: %s %u\r\n", __FUNCTION__, __LINE__);
+extern std::string DebugBytesToString(void *data, unsigned int len);
+extern void _OutputConsole(const char* format, ...);
+#define _DebugMe() LOG(Temp, Normal, "Debug me: %s %u\n", __FUNCTION__, __LINE__);
 
 extern BOOL SaveConfigKey(const char* Key, DWORD value);
 extern BOOL SaveConfigKey(const char* Key, const char* value);

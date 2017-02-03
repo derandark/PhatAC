@@ -2,7 +2,7 @@
 #pragma once
 
 class CClient;
-class NetFood;
+class BinaryWriter;
 
 class CBasePlayer : public CBaseMonster
 {
@@ -25,7 +25,7 @@ public:
 	virtual const char *GetGenderString();
 	virtual const char *GetRaceString();
 	virtual const char *GetTitleString();
-	virtual NetFood *GetModelData();
+	virtual BinaryWriter *GetModelData();
 
 	virtual DWORD GiveAttributeXP(eAttribute index, DWORD dwXP);
 	virtual DWORD GiveVitalXP(eVital index, DWORD dwXP);
@@ -43,7 +43,7 @@ public:
 
 	//Network events.
 	virtual void SendMessage(void *_data, DWORD _len, WORD _group, BOOL _event = 0);
-	virtual void SendMessage(NetFood *_food, WORD _group, BOOL _event = 0, BOOL del = 1);
+	virtual void SendMessage(BinaryWriter *_food, WORD _group, BOOL _event = 0, BOOL del = 1);
 	virtual void EnterPortal();
 	virtual void ExitPortal();
 	virtual void LoginCharacter();

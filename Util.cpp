@@ -4,7 +4,6 @@
 
 static char szReadBuffer[600];
 static char szWriteBuffer[600];
-static char szConsoleBuffer[800];
 
 char* csprintf(const char *format, ...)
 {
@@ -35,40 +34,31 @@ char *timestamp()
 	return result;
 }
 
-void OutputConsoleBytes(void *_data, unsigned int len) {
 
+std::string DebugBytesToString(void *_data, unsigned int len)
+{
 	BYTE *data = (BYTE *)_data;
+
+	std::string strBytes;
 
 	for (unsigned int i = 0; i < len; i++)
 	{
-		OutputConsole("%02X", data[i]);
+		char temp[3];
+		sprintf(temp, "%02X", data[i]);
+		strBytes += temp;
 
 		if (!((i + 1) % 16))
-			OutputConsole("\r\n");
+			strBytes += "\n";
 		else
-			OutputConsole(" ");
+			strBytes += " ";
 	}
 
 	if (len % 16)
-		OutputConsole("\r\n");
-}
+	{
+		strBytes += "\n";
+	}
 
-void OutputConsole(const char *format, ...)
-{
-	szConsoleBuffer[0] = 0;
-	va_list args;
-
-	va_start(args, format);
-	_vsnprintf(szConsoleBuffer, 1024, format, args);
-	va_end(args);
-
-	HWND console = GetDlgItem(g_pGlobals->GetWindowHandle(), IDC_CONSOLE);
-	int len = (int)SendMessage(console, WM_GETTEXTLENGTH, 0, 0);
-	DWORD start, end;
-	SendMessage(console, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
-	SendMessage(console, EM_SETSEL, len, len);
-	SendMessage(console, EM_REPLACESEL, FALSE, (LPARAM)szConsoleBuffer);
-	SendMessage(console, EM_SETSEL, start, end);
+	return strBytes;
 }
 
 void MsgBox(UINT type, const char *format, ...)

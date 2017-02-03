@@ -1,8 +1,8 @@
 
 #include "StdAfx.h"
-#include "NetMeal.h"
+#include "BinaryReader.h"
 
-NetMeal::NetMeal(BYTE *pData, DWORD dwSize)
+BinaryReader::BinaryReader(BYTE *pData, DWORD dwSize)
 {
 	m_dwErrorCode = 0;
 
@@ -11,16 +11,7 @@ NetMeal::NetMeal(BYTE *pData, DWORD dwSize)
 	m_pEnd = m_pStart + dwSize;
 }
 
-NetMeal::NetMeal(BlobPacket_s *p)
-{
-	m_dwErrorCode = 0;
-
-	m_pData = p->data;
-	m_pStart = m_pData;
-	m_pEnd = m_pStart + p->header.wSize;
-}
-
-NetMeal::~NetMeal()
+BinaryReader::~BinaryReader()
 {
 	for (std::list<char *>::iterator it = m_lStrings.begin(); it != m_lStrings.end(); it++)
 		delete[](*it);
@@ -28,29 +19,30 @@ NetMeal::~NetMeal()
 	m_lStrings.clear();
 }
 
-void NetMeal::ReadAlign()
+void BinaryReader::ReadAlign()
 {
 	DWORD dwOffset = (DWORD)(m_pData - m_pStart);
 	if ((dwOffset % 4) != 0)
 		m_pData += (4 - (dwOffset % 4));
 }
 
-void *NetMeal::ReadArray(size_t size)
+void *BinaryReader::ReadArray(size_t size)
 {
+	static BYTE dummyData[10000];
+
 	void *retval = m_pData;
 	m_pData += size;
 
 	if (m_pData > m_pEnd)
 	{
-		OutputConsole("Error in reading array from data stream.\r\n");
 		m_dwErrorCode = 2;
-		return NULL;
+		return dummyData;
 	}
 
 	return retval;
 }
 
-char *NetMeal::ReadString(void)
+char *BinaryReader::ReadString(void)
 {
 	WORD wLen = ReadWORD();
 
@@ -71,39 +63,40 @@ char *NetMeal::ReadString(void)
 	return szString;
 }
 
-BYTE *NetMeal::GetDataStart()
+BYTE *BinaryReader::GetDataStart()
 {
 	return m_pStart;
 }
 
-BYTE *NetMeal::GetDataPtr()
+BYTE *BinaryReader::GetDataPtr()
 {
 	return m_pData;
 }
 
-BYTE *NetMeal::GetDataEnd()
+BYTE *BinaryReader::GetDataEnd()
 {
 	return m_pEnd;
 }
 
-DWORD NetMeal::GetDataLen()
+DWORD BinaryReader::GetDataLen()
 {
 	return (DWORD)(m_pEnd - m_pStart);
 }
 
-DWORD NetMeal::GetOffset()
+DWORD BinaryReader::GetOffset()
 {
 	return (DWORD)(m_pData - m_pStart);
 }
 
-DWORD NetMeal::GetLastError()
+DWORD BinaryReader::GetLastError()
 {
 	return m_dwErrorCode;
 }
 
-
-
-
+DWORD BinaryReader::GetDataRemaining()
+{
+	return m_pEnd - m_pData;
+}
 
 
 

@@ -50,7 +50,7 @@ struct PartEvent
 		case 0x15: memcpy(EventData, pbData, 20);	pbData += 20;	break; // 0x00, soundref, 3 floats
 		case 0x16: memcpy(EventData, pbData, 16);	pbData += 16;	break; // 0x00, 0x00, 2floats
 		default:
-			OutputConsole("Unknown animation event %08X!\r\n", EventID);
+			LOG(Animation, Warning, "Unknown animation event %08X!\n", EventID);
 		}
 
 		return pbData;

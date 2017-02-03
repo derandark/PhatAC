@@ -1,6 +1,8 @@
 
 #pragma once
 
+#pragma warning(disable: 4503)
+
 #define _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
 
@@ -12,8 +14,8 @@
 
 #include <windows.h>
 #include <commctrl.h>
-#include <stdio.h>
 #include <time.h>
+
 #include "zlib/zlib.h"
 #include "mysql/mysql.h"
 
@@ -24,6 +26,9 @@
 #include <hash_map>
 #include <string>
 #include <iterator>
+#include <algorithm>
+#include <stdint.h>
+#include <stdio.h>
 
 #include "resource.h"
 
@@ -33,8 +38,7 @@
 class CPhysicsObj;
 class CBasePlayer;
 
-#define DEBUGOUT OutputConsole
-
+#include "Logging.h"
 #include "Enums.h"
 #include "Common.h"
 #include "Math.h"

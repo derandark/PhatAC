@@ -4,7 +4,7 @@
 #include "Item.h"
 #include "LandBlock.h"
 
-#include "NetFood.h"
+#include "BinaryWriter.h"
 #include "World.h"
 
 CBaseItem::CBaseItem()
@@ -31,7 +31,7 @@ CBaseItem::CBaseItem()
 
 	m_strName = "Item";
 
-	m_VisFlags = VF_PLAYER | VF_SIGN | VF_HOLLOW;
+	m_PhysicsState = PhysicsState::GRAVITY_PS | PhysicsState::IGNORE_COLLISIONS_PS | PhysicsState::ETHEREAL_PS;
 }
 
 CBaseItem::~CBaseItem()
@@ -77,7 +77,7 @@ CPhysicsObj* CBaseItem::GetWorldWielder() {
 
 void CBaseItem::SetWorldContainer(DWORD dwCell, CPhysicsObj *pContainer)
 {
-	NetFood SWC;
+	BinaryWriter SWC;
 
 	SWC.WriteDWORD(0x22D);
 	SWC.WriteBYTE(++m_bContainSequence);
@@ -100,9 +100,11 @@ void CBaseItem::SetWorldContainer(DWORD dwCell, CPhysicsObj *pContainer)
 void CBaseItem::SetWorldWielder(DWORD dwCell, CPhysicsObj *pWielder)
 {
 	if (m_ItemType == TYPE_ARMOR)
-		DebugMe();
+	{
+		LOG(Object, Warning, "Trying to wield armor!\n");
+	}
 
-	NetFood SWW;
+	BinaryWriter SWW;
 
 	SWW.WriteDWORD(0x22D);
 	SWW.WriteBYTE(++m_bWieldSequence);
@@ -128,7 +130,7 @@ void CBaseItem::SetWorldWielder(DWORD dwCell, CPhysicsObj *pWielder)
 
 void CBaseItem::SetWorldCoverage(DWORD dwCell, DWORD dwCoverage)
 {
-	NetFood SC;
+	BinaryWriter SC;
 
 	SC.WriteDWORD(0x229);
 	SC.WriteBYTE(++m_bCoverSequence);
@@ -212,7 +214,7 @@ CAcademyCoat::CAcademyCoat()
 	m_dwCoverage1 = CA_LOWERARMS | CA_UPPERARMS | CA_GIRTH | CA_CHEST;
 	m_dwCoverage3 = 0x3C;
 
-	m_miBaseModel.wBasePalette = 0x7E;
+	m_miBaseModel.dwBasePalette = 0x7E;
 	m_miBaseModel.lPalettes.push_back(PaletteRpl(0x1083, 0x50, 0x0C));
 	m_miBaseModel.lPalettes.push_back(PaletteRpl(0x1083, 0x60, 0x0C));
 	m_miBaseModel.lPalettes.push_back(PaletteRpl(0x1083, 0x74, 0x0C));
@@ -244,7 +246,7 @@ CTuskerHelm::CTuskerHelm()
 	m_dwCoverage1 = CA_HEAD;
 	m_dwCoverage3 = 0x3C;
 
-	m_miBaseModel.wBasePalette = 0x7E;
+	m_miBaseModel.dwBasePalette = 0x7E;
 	m_miBaseModel.lPalettes.push_back(PaletteRpl(0x1083, 0x50, 0x0C));
 	m_miBaseModel.lPalettes.push_back(PaletteRpl(0x1083, 0x60, 0x0C));
 	m_miBaseModel.lPalettes.push_back(PaletteRpl(0x1083, 0x74, 0x0C));
@@ -262,7 +264,7 @@ CTuskerHelm::CTuskerHelm()
 
 	m_miBaseModel.lModels.push_back(ModelRpl(0x00, 0x474));
 
-	m_miArmorModel.wBasePalette = 0x7E;
+	m_miArmorModel.dwBasePalette = 0x7E;
 	m_miArmorModel.lPalettes.push_back(PaletteRpl(0x485, 0xF0, 0x0A));
 	m_miArmorModel.lPalettes.push_back(PaletteRpl(0x5EA, 0xFA, 0x06));
 
@@ -283,7 +285,7 @@ CBoboHelm::CBoboHelm()
 	m_dwCoverage1 = CA_HEAD;
 	m_dwCoverage3 = 0x3C;
 
-	m_miBaseModel.wBasePalette = 0x7E;
+	m_miBaseModel.dwBasePalette = 0x7E;
 	m_miBaseModel.lPalettes.push_back(PaletteRpl(0x1083, 0x50, 0x0C));
 	m_miBaseModel.lPalettes.push_back(PaletteRpl(0x1083, 0x60, 0x0C));
 	m_miBaseModel.lPalettes.push_back(PaletteRpl(0x1083, 0x74, 0x0C));
@@ -325,7 +327,7 @@ CPhatRobe::CPhatRobe()
 	m_wBurden = 200;
 	m_dwStats[eArmorLevel] = 1337;
 
-	m_miBaseModel.wBasePalette = 0x7E;
+	m_miBaseModel.dwBasePalette = 0x7E;
 	m_miBaseModel.lPalettes.push_back(PaletteRpl(0x1083, 0x50, 0x0C));
 	m_miBaseModel.lPalettes.push_back(PaletteRpl(0x1083, 0x60, 0x0C));
 	m_miBaseModel.lPalettes.push_back(PaletteRpl(0x1083, 0x74, 0x0C));
@@ -343,7 +345,7 @@ CPhatRobe::CPhatRobe()
 
 	m_miBaseModel.lModels.push_back(ModelRpl(0x00, 0x474));
 
-	m_miArmorModel.wBasePalette = 0x7E;
+	m_miArmorModel.dwBasePalette = 0x7E;
 	//0x1080 = white robe
 	m_miArmorModel.lPalettes.push_back(PaletteRpl(0xFFD, 0x28, 0x28));
 	m_miArmorModel.lPalettes.push_back(PaletteRpl(0xFFD, 0x50, 0x0C));

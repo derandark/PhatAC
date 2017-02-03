@@ -4,7 +4,7 @@
 #include "ObjectMsgs.h"
 #include "World.h"
 
-#include "NetFood.h"
+#include "BinaryWriter.h"
 #include "ChatMsgs.h"
 
 #include "Item.h"
@@ -46,12 +46,16 @@ CPhysicsObj::CPhysicsObj()
 
 	memset(&m_Origin, 0, sizeof(loc_t));
 	memset(&m_Angles, 0, sizeof(heading_t));
-	m_VisFlags = 0x00400C08;
+	m_PhysicsState = PhysicsState::EDGE_SLIDE_PS | PhysicsState::LIGHTING_ON_PS | PhysicsState::GRAVITY_PS | PhysicsState::REPORT_COLLISIONS_PS;
 	m_fNextThink = g_pGlobals->Time();
 	
 	m_Usability = USEABLE_NO;
 	m_UseDistance = -0.1f;
 	m_RadarVis = ShowAlways_RadarEnum;
+
+	m_AnimOverrideData = NULL;
+	m_AnimOverrideDataLen = 0;
+	m_AutonomousMovement = 0;
 
 	Movement_Init();
 	Animation_Init();
@@ -153,7 +157,7 @@ void CPhysicsObj::Identify(CPhysicsObj *pSource)
 	}
 }
 
-NetFood* CPhysicsObj::CreateMessage()
+BinaryWriter* CPhysicsObj::CreateMessage()
 {
 	return CreateObject(this);
 }
@@ -174,12 +178,12 @@ void CPhysicsObj::UpdateModel()
 	if (HasOwner())
 		return;
 
-	NetFood MU;
+	BinaryWriter MU;
 
 	MU.WriteDWORD(0xF625);
 	MU.WriteDWORD(m_dwGUID);
 
-	NetFood *MD = GetModelData();
+	BinaryWriter *MD = GetModelData();
 	MU.AppendData(MD->GetData(), MD->GetSize());
 	delete MD;
 
@@ -191,12 +195,12 @@ void CPhysicsObj::UpdateModel()
 
 }
 
-NetFood* CPhysicsObj::GetModelData()
+BinaryWriter* CPhysicsObj::GetModelData()
 {
 	ModelInfo miCurrentModel;// = m_miBaseModel;
 
 	miCurrentModel.bUnknown = m_miBaseModel.bUnknown;		//0x11
-	miCurrentModel.wBasePalette = m_miBaseModel.wBasePalette;
+	miCurrentModel.dwBasePalette = m_miBaseModel.dwBasePalette;
 	miCurrentModel.MergeData(&m_miBaseModel, NULL);
 
 	ItemVector vItems;
@@ -231,7 +235,7 @@ void CPhysicsObj::ChangeVIS(DWORD dwFlags)
 		g_pWorld->BroadcastPVS(GetLandcell(), UVF, sizeof(UVF));
 	}
 
-	m_VisFlags = dwFlags;
+	m_PhysicsState = dwFlags;
 }
 
 void CPhysicsObj::EmitSound(DWORD dwIndex, float fSpeed)
@@ -239,7 +243,7 @@ void CPhysicsObj::EmitSound(DWORD dwIndex, float fSpeed)
 	if (HasOwner())
 		return;
 
-	NetFood SoundMsg;
+	BinaryWriter SoundMsg;
 	SoundMsg.WriteDWORD(0xF750);
 	SoundMsg.WriteDWORD(m_dwGUID);
 	SoundMsg.WriteDWORD(dwIndex);
@@ -253,7 +257,7 @@ void CPhysicsObj::EmitEffect(DWORD dwIndex, float flScale)
 	if (HasOwner())
 		return;
 
-	NetFood EffectMsg;
+	BinaryWriter EffectMsg;
 	EffectMsg.WriteDWORD(0xF755);
 	EffectMsg.WriteDWORD(m_dwGUID);
 	EffectMsg.WriteDWORD(dwIndex);
@@ -267,7 +271,7 @@ void CPhysicsObj::SpeakLocal(const char* szText, long lColor)
 	if (HasOwner())
 		return;
 
-	NetFood *LC = LocalChat(szText, GetName(), m_dwGUID, lColor);
+	BinaryWriter *LC = LocalChat(szText, GetName(), m_dwGUID, lColor);
 	g_pWorld->BroadcastPVS(GetLandcell(), LC->GetData(), LC->GetSize(), PRIVATE_MSG);
 	delete LC;
 }
@@ -277,7 +281,7 @@ void CPhysicsObj::EmoteLocal(const char* szText)
 	if (HasOwner())
 		return;
 
-	NetFood *EL = EmoteChat(szText, GetName(), m_dwGUID);
+	BinaryWriter *EL = EmoteChat(szText, GetName(), m_dwGUID);
 	g_pWorld->BroadcastPVS(GetLandcell(), EL->GetData(), EL->GetSize(), PRIVATE_MSG);
 	delete EL;
 }
@@ -287,7 +291,7 @@ void CPhysicsObj::ActionLocal(const char* szText)
 	if (HasOwner())
 		return;
 
-	NetFood *AL = ActionChat(szText, GetName(), m_dwGUID);
+	BinaryWriter *AL = ActionChat(szText, GetName(), m_dwGUID);
 	g_pWorld->BroadcastPVS(GetLandcell(), AL->GetData(), AL->GetSize(), PRIVATE_MSG);
 	delete AL;
 }

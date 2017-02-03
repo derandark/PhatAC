@@ -22,6 +22,7 @@ class CLandBlock;
 #define ANIM_DROPITEM 6
 
 // Visual flags
+/*
 #define VF_JUMPLOCK (VisFlags_t)0x00800000 //no idea, jumping locks you to the north.
 #define VF_NOEDGEFALL (VisFlags_t)0x00400000 //falls off edges
 #define VF_FROZEN (VisFlags_t)0x00100000
@@ -34,6 +35,7 @@ class CLandBlock;
 #define VF_SIGN (VisFlags_t)0x00000010
 #define VF_NORMAL (VisFlags_t)0x00000008
 #define VF_HOLLOW (VisFlags_t)0x00000004 //haven't checked
+*/
 
 #define USEDISTANCE_ANYWHERE -0.1f
 
@@ -42,8 +44,6 @@ class CLandBlock;
 // 0x0100 = too cool, gives a sort of tumbling effect
 // 0x0020 = invisible/cloaked?
 // 0x0004 = can pass through objects?
-typedef DWORD VisFlags_t;
-
 typedef std::vector<CBaseItem *> ItemVector;
 
 /*
@@ -114,8 +114,8 @@ public:
 	void MakeLive(void);
 
 	//Generic network messages.
-	virtual NetFood* CreateMessage(void);
-	virtual NetFood* GetModelData(void);
+	virtual BinaryWriter* CreateMessage(void);
+	virtual BinaryWriter* GetModelData(void);
 	virtual void UpdateModel(void);
 
 	virtual void Spawn(void);
@@ -229,12 +229,15 @@ public:
 
 	loc_t m_Origin;
 	heading_t m_Angles;
-	VisFlags_t m_VisFlags;
+	DWORD m_PhysicsState;
 	double m_fNextThink;
 
 	DWORD m_dwStats[0x100];
 	ModelInfo m_miBaseModel;
 
+	BYTE *m_AnimOverrideData;
+	DWORD m_AnimOverrideDataLen;
+	DWORD m_AutonomousMovement;
 
 #include "container.h"
 #include "animate.h"

@@ -45,7 +45,7 @@ public:
 
 	void BroadcastPVS(DWORD dwCell, void *_data, DWORD _len, WORD _group = OBJECT_MSG, DWORD ignore_ent = 0, BOOL _game_event = 0);
 	void BroadcastGlobal(void *_data, DWORD _len, WORD _group, DWORD ignore_ent = 0, BOOL _game_event = 0);
-	void BroadcastGlobal(NetFood *food, WORD _group, DWORD ignore_ent = 0, BOOL _game_event = 0, BOOL del = 1);
+	void BroadcastGlobal(BinaryWriter *food, WORD _group, DWORD ignore_ent = 0, BOOL _game_event = 0, BOOL del = 1);
 
 	CLandBlock* GetLandblock(WORD wHeader);
 	loc_t FindDungeonDrop();
