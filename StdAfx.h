@@ -5,6 +5,7 @@
 
 #define _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
+#pragma warning( disable : 4503 ) //4503 can safely be ignored
 
 #ifdef _DEBUG
 #define CRTDBG_MAP_ALLOC

@@ -542,7 +542,14 @@ void CBasePlayer::ChangeVIS(DWORD dwFlags)
 {
 	CBaseMonster::ChangeVIS(dwFlags | PhysicsState::GRAVITY_PS);
 }
-
+void CBasePlayer::AddSpellByID(DWORD id)
+{
+	NetFood AddSpellToSpellbook;
+	AddSpellToSpellbook.WriteDWORD(0x02C1);
+	AddSpellToSpellbook.WriteDWORD(id);
+	AddSpellToSpellbook.WriteDWORD(0x0);
+	SendMessage(AddSpellToSpellbook.GetData(), AddSpellToSpellbook.GetSize(), EVENT_MSG,true);
+}
 void CBasePlayer::EnterPortal()
 {
 	ChangeVIS(PhysicsState::HIDDEN_PS | PhysicsState::IGNORE_COLLISIONS_PS | PhysicsState::EDGE_SLIDE_PS);
@@ -662,6 +669,24 @@ DWORD CBasePlayer::SetObjectStat(eObjectStat index, DWORD value)
 	SendMessage(&UpdateStatistic, PRIVATE_MSG, FALSE, FALSE);
 
 	return CPhysicsObj::SetObjectStat(index, value);
+}
+
+void CBasePlayer::SetLastAssessedItem(CPhysicsObj* obj)
+{
+	if (dynamic_cast<CBasePlayer*>(obj) == NULL) //FIXME: Cannot delete players, other objects not removable at this time??
+	ppoLastAssessedItem = obj;
+}
+std::string CBasePlayer::RemoveLastAssessedItem()
+{
+	if (ppoLastAssessedItem != 0) {
+		std::string name = ppoLastAssessedItem->GetName();
+		CLandBlock *pBlock = GetBlock();
+		ppoLastAssessedItem->RemoveMe();
+		pBlock->Destroy(ppoLastAssessedItem);
+		ppoLastAssessedItem = 0;
+		return name;
+	}
+	return "";
 }
 
 

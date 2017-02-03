@@ -42,7 +42,7 @@ void CPortal::Teleport(CPhysicsObj *pTarget)
 BOOL CPortal::ProximityThink()
 {
 	std::list<CPhysicsObj *> nearbyObjects;
-	g_pWorld->EnumNearby(this, 1.0f, &nearbyObjects);
+	g_pWorld->EnumNearby(this, 2.0f, &nearbyObjects);
 
 	for (std::list<CPhysicsObj *>::iterator i = nearbyObjects.begin(); i != nearbyObjects.end(); i++)
 	{

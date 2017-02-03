@@ -122,7 +122,19 @@ CLIENT_COMMAND(arwic, "", "Teleports you to Arwic.", BASIC_ACCESS)
 
 	return false;
 }
-
+CLIENT_COMMAND(removethis, "", "Remove Item", BASIC_ACCESS)
+{
+	std::string itemRemoved = pPlayer->RemoveLastAssessedItem();
+	if (itemRemoved != "") {
+		pPlayer->SendText(std::string("Removed Item: ").append(itemRemoved).c_str(),1);
+	}
+	else
+	{
+		pPlayer->SendText(std::string("Please assess the thing you want to remove!").append(itemRemoved).c_str(), 1);
+		return true;
+	}
+	return false;
+}
 CLIENT_COMMAND(tele, "<player name>", "Teleports you to a player.", BASIC_ACCESS)
 {
 	if (argc < 1)
@@ -140,7 +152,74 @@ CLIENT_COMMAND(tele, "<player name>", "Teleports you to a player.", BASIC_ACCESS
 
 	return false;
 }
+CLIENT_COMMAND(teleall, "<target>", "Teleports all players target. If no target specified, teleports to you.", BASIC_ACCESS)
+{
+	CBasePlayer* target;
+	if (argc < 1)
+		target = pPlayer;
+	else {
+		target = g_pWorld->FindPlayer(argv[0]);
+		if (target == NULL)
+		{
+			pPlayer->SendText("Invalid target!",1);
+			return true;
+		}
+	}
+	PlayerMap* map = g_pWorld->GetPlayers();
+	PlayerMap::iterator pit = map->begin();
+	PlayerMap::iterator pend = map->end();
 
+	//This is probably really bad..
+	bool teleportedOne = false;
+	while (pit != pend)
+	{
+		CBasePlayer *them = pit->second;
+
+		if (them != target)
+		{
+			teleportedOne = true;
+			pPlayer->SendText(std::string("Teleported: ").append(them->GetName()).c_str(), 1);
+			them->Movement_Teleport(target->m_Origin, target->m_Angles);
+			them->SendText(std::string("Teleported by: ").append(pPlayer->GetName()).c_str(), 1);
+		}
+
+		pit++;
+	}
+	if (teleportedOne)
+		return false;
+	else
+	{
+		pPlayer->SendText("Didn't teleport anyone! Nobody on server?",1);
+	}
+	return true;
+}
+CLIENT_COMMAND(teletown, "<town name>", "Teleports you to a town.", BASIC_ACCESS)
+{
+	if (argc == 0) {
+		pPlayer->SendText("Your teleporting choices are:", 1);
+		pPlayer->SendText(g_pWorld->GetTeleportList().c_str(), 1);
+		return true;
+	}
+	std::string cmdString = argv[0];
+	for (int i = 1; i < argc; i++)
+	{
+		cmdString.append(" ");
+		cmdString.append(argv[i]);
+	}
+
+	TeleTownList_s var = g_pWorld->GetTeleportLocation(cmdString);
+	if (var.m_teleString != "")
+	{
+		pPlayer->SendText(std::string("Portaling To: ").append(var.m_teleString).c_str(), 1);
+		pPlayer->Movement_Teleport(var.loc, var.heading);
+		return false;
+	}
+	else
+		pPlayer->SendText("Town Not Found! Try again...", 1);
+
+	return true;
+
+}
 CLIENT_COMMAND(teleto, "<coords>", "Teleports you to coordinates.", BASIC_ACCESS)
 {
 	if (argc < 2)
@@ -500,6 +579,19 @@ SERVER_COMMAND(kick, "<player name>", "Kicks the specified player.", ADMIN_ACCES
 	return false;
 }
 
+/*
+CLIENT_COMMAND(AddSpellByID, "id", "Adds a spell by ID", ADMIN_ACCESS)
+{
+	if (argc < 1)
+		return true;
+	
+	int id = atoi(argv[0]);
+	pPlayer->AddSpellByID(id);
+	
+	return false;
+}
+*/
+
 CLIENT_COMMAND(test, "<index>", "Performs the specified test.", BASIC_ACCESS)
 {
 	if (argc < 1)
@@ -621,7 +713,35 @@ CLIENT_COMMAND(animation, "<index> [speed=1]", "Plays a primary animation.", BAS
 
 	return false;
 }
+CLIENT_COMMAND(setmodel, "<model>", "Allows you to set your model", BASIC_ACCESS)
+{
+	if (argc < 1)
+		return true;
 
+	WORD wIndex = atoi(argv[0]);
+
+	pPlayer->m_dwModel = 0x02000000 + wIndex;
+
+	return false;
+}
+CLIENT_COMMAND(invisible, "", "Go Invisible", BASIC_ACCESS)
+{
+
+	WORD wIndex = 160;
+	float fSpeed = (argc >= 2) ? (float)atof(argv[1]) : 1.0f;
+	float fDelay = 0.5f;
+	pPlayer->Animation_PlayPrimary(wIndex, fSpeed, fDelay);
+	return false;
+}
+CLIENT_COMMAND(visible, "", "Go Visible", BASIC_ACCESS)
+{
+
+	WORD wIndex = 161;
+	float fSpeed = (argc >= 2) ? (float)atof(argv[1]) : 1.0f;
+	float fDelay = 0.5f;
+	pPlayer->Animation_PlayPrimary(wIndex, fSpeed, fDelay);
+	return false;
+}
 CLIENT_COMMAND(motion, "<index> [speed=1]", "Plays a sequenced animation.", BASIC_ACCESS)
 {
 	if (argc < 1)
@@ -1047,9 +1167,9 @@ CLIENT_COMMAND(doomshard, "[palette=0xBF7]", "Spawns a doom shard.", BASIC_ACCES
 	return false;
 }
 
-CLIENT_COMMAND(spawnaerfalle, "", "Spawn aerfalle for testing if the data is available.", BASIC_ACCESS)
+CLIENT_COMMAND(spawnaerfalle, "", "Spawn aerfalle for testing if the data is available.", ADMIN_ACCESS)
 {
-	// g_pGameDatabase->SpawnAerfalle();
+	g_pGameDatabase->SpawnAerfalle();
 	return false;
 }
 

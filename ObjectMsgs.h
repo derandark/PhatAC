@@ -14,3 +14,4 @@ extern BinaryWriter *InventoryEquip(DWORD dwItemID, DWORD dwCoverage); //0x00000
 extern BinaryWriter *InventoryMove(DWORD dwItemID, DWORD dwContainerID, DWORD dwSlot, DWORD dwType); //0x00000022
 extern BinaryWriter *InventoryDrop(DWORD dwItemID); //0x0000019A
 extern BinaryWriter *MoveUpdate(CPhysicsObj *pEntity);		//0x0000F748
+

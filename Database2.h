@@ -142,8 +142,10 @@ protected:
 
 	void LoadPortals();
 	void LoadAerfalle();
-	void LoadCapturedMonsterData();
-	
+	void LoadCapturedMonsterData();	
+	void LoadMonsterTemplates();
+	void LoadTeleTownList();
+
 	bool m_bLoadedPortals;
 
 	std::list<CCapturedWorldObjectInfo *> m_CapturedAerfalleData;
