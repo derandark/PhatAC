@@ -3,10 +3,6 @@
 #include "PhysicsObj.h"
 #include "Lifestone.h"
 
-#define DOOR_ANIMSET		0x09000023
-#define DOOR_OPEN			0x0B
-#define DOOR_CLOSED			0x0C
-
 CBaseLifestone::CBaseLifestone()
 {
 	m_wTypeID = 0x1FD;
