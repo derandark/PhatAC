@@ -2,6 +2,62 @@
 #pragma once
 #include <math.h>
 
+#pragma pack(push, 1)
+typedef struct loc_s
+{
+	loc_s() {
+		landcell = 0;
+		x = 0;
+		y = 0;
+		z = 0;
+	}
+	loc_s(DWORD _landcell, float _x, float _y, float _z) {
+		landcell = _landcell;
+		x = _x;
+		y = _y;
+		z = _z;
+	}
+
+	//inline Vector2D operator/(vec_t fl) const { return Vector2D(x/fl, y/fl); }
+	DWORD landcell;
+	float x;
+	float y;
+	float z;
+} loc_t;
+#pragma pack(pop)
+
+inline bool operator !(const loc_t &v) {
+	return !v.landcell ? true : false;
+}
+
+#pragma pack(push, 1)
+typedef struct heading_s
+{
+	heading_s() {
+		w = 1;
+		x = 0;
+		y = 0;
+		z = 0;
+	}
+	heading_s(float _w, float _x, float _y, float _z) {
+		w = _w;
+		x = _x;
+		y = _y;
+		z = _z;
+	}
+	float w;
+	float x;
+	float y;
+	float z;
+} heading_t;
+#pragma pack(pop)
+
+typedef struct placement_s
+{
+	loc_t origin;
+	heading_t angles;
+} placement_t;
+
 extern DWORD RandomDWORD(DWORD min, DWORD max);
 extern long RandomLong(long min, long max);
 extern double RandomDouble(double min, double max);

@@ -2,6 +2,8 @@
 
 #include "BinaryReader.h"
 
+// All of this is temporary.
+
 class RestrictionDB
 {
 public:
@@ -54,6 +56,48 @@ public:
 	uint32_t _cooldown_id;
 	double _cooldown_duration;
 	uint32_t _pet_owner;
+
+	PublicWeenieDesc()
+	{
+		_wcid = 0;
+	    _iconID = 0;
+		_type = (ITEM_TYPE)0;
+		_bitfield = 0;
+		_itemsCapacity = 0;
+		_containersCapacity = 0;
+		_ammoType = (AMMO_TYPE)0;
+		_value = 0;
+		 _useability = (ITEM_USEABLE)0;
+		 _useRadius = 0;
+		_targetType = (ITEM_TYPE)0;
+		_effects = 0;
+		_combatUse = 0;
+		_structure = 0;
+		_maxStructure = 0;
+		_stackSize = 0;
+		_maxStackSize = 0;
+		_containerID = 0;
+		_wielderID = 0;
+		_valid_locations = 0;
+		_location = 0;
+		_priority = 0;
+		_blipColor = 0;
+		 _radar_enum = (RadarEnum)0;
+		_pscript = 0;
+		 _workmanship = 0;
+		_burden = 0;
+		_spellID = 0;
+		_house_owner_iid = 0;
+		_hook_item_types = 0;
+		_monarch = 0;
+		_hook_type = (ITEM_TYPE)0;
+		_iconOverlayID = 0;
+		_iconUnderlayID = 0;
+		_material_type = (MaterialType)0;
+		_cooldown_id = 0;
+		_cooldown_duration = 0;
+		_pet_owner = 0;
+	}
 
 	void Unpack(BinaryReader &binaryReader) {
 		PublicWeenieDesc &newObj = *this;
@@ -177,6 +221,16 @@ public:
 
 		if ((newObj.header & (uint32_t)PublicWeenieDescPackHeader::PWD_Packed_HouseRestrictions) != 0) {
 			// TODO: Read here once you get RestrictedDB read finished
+			binaryReader.ReadUInt32();
+			binaryReader.ReadUInt32();
+			binaryReader.ReadUInt32();
+			WORD count = binaryReader.ReadUInt16();
+			binaryReader.ReadUInt16();
+			for (int i = 0; i < count; i++)
+			{
+				binaryReader.ReadUInt32();
+				binaryReader.ReadUInt32();
+			}
 		}
 
 		if ((newObj.header & (uint32_t)PublicWeenieDescPackHeader::PWD_Packed_HookItemTypes) != 0) {

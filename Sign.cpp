@@ -36,7 +36,7 @@ void CBaseSign::Use(CPhysicsObj *pEntity)
 	if (pEntity->IsPlayer())
 	{
 		BinaryWriter *ST = ServerText("You clicked a sign, but the code isn't done yet .. so too bad!", 1);
-		((CBasePlayer *)pEntity)->SendMessage(ST->GetData(), ST->GetSize(), PRIVATE_MSG);
+		((CBasePlayer *)pEntity)->SendNetMessage(ST->GetData(), ST->GetSize(), PRIVATE_MSG);
 		delete ST;
 	}
 }

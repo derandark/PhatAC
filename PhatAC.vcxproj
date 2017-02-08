@@ -105,6 +105,8 @@
     <ClCompile Include="Animate.cpp" />
     <ClCompile Include="Attributes.cpp" />
     <ClCompile Include="Database2.cpp" />
+    <ClCompile Include="GameMode.cpp" />
+    <ClCompile Include="Lifestone.cpp" />
     <ClCompile Include="Logging.cpp" />
     <ClCompile Include="PhysicsObj.cpp" />
     <ClCompile Include="CharacterDatabase.cpp" />
@@ -165,7 +167,10 @@
     <ClInclude Include="Attributes.h" />
     <ClInclude Include="Database2.h" />
     <ClInclude Include="Enums.h" />
+    <ClInclude Include="GameMode.h" />
+    <ClInclude Include="Lifestone.h" />
     <ClInclude Include="Logging.h" />
+    <ClInclude Include="NetworkDefs.h" />
     <ClInclude Include="PhysicsDesc.h" />
     <ClInclude Include="PhysicsObj.h" />
     <ClInclude Include="CharacterDatabase.h" />

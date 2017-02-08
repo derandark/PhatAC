@@ -43,22 +43,28 @@ BOOL ValidAccountText(const char *account, const char *password)
 
 extern DWORD g_dwMagicNumber;
 
-BOOL CAccountDatabase::CheckAccount(const char *account, const char *password, int *accessLevel)
+BOOL CAccountDatabase::CheckAccount(const char *account, const char *password, int *accessLevel, std::string& actualAccount)
 {
+	// This is all garbage... garbage.. and we'll be wiped as soon as possible.
+	// Just trying to make things work for the time being.
+
 	*accessLevel = BASIC_ACCESS;
 
 	std::string temp;
-	if (!ValidAccountText(account, password))
+	if (!ValidAccountText(account, password) || !_stricmp(account, "username"))
 	{
 		LOG(Database, Normal, "Invalid characters in account/password! Username: %s Password: %s\n", account, password);
 		// return FALSE;
 
 		temp = csprintf("anonymous%d", RandomLong(0, 999999999));
 		account = temp.c_str();
+		password = temp.c_str();
 	}
 
+	actualAccount = account;
+
 	char szCorrectPassword[50];
-	if (!stricmp(account, "admin"))
+	if (!_stricmp(account, "admin"))
 	{
 		_snprintf(szCorrectPassword, 50, "%06lu", g_dwMagicNumber);
 		if (!strcmp(password, szCorrectPassword))
@@ -66,6 +72,8 @@ BOOL CAccountDatabase::CheckAccount(const char *account, const char *password, i
 			*accessLevel = ADMIN_ACCESS;
 			return TRUE;
 		}
+
+		return FALSE;
 	}
 
 	char *accountlwr = _strlwr(_strdup(account));
@@ -100,8 +108,13 @@ BOOL CAccountDatabase::CheckAccount(const char *account, const char *password, i
 
 	// Bad pasword or non-existent account, create a random one instead until we change this whole system.
 	std::string newAccount = bMakeRandom ? csprintf("anonymous%d", RandomLong(0, 999999999)) : account;
+	
+	actualAccount = newAccount;
 
 	accountlwr = _strlwr(_strdup(newAccount.c_str()));
+	if (bMakeRandom)
+		password = accountlwr;
+
 	LOG(Database, Normal, "Creating new account %s:%s\n", accountlwr, password);
 	command = csprintf("INSERT INTO Accounts (Username, Password) VALUES (\'%s\', \'%s\');", accountlwr, password);
 

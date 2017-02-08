@@ -3,6 +3,8 @@
 
 #include "BinaryReader.h"
 
+// All of this is temporary.
+
 class Vector3
 {
 public:
@@ -78,22 +80,22 @@ class PhysicsDesc
 {
 public:
 	enum PhysicsDescInfo {
-		CSetup = (1 << 0),
-		MTABLE = (1 << 1),
-		VELOCITY = (1 << 2),
-		ACCELERATION = (1 << 3),
+		CSetup = (1 << 0), // 0x1
+		MTABLE = (1 << 1), // 0x2
+		VELOCITY = (1 << 2), // 0x4
+		ACCELERATION = (1 << 3), // 0x8
 		OMEGA = (1 << 4), // 0x10
-		PARENT = (1 << 5),
-		CHILDREN = (1 << 6),
-		OBJSCALE = (1 << 7),
+		PARENT = (1 << 5), // 0x20
+		CHILDREN = (1 << 6), // 0x40
+		OBJSCALE = (1 << 7), // 0x80
 		FRICTION = (1 << 8), // 0x100
-		ELASTICITY = (1 << 9),
-		TIMESTAMPS = (1 << 10),
-		STABLE = (1 << 11),
+		ELASTICITY = (1 << 9), // 0x200
+		TIMESTAMPS = (1 << 10), // 0x400
+		STABLE = (1 << 11), // 0x800
 		PETABLE = (1 << 12), // 0x1000
-		DEFAULT_SCRIPT = (1 << 13),
-		DEFAULT_SCRIPT_INTENSITY = (1 << 14),
-		POSITION = (1 << 15),
+		DEFAULT_SCRIPT = (1 << 13), // 0x2000
+		DEFAULT_SCRIPT_INTENSITY = (1 << 14), // 0x4000
+		POSITION = (1 << 15), // 0x8000
 		MOVEMENT = (1 << 16), // 0x10000
 		ANIMFRAME_ID = (1 << 17), // 0x20000
 		TRANSLUCENCY = (1 << 18) // 0x40000

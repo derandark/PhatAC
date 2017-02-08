@@ -117,20 +117,17 @@ void CGlobals::ResetPackets()
 
 double CGlobals::Time()
 {
-	QueryPerformanceCounter((LARGE_INTEGER *)&m_CounterTime);
-
-	m_fTime = (m_CounterTime - m_CounterStart) / (double)m_CounterFreq;
-	m_fTime += 1200.0;
-
 	return m_fTime;
 }
+
+double g_TimeAdjustment = 0;
 
 void CGlobals::Update()
 {
 	QueryPerformanceCounter((LARGE_INTEGER *)&m_CounterTime);
 
 	m_fTime = (m_CounterTime - m_CounterStart) / (double)m_CounterFreq;
-	m_fTime += 1200.0;
+	m_fTime += 24000.0 + g_TimeAdjustment;
 }
 
 

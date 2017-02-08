@@ -19,6 +19,8 @@ public:
 
 	virtual BOOL IsMonster() { return TRUE; }
 
+	virtual void PostSpawn();
+
 	virtual DWORD GiveAttributeXP(eAttribute index, DWORD dwXP);
 	virtual DWORD GiveVitalXP(eVital index, DWORD dwXP);
 	virtual DWORD GiveSkillXP(eSkill index, DWORD dwXP);

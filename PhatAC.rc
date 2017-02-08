@@ -127,8 +127,8 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,192,160,50,14
     CONTROL         IDB_BANNER,IDC_BANNER,"Static",SS_BITMAP | WS_BORDER,4,4,241,112
-    LTEXT           "Written and developed by Sean ""Pea"" H.\n\nSpecial thanks to Lane, Loap, and all of #acdev.",IDC_CREDITS,8,120,234,32,0,WS_EX_TRANSPARENT
-    DEFPUSHBUTTON   "Author Website",IDC_WEBSITE,8,160,76,14
+    LTEXT           "Written and developed by ""Pea""\n\nSpecial thanks to Lane, Loap, and all of #acdev.",IDC_CREDITS,8,120,234,32,0,WS_EX_TRANSPARENT
+    DEFPUSHBUTTON   "PhatAC Discord",IDC_WEBSITE,8,160,76,14
 END
 
 

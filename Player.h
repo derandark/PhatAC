@@ -44,23 +44,21 @@ public:
 	void AddSpellByID(DWORD id);
 
 	//Network events.
-	virtual void SendMessage(void *_data, DWORD _len, WORD _group, BOOL _event = 0);
-	virtual void SendMessage(BinaryWriter *_food, WORD _group, BOOL _event = 0, BOOL del = 1);
+	virtual void SendNetMessage(void *_data, DWORD _len, WORD _group, BOOL _event = 0) override;
+	virtual void SendNetMessage(BinaryWriter *_food, WORD _group, BOOL _event = 0, BOOL del = 1) override;
 	virtual void EnterPortal();
 	virtual void ExitPortal();
 	virtual void LoginCharacter();
 	virtual void UpdateEntity(CPhysicsObj *);
 
 	virtual BOOL IsPlayer() { return TRUE; }
-	virtual BOOL HasRadarDot() { return TRUE; }
-	virtual BYTE GetRadarColor() { return 9; }
 
 	virtual DWORD GetObjectStat(eObjectStat index);
 	virtual DWORD SetObjectStat(eObjectStat index, DWORD value);
 
 	//cmoski -- remove last assessed item
-	void SetLastAssessedItem(CPhysicsObj * obj);
-	std::string RemoveLastAssessedItem();
+	void SetLastAssessed(DWORD guid);
+	std::string RemoveLastAssessed();
 	//
 
 	void EmitSoundUI(DWORD dwIndex, float fSpeed);
@@ -72,9 +70,10 @@ public:
 
 	BOOL IsHuman();
 
+	DWORD m_LastAssessed;
+
 protected:
 	CClient *m_pClient;
-	CPhysicsObj* ppoLastAssessedItem = 0;
 	BYTE m_bStatSequence;
 };
 

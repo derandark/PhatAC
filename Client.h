@@ -31,8 +31,8 @@ public:
 
 	void IncomingBlob(BlobPacket_s *);
 	void ProcessMessage(BYTE *data, DWORD length, WORD);
-	void SendMessage(BinaryWriter*, WORD group, BOOL game_event = 0, BOOL del = 1);
-	void SendMessage(void *data, DWORD length, WORD group, BOOL game_event = 0);
+	void SendNetMessage(BinaryWriter*, WORD group, BOOL game_event = 0, BOOL del = 1);
+	void SendNetMessage(void *data, DWORD length, WORD group, BOOL game_event = 0);
 
 	CClientEvents* GetEvents() { return m_pEvents; }
 

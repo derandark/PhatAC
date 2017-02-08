@@ -78,7 +78,7 @@ DWORD CPacketController::GetLastSequence(void)
 	return (--m_out.sequence);
 }
 
-BOOL CPacketController::SendMessage(void *data, DWORD length, WORD group)
+BOOL CPacketController::SendNetMessage(void *data, DWORD length, WORD group)
 {
 	DWORD dwRPC = 0x80000000;
 	if (length >= 4)
@@ -271,10 +271,8 @@ void CPacketController::ThinkOutbound(void)
 		if ((m_out.lastflush + 3.0f) < time)
 			FlushPeerCache();
 
-		/*
 		if ((m_out.lasttimeupdate + 3.0f) < time)
 			UpdatePeerTime();
-			*/
 
 		if (!m_out.fragqueue.empty())
 			FlushFragments();
@@ -335,16 +333,14 @@ void CPacketController::FlushPeerCache()
 
 void CPacketController::UpdatePeerTime()
 {
-	/* Piggy back instead
-
 	m_out.lasttimeupdate = g_pGlobals->Time();
-	//
+
 	CREATEBLOB(tupdate, sizeof(double));
 	*((double *)tupdate->data) = g_pGlobals->Time();
 
 	BlobHeader_s *header = &tupdate->header;
 
-	header->dwSequence = m_out.sequence;
+	header->dwSequence = GetNextSequence();
 	header->dwFlags = BT_TIMEUPDATE | BT_USES_CRC;
 	header->dwCRC = 0;
 	header->wRecID = g_pNetwork->GetServerID();
@@ -356,11 +352,11 @@ void CPacketController::UpdatePeerTime()
 
 	//Off you go.
 	g_pNetwork->SendPacket(m_pPeer, tupdate, BLOBLEN(tupdate));
+	// g_pNetwork->SendConnectlessBlob(m_pPeer, tupdate, BT_TIMEUPDATE, m_out.sequence, GetElapsedTime());
+
 
 	//Cache for later use.
-	header->dwCRC = dwXOR;
 	m_out.blobcache.push_back(tupdate);
-	*/
 }
 
 WORD CPacketController::GetElapsedTime()

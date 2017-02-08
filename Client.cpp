@@ -116,7 +116,7 @@ void CClient::WorldThink()
 			EraseFile.WriteDWORD( 0xF0EAFFFF );
 			EraseFile.WriteDWORD( 0xEEE9FFFF );
 			EraseFile.WriteDWORD( 0xEFE9FFFF );
-			SendMessage(EraseFile.GetData(), EraseFile.GetSize(), EVENT_MSG);
+			SendNetMessage(EraseFile.GetData(), EraseFile.GetSize(), EVENT_MSG);
 			*/
 
 			//CUSTOM BLOCKS!
@@ -150,7 +150,7 @@ void CClient::WorldThink()
 				EraseCustomBlocks.AppendData(CustomBlocks.GetData(), CustomBlocks.GetSize());
 
 				// LOG(Temp, Normal, "Erasing custom blocks: %lu\n", dwCount);
-				SendMessage(EraseCustomBlocks.GetData(), EraseCustomBlocks.GetSize(), EVENT_MSG);
+				SendNetMessage(EraseCustomBlocks.GetData(), EraseCustomBlocks.GetSize(), EVENT_MSG);
 
 				g_pDB->DataFileFindClose();
 			}
@@ -165,8 +165,8 @@ void CClient::WorldThink()
 			UpdateDats.WriteLong(0);
 			UpdateDats.WriteLong(0);
 
-			SendMessage(UpdateDats.GetData(), UpdateDats.GetSize(), EVENT_MSG);
-			SendMessage(UpdateDats.GetData(), UpdateDats.GetSize(), EVENT_MSG);
+			SendNetMessage(UpdateDats.GetData(), UpdateDats.GetSize(), EVENT_MSG);
+			SendNetMessage(UpdateDats.GetData(), UpdateDats.GetSize(), EVENT_MSG);
 
 			m_vars.initdats = TRUE;
 		}
@@ -208,7 +208,7 @@ void CClient::UpdateLoginScreen()
 	CharacterList.WriteString(account);
 	CharacterList.WriteLong(1);
 	CharacterList.WriteLong(1);
-	SendMessage(CharacterList.GetData(), CharacterList.GetSize(), 9);
+	SendNetMessage(CharacterList.GetData(), CharacterList.GetSize(), PRIVATE_MSG);
 
 	/*std::string strMOTD = "You are in the world of PHATAC.\n\n";
 	strMOTD += "Welcome to Asheron's Call!\n\n";
@@ -226,7 +226,7 @@ void CClient::UpdateLoginScreen()
 	ServerMOTD.WriteLong( 0xF65A );
 	ServerMOTD.WriteString( csprintf("Currently %u clients connected.\n", g_pGlobals->GetClientCount() ) );
 	ServerMOTD.WriteString( g_pWorld->GetMOTD() );
-	SendMessage(ServerMOTD.GetData(), ServerMOTD.GetSize(), PRIVATE_MSG);
+	SendNetMessage(ServerMOTD.GetData(), ServerMOTD.GetSize(), PRIVATE_MSG);
 	*/
 
 	BinaryWriter ServerName;
@@ -234,7 +234,7 @@ void CClient::UpdateLoginScreen()
 	ServerName.WriteLong(0x32); // Num connections
 	ServerName.WriteLong(-1); // Max connections
 	ServerName.WriteString("PhatAC");
-	SendMessage(ServerName.GetData(), ServerName.GetSize(), 9);
+	SendNetMessage(ServerName.GetData(), ServerName.GetSize(), PRIVATE_MSG);
 
 	BinaryWriter ServerUnk;
 	ServerUnk.WriteLong(0xF7E5);
@@ -244,14 +244,14 @@ void CClient::UpdateLoginScreen()
 	ServerUnk.WriteLong(2); // supports languages (2)
 	ServerUnk.WriteLong(0); // language #1
 	ServerUnk.WriteLong(1); // language #2
-	SendMessage(ServerUnk.GetData(), ServerUnk.GetSize(), 5);
+	SendNetMessage(ServerUnk.GetData(), ServerUnk.GetSize(), EVENT_MSG);
 }
 
 void CClient::EnterWorld()
 {
 	DWORD EnterWorld = 0xF7DF; // 0xF7C7;
 
-	SendMessage(&EnterWorld, sizeof(DWORD), 9);
+	SendNetMessage(&EnterWorld, sizeof(DWORD), 9);
 	LOG(Client, Normal, "Client #%u is entering the world.\n", m_vars.slot);
 
 	m_vars.inworld = TRUE;
@@ -260,7 +260,7 @@ void CClient::EnterWorld()
 void CClient::ExitWorld()
 {
 	DWORD ExitWorld = 0xF653;
-	SendMessage(&ExitWorld, sizeof(DWORD), PRIVATE_MSG);
+	SendNetMessage(&ExitWorld, sizeof(DWORD), PRIVATE_MSG);
 	LOG(Client, Normal, "Client #%u is exiting the world.\n", m_vars.slot);
 
 	m_pPC->ResetEvent();
@@ -270,17 +270,17 @@ void CClient::ExitWorld()
 	m_vars.inworld = FALSE;
 }
 
-void CClient::SendMessage(BinaryWriter* pMessage, WORD group, BOOL event, BOOL del)
+void CClient::SendNetMessage(BinaryWriter* pMessage, WORD group, BOOL event, BOOL del)
 {
 	if (!pMessage)
 		return;
 
-	SendMessage(pMessage->GetData(), pMessage->GetSize(), group, event);
+	SendNetMessage(pMessage->GetData(), pMessage->GetSize(), group, event);
 
 	if (del)
 		delete pMessage;
 }
-void CClient::SendMessage(void *data, DWORD length, WORD group, BOOL game_event)
+void CClient::SendNetMessage(void *data, DWORD length, WORD group, BOOL game_event)
 {
 	if (!IsAlive())
 		return;
@@ -300,7 +300,7 @@ void CClient::SendMessage(void *data, DWORD length, WORD group, BOOL game_event)
 	if (m_pPC && m_pPC->IsAlive())
 	{
 		if (!game_event)
-			m_pPC->SendMessage(data, length, group);
+			m_pPC->SendNetMessage(data, length, group);
 		else
 		{
 			EventHeader *Event = (EventHeader *)new BYTE[sizeof(EventHeader) + length];
@@ -309,7 +309,7 @@ void CClient::SendMessage(void *data, DWORD length, WORD group, BOOL game_event)
 			Event->dwSequence = m_pPC->GetNextEvent();
 			memcpy((BYTE *)Event + sizeof(EventHeader), data, length);
 
-			m_pPC->SendMessage(Event, sizeof(EventHeader) + length, group);
+			m_pPC->SendNetMessage(Event, sizeof(EventHeader) + length, group);
 			delete[] Event;
 		}
 	}
@@ -436,14 +436,14 @@ void CClient::CreateCharacter(BinaryReader *in)
 			Success.WriteDWORD(dwGUID);
 			Success.WriteString(szCharacterName);
 			Success.WriteDWORD(0);
-			SendMessage(Success.GetData(), Success.GetSize(), PRIVATE_MSG);
+			SendNetMessage(Success.GetData(), Success.GetSize(), PRIVATE_MSG);
 		}
 		else
 		{
 			BinaryWriter BadCharGen;
 			BadCharGen.WriteDWORD(0xF643);
 			BadCharGen.WriteDWORD(3); // name already exists
-			SendMessage(BadCharGen.GetData(), BadCharGen.GetSize(), PRIVATE_MSG);
+			SendNetMessage(BadCharGen.GetData(), BadCharGen.GetSize(), PRIVATE_MSG);
 		}
 	}
 	return;
@@ -452,32 +452,8 @@ BadData:
 		BinaryWriter BadCharGen;
 		BadCharGen.WriteDWORD(0xF643);
 		BadCharGen.WriteDWORD(dwError);
-		SendMessage(BadCharGen.GetData(), BadCharGen.GetSize(), PRIVATE_MSG);
+		SendNetMessage(BadCharGen.GetData(), BadCharGen.GetSize(), PRIVATE_MSG);
 	}
-}
-
-void outputCompressed(BYTE *srcData, DWORD srcLen, DWORD dstLen_, BYTE **result_)
-{
-	BYTE *dest = new BYTE[100000];
-	DWORD destLen = dstLen_;
-
-	int result = 0;
-	if (Z_OK == (result = uncompress(dest, &destLen, srcData, srcLen)))
-	{
-		LOG(Temp, Debug, "Decompress:\n");
-		LOG_BYTES(Temp, Debug, dest, destLen);
-	}
-	else
-	{
-		LOG(Temp, Debug, "Failed decompress: %d\n", result);
-	}
-
-	if (destLen != dstLen_)
-	{
-		__asm int 3;
-	}
-
-	*result_ = dest;
 }
 
 void CClient::SendLandblock(DWORD dwFileID)
@@ -536,12 +512,13 @@ void CClient::SendLandblock(DWORD dwFileID)
 		BlockPackage.WriteDWORD(dwPackageSize + sizeof(DWORD) * 2);
 		BlockPackage.WriteDWORD(dwFileSize);
 		BlockPackage.AppendData(pbPackageData, dwPackageSize);
+		BlockPackage.Align();
 
 		delete[] pbPackageData;
 		delete pLandData;
 
 		//LOG(Temp, Normal, "Sent landblock %08X ..\n", dwFileID);
-		SendMessage(BlockPackage.GetData(), BlockPackage.GetSize(), EVENT_MSG, FALSE);
+		SendNetMessage(BlockPackage.GetData(), BlockPackage.GetSize(), EVENT_MSG, FALSE);
 	}
 
 	if (pObjData)
@@ -571,12 +548,13 @@ void CClient::SendLandblock(DWORD dwFileID)
 		BlockInfoPackage.WriteDWORD(dwPackageSize + sizeof(DWORD) * 2);
 		BlockInfoPackage.WriteDWORD(dwFileSize);
 		BlockInfoPackage.AppendData(pbPackageData, dwPackageSize);
+		BlockInfoPackage.Align();
 
 		delete[] pbPackageData;
 		delete pObjData;
 
 		//LOG(Temp, Normal, "Sent objectblock %08X ..\n", dwObjFileID);
-		SendMessage(BlockInfoPackage.GetData(), BlockInfoPackage.GetSize(), EVENT_MSG, FALSE);
+		SendNetMessage(BlockInfoPackage.GetData(), BlockInfoPackage.GetSize(), EVENT_MSG, FALSE);
 	}
 
 	//if (m_pEvents)
@@ -624,13 +602,14 @@ void CClient::SendLandcell(DWORD dwFileID)
 		CellPackage.WriteDWORD(dwPackageSize + sizeof(DWORD) * 2);
 		CellPackage.WriteDWORD(dwFileSize);
 		CellPackage.AppendData(pbPackageData, dwPackageSize);
+		CellPackage.Align();
 
 		delete[] pbPackageData;
 		delete pCellData;
 
 		//LOG(Temp, Normal, "Sent cell %08X ..\n", dwFileID);
 
-		SendMessage(CellPackage.GetData(), CellPackage.GetSize(), EVENT_MSG, FALSE);
+		SendNetMessage(CellPackage.GetData(), CellPackage.GetSize(), EVENT_MSG, FALSE);
 	}
 
 	//if (m_pEvents)
@@ -642,6 +621,10 @@ void CClient::ProcessMessage(BYTE *data, DWORD length, WORD group)
 	BinaryReader in(data, length);
 
 	DWORD dwMessageCode = in.ReadDWORD();
+
+#ifdef _DEBUG
+	// LOG(Client, Normal, "Processing message 0x%X (size %d):\n", dwMessageCode, length);
+#endif
 
 	if (in.GetLastError())
 	{
@@ -697,7 +680,7 @@ void CClient::ProcessMessage(BYTE *data, DWORD length, WORD group)
 		{
 			BinaryWriter ServerUnk2;
 			ServerUnk2.WriteLong(0xF7EA);
-			SendMessage(ServerUnk2.GetData(), ServerUnk2.GetSize(), 5);
+			SendNetMessage(ServerUnk2.GetData(), ServerUnk2.GetSize(), 5);
 			break;
 		}
 
@@ -705,7 +688,7 @@ void CClient::ProcessMessage(BYTE *data, DWORD length, WORD group)
 		{
 			//BinaryWriter EndDDD;
 			//EndDDD.WriteDWORD(0xF7EA);
-			//SendMessage(EndDDD.GetData(), EndDDD.GetSize(), EVENT_MSG);
+			//SendNetMessage(EndDDD.GetData(), EndDDD.GetSize(), EVENT_MSG);
 
 			break;
 		}
@@ -713,8 +696,6 @@ void CClient::ProcessMessage(BYTE *data, DWORD length, WORD group)
 		case 0xF7E3: // Request File Data was 0xF7A9
 		{
 			// This doesn't work for some reason.
-			break;
-
 			if (m_vars.inworld)
 			{
 				DWORD dwFileClass = in.ReadDWORD();

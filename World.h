@@ -2,6 +2,7 @@
 #pragma once
 
 #include "LandBlock.h"
+#include "NetworkDefs.h"
 
 enum eGUIDClass {
 	ePresetGUID = 0,
@@ -57,7 +58,8 @@ public:
 	void BroadcastPVS(DWORD dwCell, void *_data, DWORD _len, WORD _group = OBJECT_MSG, DWORD ignore_ent = 0, BOOL _game_event = 0);
 	void BroadcastGlobal(void *_data, DWORD _len, WORD _group, DWORD ignore_ent = 0, BOOL _game_event = 0);
 	void BroadcastGlobal(BinaryWriter *food, WORD _group, DWORD ignore_ent = 0, BOOL _game_event = 0, BOOL del = 1);
-
+	
+	void ClearAllSpawns();
 	CLandBlock* GetLandblock(WORD wHeader);
 	loc_t FindDungeonDrop();
 	loc_t FindDungeonDrop(WORD wBlockID);
@@ -86,8 +88,10 @@ public:
 
 	const char* GetMOTD();
 
-private:
+	void SetNewGameMode(class CGameMode *pGameMode);
+	class CGameMode *GetGameMode();
 
+private:
 
 	void LoadStateFile();
 	void SaveStateFile();
@@ -118,6 +122,8 @@ private:
 	double m_fLastSave;
 
 	std::string m_strMOTD;
+
+	class CGameMode *m_pGameMode;
 };
 
 

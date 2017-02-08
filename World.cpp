@@ -12,6 +12,7 @@
 #include "CharacterDatabase.h"
 
 #include "TurbineDungeon.h"
+#include "GameMode.h"
 
 CWorld::CWorld()
 {
@@ -29,6 +30,8 @@ CWorld::CWorld()
 	EnumerateDungeonsFromCellData();
 
 	m_fLastSave = g_pGlobals->Time();
+
+	m_pGameMode = NULL;
 }
 
 void CWorld::SaveWorld()
@@ -39,6 +42,12 @@ void CWorld::SaveWorld()
 
 CWorld::~CWorld()
 {
+	if (m_pGameMode)
+	{
+		delete m_pGameMode;
+		m_pGameMode = NULL;
+	}
+
 	for (LandblockVector::iterator it = m_vBlocks.begin(); it != m_vBlocks.end(); it++)
 		delete (*it);
 	m_vBlocks.clear();
@@ -357,6 +366,15 @@ DWORD CWorld::GenerateGUID(eGUIDClass type)
 	return 0;
 }
 
+void CWorld::ClearAllSpawns()
+{
+	for (DWORD i = 0; i < (256 * 256); i++)
+	{
+		if (m_pBlocks[i])
+			m_pBlocks[i]->ClearSpawns();
+	}
+}
+
 CLandBlock* CWorld::GetLandblock(WORD wHeader)
 {
 	return m_pBlocks[wHeader];
@@ -609,7 +627,7 @@ void CWorld::BroadcastGlobal(void *_data, DWORD _len, WORD _group, DWORD ignore_
 		if (pPlayer = pit->second)
 		{
 			if (!ignore_ent || (pPlayer->m_dwGUID != ignore_ent))
-				pPlayer->SendMessage(_data, _len, _group, _game_event);
+				pPlayer->SendNetMessage(_data, _len, _group, _game_event);
 		}
 
 		pit++;
@@ -655,7 +673,14 @@ void CWorld::Test()
 void CWorld::RemoveEntity(CPhysicsObj *pEntity)
 {
 	if (!pEntity)
+	{
 		return;
+	}
+
+	if (m_pGameMode)
+	{
+		m_pGameMode->OnRemoveEntity(pEntity);
+	}
 
 	DWORD dwGUID = pEntity->m_dwGUID;
 
@@ -674,7 +699,9 @@ void CWorld::RemoveEntity(CPhysicsObj *pEntity)
 		DELETE_ENTITY(pEntity);
 	}
 	else
+	{
 		pBlock->Destroy(pEntity);
+	}
 }
 
 void CWorld::Think()
@@ -709,6 +736,38 @@ void CWorld::Think()
 		SaveWorld();
 		m_fLastSave = g_pGlobals->Time();
 	}
+
+	if (m_pGameMode)
+	{
+		m_pGameMode->Think();
+	}
+}
+
+CGameMode *CWorld::GetGameMode()
+{
+	return m_pGameMode;
+}
+
+void CWorld::SetNewGameMode(CGameMode *pGameMode)
+{
+	if (pGameMode)
+	{
+		g_pWorld->BroadcastGlobal(ServerText(csprintf("Setting game mode to %s", pGameMode->GetName())), PRIVATE_MSG);
+	}
+	else
+	{
+		if (!pGameMode && m_pGameMode)
+		{
+			g_pWorld->BroadcastGlobal(ServerText(csprintf("Turning off game mode %s", m_pGameMode->GetName())), PRIVATE_MSG);
+		}
+	}
+
+	if (m_pGameMode)
+	{
+		delete m_pGameMode;
+	}
+
+	m_pGameMode = pGameMode;
 }
 
 void CWorld::EnumNearby(CPhysicsObj *pSource, float fRange, std::list<CPhysicsObj *> *pResults)

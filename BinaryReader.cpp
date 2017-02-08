@@ -47,11 +47,17 @@ char *BinaryReader::ReadString(void)
 	WORD wLen = ReadWORD();
 
 	if (m_dwErrorCode || wLen > MAX_MEALSTRING_LEN)
+	{
+		DEBUG_BREAK();
 		return NULL;
+	}
 
 	char *szArray = (char *)ReadArray(wLen);
 	if (!szArray)
+	{
+		DEBUG_BREAK();
 		return NULL;
+	}
 
 	char *szString = new char[wLen + 1];
 	szString[wLen] = 0;
@@ -86,6 +92,11 @@ DWORD BinaryReader::GetDataLen()
 DWORD BinaryReader::GetOffset()
 {
 	return (DWORD)(m_pData - m_pStart);
+}
+
+void BinaryReader::SetOffset(DWORD offset)
+{
+	m_pData = m_pStart + offset;
 }
 
 DWORD BinaryReader::GetLastError()

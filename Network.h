@@ -2,10 +2,6 @@
 
 #pragma once
 
-class CClient;
-class CDatabase;
-class CWorld;
-
 class CNetwork
 {
 public:
@@ -18,7 +14,7 @@ public:
 
 	WORD GetServerID();
 
-	void KickClient(CClient* pClient);
+	void KickClient(class CClient* pClient);
 	void KickClient(WORD index);
 	void KillClient(WORD index);
 	void SendPacket(SOCKADDR_IN *, void *data, DWORD len);
@@ -26,9 +22,9 @@ public:
 
 private:
 
-	BOOL	IsBannedIP( in_addr );
+	BOOL IsBannedIP(in_addr);
 
-	WORD	GetClientSlot();
+	WORD GetClientSlot();
 
 	CClient *ValidateClient(WORD, sockaddr_in *);
 	CClient *FindClientByAccount(const char *);
@@ -39,11 +35,11 @@ private:
 	SOCKET *m_sockets;
 	int m_socketCount;
 
-	WORD		m_wID;
+	WORD m_wID;
 
-	WORD		m_freeslot;
-	WORD		m_slotrange;
-	CClient*	m_clients[400];
+	WORD m_freeslot;
+	WORD m_slotrange;
+	CClient* m_clients[400];
 };
 
 

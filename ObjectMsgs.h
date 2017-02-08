@@ -7,6 +7,7 @@ class CBaseMonster;
 class CBasePlayer;
 
 extern BinaryWriter *CreateObject(CPhysicsObj *pEntity);	//0x0000F745
+extern BinaryWriter *UpdateObject(CPhysicsObj *pEntity);
 extern BinaryWriter *IdentifyObject(CPhysicsObj *pEntity);	//0x000000C9
 extern BinaryWriter *LoginCharacter(CBasePlayer *pPlayer);	//0x00000013
 extern BinaryWriter *HealthUpdate(CBaseMonster *pMonster);	//0x000001C0

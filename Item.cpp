@@ -12,26 +12,18 @@ CBaseItem::CBaseItem()
 	m_dwSoundSet = 0x20000014;
 	m_dwEffectSet = 0x3400002B;
 
-	m_wBurden = 0;
-	m_dwValue = 1;
-
 	m_bWieldSequence = 0;
 	m_pWielder = NULL;
 
 	m_bContainSequence = 0;
 	m_pContainer = NULL;
 
-	m_dwEquipSlot = eEquipTypeNone;
-	m_dwEquipType = eEquipSlotNone;
-
-	m_bCoverSequence = 0;
-	m_dwCoverage1 = NULL; //What it CAN cover?
-	m_dwCoverage2 = NULL; //What it IS covering?
-	m_dwCoverage3 = NULL; //??
-
 	m_strName = "Item";
 
 	m_PhysicsState = PhysicsState::GRAVITY_PS | PhysicsState::IGNORE_COLLISIONS_PS | PhysicsState::ETHEREAL_PS;
+	m_WeenieBitfield = BF_INSCRIBABLE | BF_ATTACKABLE;
+
+	m_RadarVis = ShowNever_RadarEnum;
 }
 
 CBaseItem::~CBaseItem()
@@ -99,7 +91,7 @@ void CBaseItem::SetWorldContainer(DWORD dwCell, CPhysicsObj *pContainer)
 
 void CBaseItem::SetWorldWielder(DWORD dwCell, CPhysicsObj *pWielder)
 {
-	if (m_ItemType == TYPE_ARMOR)
+	if (m_ItemType & (TYPE_ARMOR | TYPE_CLOTHING))
 	{
 		LOG(Object, Warning, "Trying to wield armor!\n");
 	}
@@ -150,12 +142,19 @@ BOOL CBaseItem::HasCoverage()
 CBaseWand::CBaseWand()
 {
 	//We'll be a drudge wand by default =)
-	m_dwModel = 0x02000B79;
-	m_fScale = 1.2f;
+	m_dwModel = 0x02000896;
+	m_dwEffectSet = 0x3400002B;
+	m_dwSoundSet = 0x20000014;
+	m_miBaseModel.dwBasePalette = 0xBEF;
+	m_miBaseModel.lPalettes.push_back(PaletteRpl(0xBF0, 0, 0));
+	m_miBaseModel.lTextures.push_back(TextureRpl(0, 0xA8A, 0xA8A));
+	m_miBaseModel.lModels.push_back(ModelRpl(0, 0xB6E));
 
-	m_wBurden = 0;
-	m_dwValue = 1337;
-	m_strName = "Wand of Death";
+	m_fScale = 1.0f;
+
+	m_Burden = 0;
+	m_Value = 1337;
+	m_strName = "Staff of Aerfalle";
 
 	m_wTypeID = 0x2FBD;
 	m_wIcon = 0x22B3;
@@ -165,6 +164,8 @@ CBaseWand::CBaseWand()
 	m_dwCoverage1 = CA_WEAPON_FOCUS;
 	//m_dwCoverage2		= CA_WEAPON_FOCUS;
 	//m_dwCoverage3		= CA_WEAPON_FOCUS;
+
+	m_bCoverSequence = 0;
 }
 
 CEnvoyShield::CEnvoyShield()
@@ -172,8 +173,8 @@ CEnvoyShield::CEnvoyShield()
 	//We'll be a drudge wand by default =)
 	m_dwModel = 0x02001035;
 
-	m_wBurden = 0;
-	m_dwValue = 1;
+	m_Burden = 0;
+	m_Value = 1;
 	m_strName = "Envoy's Shield";
 
 	m_wTypeID = 0x65CA;
@@ -196,11 +197,6 @@ CBaseArmor::CBaseArmor()
 	//m_dwCoverage1		= ..;
 	//m_dwCoverage2		= ..;
 	//m_dwCoverage3		= ..;
-}
-
-ModelInfo* CBaseArmor::GetArmorModel()
-{
-	return &m_miArmorModel;
 }
 
 CAcademyCoat::CAcademyCoat()
@@ -232,7 +228,7 @@ CAcademyCoat::CAcademyCoat()
 
 	m_miBaseModel.lModels.push_back(ModelRpl(0x00, 0x474));
 
-	//m_miArmorModel.lModels.push_back( ModelRpl(0x10, 0x449) );
+	//m_miWornModel.lModels.push_back( ModelRpl(0x10, 0x449) );
 }
 
 CTuskerHelm::CTuskerHelm()
@@ -264,14 +260,14 @@ CTuskerHelm::CTuskerHelm()
 
 	m_miBaseModel.lModels.push_back(ModelRpl(0x00, 0x474));
 
-	m_miArmorModel.dwBasePalette = 0x7E;
-	m_miArmorModel.lPalettes.push_back(PaletteRpl(0x485, 0xF0, 0x0A));
-	m_miArmorModel.lPalettes.push_back(PaletteRpl(0x5EA, 0xFA, 0x06));
+	m_miWornModel.dwBasePalette = 0x7E;
+	m_miWornModel.lPalettes.push_back(PaletteRpl(0x485, 0xF0, 0x0A));
+	m_miWornModel.lPalettes.push_back(PaletteRpl(0x5EA, 0xFA, 0x06));
 
-	m_miArmorModel.lTextures.push_back(TextureRpl(0x10, 0x3C8, 0x3C8));
-	m_miArmorModel.lTextures.push_back(TextureRpl(0x10, 0x3C9, 0x3C9));
+	m_miWornModel.lTextures.push_back(TextureRpl(0x10, 0x3C8, 0x3C8));
+	m_miWornModel.lTextures.push_back(TextureRpl(0x10, 0x3C9, 0x3C9));
 
-	m_miArmorModel.lModels.push_back(ModelRpl(0x10, 0x449));
+	m_miWornModel.lModels.push_back(ModelRpl(0x10, 0x449));
 }
 
 CBoboHelm::CBoboHelm()
@@ -303,14 +299,14 @@ CBoboHelm::CBoboHelm()
 
 	m_miBaseModel.lModels.push_back(ModelRpl(0x00, 0x474));
 
-	//m_miArmorModel.wBasePalette	= 0x7E;
-	//m_miArmorModel.lPalettes.push_back( PaletteRpl(0x485, 0xF0, 0x0A) );
-	//m_miArmorModel.lPalettes.push_back( PaletteRpl(0x5EA, 0xFA, 0x06) );
+	//m_miWornModel.wBasePalette	= 0x7E;
+	//m_miWornModel.lPalettes.push_back( PaletteRpl(0x485, 0xF0, 0x0A) );
+	//m_miWornModel.lPalettes.push_back( PaletteRpl(0x5EA, 0xFA, 0x06) );
 
-	//m_miArmorModel.lTextures.push_back( TextureRpl(0x10, 0x3C8, 0x3C8) );
-	//m_miArmorModel.lTextures.push_back( TextureRpl(0x10, 0x3C9, 0x3C9) );
+	//m_miWornModel.lTextures.push_back( TextureRpl(0x10, 0x3C8, 0x3C8) );
+	//m_miWornModel.lTextures.push_back( TextureRpl(0x10, 0x3C9, 0x3C9) );
 
-	m_miArmorModel.lModels.push_back(ModelRpl(0x10, 0x2CF7));
+	m_miWornModel.lModels.push_back(ModelRpl(0x10, 0x2CF7));
 }
 
 CPhatRobe::CPhatRobe()
@@ -324,7 +320,7 @@ CPhatRobe::CPhatRobe()
 	m_dwCoverage1 = CA_HEAD | CA_CHEST | CA_GIRTH | CA_UPPERARMS | CA_LOWERARMS | CA_UPPERLEGS | CA_LOWERLEGS | CA_FEET;
 	m_dwCoverage3 = 0x3C;
 
-	m_wBurden = 200;
+	m_Burden = 200;
 	m_dwStats[eArmorLevel] = 1337;
 
 	m_miBaseModel.dwBasePalette = 0x7E;
@@ -345,41 +341,48 @@ CPhatRobe::CPhatRobe()
 
 	m_miBaseModel.lModels.push_back(ModelRpl(0x00, 0x474));
 
-	m_miArmorModel.dwBasePalette = 0x7E;
+	m_miWornModel.dwBasePalette = 0x7E;
 	//0x1080 = white robe
-	m_miArmorModel.lPalettes.push_back(PaletteRpl(0xFFD, 0x28, 0x28));
-	m_miArmorModel.lPalettes.push_back(PaletteRpl(0xFFD, 0x50, 0x0C));
-	m_miArmorModel.lPalettes.push_back(PaletteRpl(0xFFD, 0x60, 0x0C));
-	m_miArmorModel.lPalettes.push_back(PaletteRpl(0xFFD, 0x74, 0x0C));
 
-	m_miArmorModel.lTextures.push_back(TextureRpl(0x00, 0x1879, 0x1879));
-	m_miArmorModel.lTextures.push_back(TextureRpl(0x00, 0x1878, 0x1878));
-	m_miArmorModel.lTextures.push_back(TextureRpl(0x01, 0x1880, 0x1880));
-	m_miArmorModel.lTextures.push_back(TextureRpl(0x02, 0x187F, 0x187F));
-	m_miArmorModel.lTextures.push_back(TextureRpl(0x05, 0x1880, 0x1880));
-	m_miArmorModel.lTextures.push_back(TextureRpl(0x06, 0x187F, 0x187F));
-	m_miArmorModel.lTextures.push_back(TextureRpl(0x09, 0x3D5, 0x187C));
-	m_miArmorModel.lTextures.push_back(TextureRpl(0x09, 0x3D4, 0x187D));
-	m_miArmorModel.lTextures.push_back(TextureRpl(0x0A, 0x187B, 0x187B));
-	m_miArmorModel.lTextures.push_back(TextureRpl(0x0B, 0x187A, 0x187A));
-	m_miArmorModel.lTextures.push_back(TextureRpl(0x0D, 0x187B, 0x187B));
-	m_miArmorModel.lTextures.push_back(TextureRpl(0x0E, 0x187A, 0x187A));
-	//m_miArmorModel.lTextures.push_back( TextureRpl(0x10, 0x187E, 0x187E) ); - Face Texture
+	/*
+	m_miWornModel.lPalettes.push_back(PaletteRpl(0xFFD, 0x28, 0x28));
+	m_miWornModel.lPalettes.push_back(PaletteRpl(0xFFD, 0x50, 0x0C));
+	m_miWornModel.lPalettes.push_back(PaletteRpl(0xFFD, 0x60, 0x0C));
+	m_miWornModel.lPalettes.push_back(PaletteRpl(0xFFD, 0x74, 0x0C));
+	*/
+	m_miWornModel.lPalettes.push_back(PaletteRpl(0xFFD, 0x28, 0x28));
+	m_miWornModel.lPalettes.push_back(PaletteRpl(0xFFD, 0x50, 0x0C));
+	m_miWornModel.lPalettes.push_back(PaletteRpl(0xFFD, 0x60, 0x0C));
+	m_miWornModel.lPalettes.push_back(PaletteRpl(0xFFD, 0x74, 0x0C));
 
-	m_miArmorModel.lModels.push_back(ModelRpl(0x00, 0x1A16));
-	m_miArmorModel.lModels.push_back(ModelRpl(0x01, 0x1A0D));
-	m_miArmorModel.lModels.push_back(ModelRpl(0x02, 0x1A06));
-	m_miArmorModel.lModels.push_back(ModelRpl(0x03, 0x1EC));
-	m_miArmorModel.lModels.push_back(ModelRpl(0x04, 0x1EC));
-	m_miArmorModel.lModels.push_back(ModelRpl(0x05, 0x1A11));
-	m_miArmorModel.lModels.push_back(ModelRpl(0x06, 0x1A09));
-	m_miArmorModel.lModels.push_back(ModelRpl(0x07, 0x1EC));
-	m_miArmorModel.lModels.push_back(ModelRpl(0x08, 0x1EC));
-	m_miArmorModel.lModels.push_back(ModelRpl(0x09, 0x120D));
-	m_miArmorModel.lModels.push_back(ModelRpl(0x0A, 0x19F7));
-	m_miArmorModel.lModels.push_back(ModelRpl(0x0B, 0x19EF));
-	m_miArmorModel.lModels.push_back(ModelRpl(0x0D, 0x19FF));
-	m_miArmorModel.lModels.push_back(ModelRpl(0x0E, 0x19EF));
-	m_miArmorModel.lModels.push_back(ModelRpl(0x10, 0x1A13));
+	m_miWornModel.lTextures.push_back(TextureRpl(0x00, 0x1879, 0x1879));
+	m_miWornModel.lTextures.push_back(TextureRpl(0x00, 0x1878, 0x1878));
+	m_miWornModel.lTextures.push_back(TextureRpl(0x01, 0x1880, 0x1880));
+	m_miWornModel.lTextures.push_back(TextureRpl(0x02, 0x187F, 0x187F));
+	m_miWornModel.lTextures.push_back(TextureRpl(0x05, 0x1880, 0x1880));
+	m_miWornModel.lTextures.push_back(TextureRpl(0x06, 0x187F, 0x187F));
+	m_miWornModel.lTextures.push_back(TextureRpl(0x09, 0x3D5, 0x187C));
+	m_miWornModel.lTextures.push_back(TextureRpl(0x09, 0x3D4, 0x187D));
+	m_miWornModel.lTextures.push_back(TextureRpl(0x0A, 0x187B, 0x187B));
+	m_miWornModel.lTextures.push_back(TextureRpl(0x0B, 0x187A, 0x187A));
+	m_miWornModel.lTextures.push_back(TextureRpl(0x0D, 0x187B, 0x187B));
+	m_miWornModel.lTextures.push_back(TextureRpl(0x0E, 0x187A, 0x187A));
+	//m_miWornModel.lTextures.push_back( TextureRpl(0x10, 0x187E, 0x187E) ); - Face Texture
+
+	m_miWornModel.lModels.push_back(ModelRpl(0x00, 0x1A16));
+	m_miWornModel.lModels.push_back(ModelRpl(0x01, 0x1A0D));
+	m_miWornModel.lModels.push_back(ModelRpl(0x02, 0x1A06));
+	m_miWornModel.lModels.push_back(ModelRpl(0x03, 0x1EC));
+	m_miWornModel.lModels.push_back(ModelRpl(0x04, 0x1EC));
+	m_miWornModel.lModels.push_back(ModelRpl(0x05, 0x1A11));
+	m_miWornModel.lModels.push_back(ModelRpl(0x06, 0x1A09));
+	m_miWornModel.lModels.push_back(ModelRpl(0x07, 0x1EC));
+	m_miWornModel.lModels.push_back(ModelRpl(0x08, 0x1EC));
+	m_miWornModel.lModels.push_back(ModelRpl(0x09, 0x120D));
+	m_miWornModel.lModels.push_back(ModelRpl(0x0A, 0x19F7));
+	m_miWornModel.lModels.push_back(ModelRpl(0x0B, 0x19EF));
+	m_miWornModel.lModels.push_back(ModelRpl(0x0D, 0x19FF));
+	m_miWornModel.lModels.push_back(ModelRpl(0x0E, 0x19EF));
+	m_miWornModel.lModels.push_back(ModelRpl(0x10, 0x1A13));
 }
 

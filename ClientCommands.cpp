@@ -13,6 +13,11 @@
 #include "ChatMsgs.h"
 #include "Portal.h"
 #include "Database2.h"
+#include "GameMode.h"
+#include "Lifestone.h"
+
+// Most of these commands are just for experimenting and never meant to be used in a real game
+// TODO: Add flags to these commands so they are only accessible under certain modes such as a sandbox mode
 
 CommandMap CommandBase::m_mCommands;
 
@@ -31,6 +36,21 @@ void CommandBase::Create(const char* szName, const char* szArguments, const char
 	m_mCommands[std::string(szName)] = i;
 }
 
+bool g_bSilence = false;
+
+bool SpawningEnabled(CBasePlayer *pPlayer)
+{
+	if (g_bSilence)
+	{
+		if (pPlayer->GetClient()->GetAccessLevel() < ADMIN_ACCESS)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 CLIENT_COMMAND(myloc, "", "Info on your current location.", BASIC_ACCESS)
 {
 	const char* szResponse =
@@ -44,8 +64,34 @@ CLIENT_COMMAND(myloc, "", "Info on your current location.", BASIC_ACCESS)
 	return false;
 }
 
-CLIENT_COMMAND(spawnportal, "", "Spawns a portal near you.", BASIC_ACCESS)
+CLIENT_COMMAND(startgame, "[gameid]", "Spawns something by name (right now works for monsters, NPCs, players.)", ADMIN_ACCESS)
 {
+	if (argc < 1)
+		return true;
+	
+	int game = atoi(argv[0]);
+
+	switch (game)
+	{
+	case 0:
+		g_pWorld->SetNewGameMode(NULL);
+		break;
+
+	case 1:
+		g_pWorld->SetNewGameMode(new CGameMode_Tag());
+		break;
+	}
+
+	return false;
+}
+
+CLIENT_COMMAND(spawnportal, "", "Spawns a dysfunctional portal near you.", BASIC_ACCESS)
+{
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
+
 	CPortal *pPortal = new CPortal();
 	pPortal->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
 	pPortal->m_Origin = pPlayer->m_Origin;
@@ -59,6 +105,11 @@ CLIENT_COMMAND(spawnportal, "", "Spawns a portal near you.", BASIC_ACCESS)
 
 CLIENT_COMMAND(spawndoor, "", "Spawns a door at your location.", BASIC_ACCESS)
 {
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
+
 	CPhysicsObj *pDoor = new CBaseDoor();
 	pDoor->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
 	pDoor->m_Origin = pPlayer->m_Origin;
@@ -69,15 +120,77 @@ CLIENT_COMMAND(spawndoor, "", "Spawns a door at your location.", BASIC_ACCESS)
 	return false;
 }
 
-CLIENT_COMMAND(global, "<text> [color=1]", "Displays text globally.", BASIC_ACCESS)
+CLIENT_COMMAND(global, "<text> [color=1]", "Displays text globally.", ADMIN_ACCESS)
 {
 	if (argc < 1)
+	{
 		return true;
+	}
+
+	if (g_bSilence)
+	{
+		return false;
+	}
 
 	const char* szText = argv[0];
 	long lColor = (argc >= 2) ? atoi(argv[1]) : 1;
 
 	g_pWorld->BroadcastGlobal(ServerText(szText, lColor), PRIVATE_MSG);
+
+	return false;
+}
+
+CLIENT_COMMAND(animationall, "<num> [speed]", "Performs an animation for everyone.", ADMIN_ACCESS)
+{
+	if (argc < 1)
+	{
+		return true;
+	}
+
+	WORD wIndex = atoi(argv[0]);
+	float fSpeed = (argc >= 2) ? (float)atof(argv[1]) : 1.0f;
+	float fDelay = 0.5f;
+
+	PlayerMap *pPlayers = g_pWorld->GetPlayers();
+	for (PlayerMap::iterator i = pPlayers->begin(); i != pPlayers->end(); i++)
+	{
+		i->second->Animation_PlayPrimary(wIndex, fSpeed, fDelay);
+	}
+
+	return false;
+}
+
+CLIENT_COMMAND(freezeall, "", "Freezes or unfreezes everyone.", ADMIN_ACCESS)
+{
+	if (argc < 1)
+	{
+		return true;
+	}
+
+	PlayerMap *pPlayers = g_pWorld->GetPlayers();
+	for (PlayerMap::iterator i = pPlayers->begin(); i != pPlayers->end(); i++)
+	{
+		i->second->ChangeVIS(i->second->m_PhysicsState ^ (DWORD)(FROZEN_PS));
+	}
+
+	return false;
+}
+
+CLIENT_COMMAND(lineall, "", "Moves everyone.", ADMIN_ACCESS)
+{
+	loc_t loc = pPlayer->m_Origin;
+	heading_t angles = pPlayer->m_Angles;
+
+	PlayerMap *pPlayers = g_pWorld->GetPlayers();
+	for (PlayerMap::iterator i = pPlayers->begin(); i != pPlayers->end(); i++)
+	{
+		if (i->second != pPlayer)
+		{
+			loc.x += 1.5f;
+			i->second->SendText("Teleporting you...", 1);
+			i->second->Movement_Teleport(loc, angles);
+		}
+	}
 
 	return false;
 }
@@ -114,27 +227,29 @@ CLIENT_COMMAND(sound, "<index> [speed?=1]", "Emits a sound effect.", BASIC_ACCES
 
 CLIENT_COMMAND(arwic, "", "Teleports you to Arwic.", BASIC_ACCESS)
 {
-	loc_t		origin(0xC6A90023, 102.4f, 70.1f, 44.0f);
-	heading_t	angles(0.70710677f, 0, 0, 0.70710677f);
+	loc_t origin(0xC6A90023, 102.4f, 70.1f, 44.0f);
+	heading_t angles(0.70710677f, 0, 0, 0.70710677f);
 
 	pPlayer->SendText("Teleporting you to Arwic..", 1);
 	pPlayer->Movement_Teleport(origin, angles);
 
 	return false;
 }
-CLIENT_COMMAND(removethis, "", "Remove Item", BASIC_ACCESS)
+
+CLIENT_COMMAND(removethis, "", "Removes an object.", BASIC_ACCESS)
 {
-	std::string itemRemoved = pPlayer->RemoveLastAssessedItem();
+	std::string itemRemoved = pPlayer->RemoveLastAssessed();
 	if (itemRemoved != "") {
-		pPlayer->SendText(std::string("Removed Item: ").append(itemRemoved).c_str(),1);
+		pPlayer->SendText(std::string("Removed object: ").append(itemRemoved).c_str(),1);
 	}
 	else
 	{
-		pPlayer->SendText(std::string("Please assess the thing you want to remove!").append(itemRemoved).c_str(), 1);
+		pPlayer->SendText(std::string("Please assess a valid object you wish to clear!").append(itemRemoved).c_str(), 1);
 		return true;
 	}
 	return false;
 }
+
 CLIENT_COMMAND(tele, "<player name>", "Teleports you to a player.", BASIC_ACCESS)
 {
 	if (argc < 1)
@@ -254,6 +369,11 @@ CLIENT_COMMAND(teleto, "<coords>", "Teleports you to coordinates.", BASIC_ACCESS
 
 CLIENT_COMMAND(spawnbox, "", "Spawns a box.", BASIC_ACCESS)
 {
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
+
 	CPhysicsObj *pTurbineBox = new CPhysicsObj();
 	pTurbineBox->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
 	pTurbineBox->m_Origin.landcell = pPlayer->GetLandcell();
@@ -267,6 +387,11 @@ CLIENT_COMMAND(spawnbox, "", "Spawns a box.", BASIC_ACCESS)
 
 CLIENT_COMMAND(spawnboxes, "", "Spawns 50 boxes. For load testing.", BASIC_ACCESS)
 {
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
+
 	for (int i = 0; i < 50; i++)
 	{
 		CPhysicsObj *pTurbineBox = new CPhysicsObj();
@@ -283,6 +408,11 @@ CLIENT_COMMAND(spawnboxes, "", "Spawns 50 boxes. For load testing.", BASIC_ACCES
 
 CLIENT_COMMAND(spawndoors, "", "Spawns doors at holtburg west.", BASIC_ACCESS)
 {
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
+
 	CPhysicsObj *pDoor1 = new CBaseDoor();
 	pDoor1->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
 	CPhysicsObj *pDoor2 = new CBaseDoor();
@@ -325,6 +455,11 @@ CLIENT_COMMAND(vismode, "<mode>", "Changes your physics state.", BASIC_ACCESS)
 
 CLIENT_COMMAND(spawnbael, "", "Spawns Bael'Zharon.", BASIC_ACCESS)
 {
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
+
 	CBaelZharon *pBael = new CBaelZharon();
 	pBael->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
 	pBael->m_Origin.landcell = pPlayer->GetLandcell();
@@ -336,25 +471,37 @@ CLIENT_COMMAND(spawnbael, "", "Spawns Bael'Zharon.", BASIC_ACCESS)
 	return false;
 }
 
-bool g_bSilence = false;
+extern double g_TimeAdjustment;
+
+CLIENT_COMMAND(timeadjust, "", "Time adjustment  Careful.", ADMIN_ACCESS)
+{
+	if (argc < 1)
+		return true;
+
+	g_TimeAdjustment = atof(argv[0]);
+	return false;
+}
 
 CLIENT_COMMAND(squelchall, "", "Squelch all.", ADMIN_ACCESS)
 {
 	if (argc < 1)
 		return true;
-
+	
 	g_bSilence = atoi(argv[0]) ? true : false;
+
+	if (g_bSilence)
+		pPlayer->SendText("Silenced all players and spawning.", 1);
+	else
+		pPlayer->SendText("Unsilenced all players and spawning.", 1);
+
 	return false;
 }
 
 CLIENT_COMMAND(spawnrabbit, "", "Spawns a rabbit.", BASIC_ACCESS)
 {
-	if (g_bSilence)
+	if (!SpawningEnabled(pPlayer))
 	{
-		if (pPlayer->GetClient()->GetAccessLevel() < ADMIN_ACCESS)
-		{
-			return false;
-		}
+		return false;
 	}
 
 	CBaseMonster *pRabbit = new CBaseMonster();
@@ -381,6 +528,11 @@ CLIENT_COMMAND(spawnrabbit, "", "Spawns a rabbit.", BASIC_ACCESS)
 
 CLIENT_COMMAND(targetdrudge, "", "Spawns a Target Drudge.", BASIC_ACCESS)
 {
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
+
 	CTargetDrudge *pDrudge = new CTargetDrudge();
 	pDrudge->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
 	pDrudge->m_Origin.landcell = pPlayer->GetLandcell();
@@ -394,6 +546,11 @@ CLIENT_COMMAND(targetdrudge, "", "Spawns a Target Drudge.", BASIC_ACCESS)
 
 CLIENT_COMMAND(spawnwand, "", "Spawns a wand.", BASIC_ACCESS)
 {
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
+
 	CBaseWand* pWand = new CBaseWand();
 	pWand->m_dwGUID = g_pWorld->GenerateGUID(eItemGUID);
 	pWand->m_Origin.landcell = pPlayer->GetLandcell();
@@ -429,7 +586,14 @@ CLIENT_COMMAND(teleloc, "<landcell> [x=0] [y=0] [z=0]", "Teleports to a specific
 CLIENT_COMMAND(spawnmodel, "<model index> [scale=1] [name=*]", "Spawns a model.", BASIC_ACCESS)
 {
 	if (argc < 1)
+	{
 		return true;
+	}
+
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
 
 	DWORD dwModel = strtoul(argv[0], NULL, 16);
 	if (!(dwModel & 0xFF000000))
@@ -458,7 +622,9 @@ CLIENT_COMMAND(spawnmodel, "<model index> [scale=1] [name=*]", "Spawns a model."
 CLIENT_COMMAND(spawnmodels, "<start index> <end index>", "Spawns a range of models.", BASIC_ACCESS)
 {
 	if (argc < 2)
+	{
 		return true;
+	}
 
 	DWORD dwModelStart = strtoul(argv[0], NULL, 16);
 	if (!(dwModelStart & 0xFF000000))
@@ -469,13 +635,22 @@ CLIENT_COMMAND(spawnmodels, "<start index> <end index>", "Spawns a range of mode
 		dwModelEnd |= 0x02000000;
 
 	if (dwModelStart > dwModelEnd && dwModelStart != 0)
+	{
 		return true;
+	}
 
 	DWORD dwCount = (dwModelEnd - dwModelStart) + 1;
 	DWORD dwWidth = (int)sqrt((double)dwCount);
 
 	if ((dwModelEnd - dwModelStart) >= 50)
+	{
 		return true;
+	}
+
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
 
 	int x = 0;
 	int y = 0;
@@ -507,18 +682,60 @@ CLIENT_COMMAND(spawnmodels, "<start index> <end index>", "Spawns a range of mode
 	return false;
 }
 
-CLIENT_COMMAND(spawnmonster, "<model index> [scale=1] [name=*]", "Spawns a monster.", BASIC_ACCESS)
+
+CLIENT_COMMAND(spawnmonster2, "<model index> <base palette>", "Spawns a monster.", BASIC_ACCESS)
 {
-	if (g_bSilence)
+	if (argc < 3)
 	{
-		if (pPlayer->GetClient()->GetAccessLevel() < ADMIN_ACCESS)
-		{
-			return false;
-		}
+		return true;
 	}
 
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
+
+	DWORD dwModel = strtoul(argv[0], NULL, 16);
+	if (!(dwModel & 0xFF000000))
+		dwModel |= 0x02000000;
+
+	DWORD dwPalette1 = strtoul(argv[1], NULL, 16);
+	DWORD dwPalette2 = strtoul(argv[2], NULL, 16);
+	dwPalette1 &= 0xFFFFF;
+	dwPalette2 &= 0xFFFFF;
+
+	CBaseMonster *pSpawn = new CBaseMonster();
+	pSpawn->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
+	pSpawn->m_dwModel = dwModel;
+	pSpawn->m_fScale = 1.0f;
+	pSpawn->m_strName = csprintf("0x%X 0x%X 0x%X", dwModel, dwPalette1, dwPalette2);
+	pSpawn->m_Origin.landcell = pPlayer->GetLandcell();
+	pSpawn->m_Origin.x = pPlayer->m_Origin.x;
+	pSpawn->m_Origin.y = pPlayer->m_Origin.y;
+	pSpawn->m_Origin.z = pPlayer->m_Origin.z;
+	pSpawn->m_miBaseModel.dwBasePalette = dwPalette1;
+	pSpawn->m_miBaseModel.lPalettes.push_back(PaletteRpl(dwPalette2, 0, 0));
+
+	g_pWorld->CreateEntity(pSpawn);
+
+	pSpawn->SetDescription(csprintf("This monster was spawned by %s.\nModel #: %08X\nPalette #: %08X %08X\n", pPlayer->GetName(), dwModel, dwPalette1, dwPalette2));
+	
+	pSpawn->PostSpawn();
+
+	return false;
+}
+
+CLIENT_COMMAND(spawnmonster, "<model index> [scale=1] [name=*] [dotcolor]", "Spawns a monster.", BASIC_ACCESS)
+{	
 	if (argc < 1)
+	{
 		return true;
+	}
+
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
 
 	DWORD dwModel = strtoul(argv[0], NULL, 16);
 	if (!(dwModel & 0xFF000000))
@@ -526,6 +743,7 @@ CLIENT_COMMAND(spawnmonster, "<model index> [scale=1] [name=*]", "Spawns a monst
 
 	float flScale = (float)((argc >= 2) ? atof(argv[1]) : 1.0f);
 	const char* szName = (argc >= 3) ? argv[2] : csprintf("Model #%08X", dwModel);
+	int dotColor = (int)((argc >= 4) ? atoi(argv[3]) : 0);
 
 	CBaseMonster *pSpawn = new CBaseMonster();
 	pSpawn->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
@@ -536,9 +754,12 @@ CLIENT_COMMAND(spawnmonster, "<model index> [scale=1] [name=*]", "Spawns a monst
 	pSpawn->m_Origin.x = pPlayer->m_Origin.x;
 	pSpawn->m_Origin.y = pPlayer->m_Origin.y;
 	pSpawn->m_Origin.z = pPlayer->m_Origin.z;
+	pSpawn->m_BlipColor = dotColor;
 	g_pWorld->CreateEntity(pSpawn);
 
 	pSpawn->SetDescription(csprintf("This monster was spawned by %s.\nModel #: %08X\nScale: %f\n", pPlayer->GetName(), dwModel, flScale));
+
+	pSpawn->PostSpawn();
 
 	return false;
 }
@@ -546,7 +767,14 @@ CLIENT_COMMAND(spawnmonster, "<model index> [scale=1] [name=*]", "Spawns a monst
 CLIENT_COMMAND(spawnitem, "<model index> [scale=1] [name=*]", "Spawns an item.", BASIC_ACCESS)
 {
 	if (argc < 1)
+	{
 		return true;
+	}
+
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
 
 	DWORD dwModel = strtoul(argv[0], NULL, 16);
 	if (!(dwModel & 0xFF000000))
@@ -571,6 +799,22 @@ CLIENT_COMMAND(spawnitem, "<model index> [scale=1] [name=*]", "Spawns an item.",
 	return false;
 }
 
+
+CLIENT_COMMAND(spawnlifestone, "", "Spawns a lifestone.", BASIC_ACCESS)
+{
+	CBaseLifestone *pSpawn = new CBaseLifestone();
+	pSpawn->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
+	pSpawn->m_Origin.landcell = pPlayer->GetLandcell();
+	pSpawn->m_Origin.x = pPlayer->m_Origin.x;
+	pSpawn->m_Origin.y = pPlayer->m_Origin.y;
+	pSpawn->m_Origin.z = pPlayer->m_Origin.z;
+	g_pWorld->CreateEntity(pSpawn);
+
+	pSpawn->SetDescription(csprintf("Life Stone spawned by %s.", pPlayer->GetName()));
+
+	return false;
+}
+
 CLIENT_COMMAND(clearspawns, "", "Clears the spawns in your current landblock", BASIC_ACCESS)
 {
 	CLandBlock *pBlock = pPlayer->GetBlock();
@@ -579,6 +823,14 @@ CLIENT_COMMAND(clearspawns, "", "Clears the spawns in your current landblock", B
 		pBlock->ClearSpawns();
 
 	pPlayer->SendText("Clearing spawns in your landblock.", 1);
+	return false;
+}
+
+CLIENT_COMMAND(clearallspawns, "", "Clears  all spawns in all landblocks (slow.)", ADMIN_ACCESS)
+{
+	g_pWorld->ClearAllSpawns();
+
+	pPlayer->SendText("Clearing spawns in all landblocks.", 1);
 	return false;
 }
 
@@ -622,7 +874,14 @@ CLIENT_COMMAND(AddSpellByID, "id", "Adds a spell by ID", ADMIN_ACCESS)
 CLIENT_COMMAND(test, "<index>", "Performs the specified test.", BASIC_ACCESS)
 {
 	if (argc < 1)
+	{
 		return true;
+	}
+
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
 
 	DWORD dwCell = pPlayer->GetLandcell();
 	float x = pPlayer->m_Origin.x;
@@ -638,6 +897,7 @@ CLIENT_COMMAND(test, "<index>", "Performs the specified test.", BASIC_ACCESS)
 		break;
 	}
 	case 2: {
+
 		CBaseItem *pSpawn = new CAcademyCoat();
 		pSpawn->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
 		pSpawn->m_Origin.landcell = dwCell;
@@ -697,6 +957,63 @@ CLIENT_COMMAND(test, "<index>", "Performs the specified test.", BASIC_ACCESS)
 
 		break;
 	}
+	case 6: {
+		if (argc < 3)
+			break;
+
+		DWORD start = strtoul(argv[1], 0, 16);
+		DWORD end = strtoul(argv[2], 0, 16);
+		if (start < 0)
+			start = 0;
+		if (start > 0xFF)
+			start = 0xFF;
+		if (end < start)
+			end = start;
+		if (end > 0xFF)
+			end = 0xFF;
+
+		CBaseArmor *pSpawn = new CPhatRobe();
+		pSpawn->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
+		pSpawn->m_Origin.landcell = dwCell;
+		pSpawn->m_Origin.x = x;
+		pSpawn->m_Origin.y = y;
+		pSpawn->m_Origin.z = z;
+		pSpawn->m_miWornModel.lPalettes.clear();
+		pSpawn->m_miWornModel.lPalettes.push_back(PaletteRpl(0x137F, (BYTE)start, (BYTE)(end - start)));
+		g_pWorld->CreateEntity(pSpawn);
+
+		BinaryWriter* co = pSpawn->CreateMessage();
+		//OutputConsoleBytes(co->GetData(), co->GetSize());
+		delete co;
+
+		break;
+	}
+	case 7: {
+		if (argc < 3)
+			break;
+
+		DWORD start = strtoul(argv[1], 0, 16);
+		DWORD end = strtoul(argv[2], 0, 16);
+		if (start < 0)
+			start = 0;
+		if (start > 0xFF)
+			start = 0xFF;
+		if (end < start)
+			end = start;
+		if (end > 0xFF)
+			end = 0xFF;
+
+		CPhysicsObj *pTarget = g_pWorld->FindWithinPVS(pPlayer, pPlayer->m_LastAssessed);
+
+		if (pTarget)
+		{
+			pTarget->m_miBaseModel.lPalettes.clear();
+			pTarget->m_miBaseModel.lPalettes.push_back(PaletteRpl(0x137F, (BYTE)start, (BYTE)(end - start)));
+			pTarget->UpdateModel();
+		}
+
+		break;
+	}
 	}
 
 	return false;
@@ -704,6 +1021,11 @@ CLIENT_COMMAND(test, "<index>", "Performs the specified test.", BASIC_ACCESS)
 
 CLIENT_COMMAND(spelltest, "", "Performs a spell test.", BASIC_ACCESS)
 {
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
+
 	//E0 and E1 are cool spellcasting animations
 	//136 = moooooo
 
@@ -740,6 +1062,8 @@ CLIENT_COMMAND(animation, "<index> [speed=1]", "Plays a primary animation.", BAS
 
 	return false;
 }
+
+/*
 CLIENT_COMMAND(setmodel, "<model>", "Allows you to set your model", BASIC_ACCESS)
 {
 	if (argc < 1)
@@ -748,27 +1072,67 @@ CLIENT_COMMAND(setmodel, "<model>", "Allows you to set your model", BASIC_ACCESS
 	WORD wIndex = atoi(argv[0]);
 
 	pPlayer->m_dwModel = 0x02000000 + wIndex;
+	pPlayer->UpdateModel();
 
 	return false;
 }
+*/
+
+CLIENT_COMMAND(setmodel, "[monster]", "Changes your model to a monster.", BASIC_ACCESS)
+{
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
+
+	if (argc < 1)
+	{
+		return true;
+	}
+
+	CCapturedWorldObjectInfo *pMonsterInfo = g_pGameDatabase->GetCapturedMonsterData(argv[0]);
+
+	if (!pMonsterInfo)
+	{
+		pPlayer->SendText("Couldn't find that monster!", 1);
+		return false;
+	}
+
+	float fScale = 1.0f;
+	if (argc >= 2)
+	{
+		fScale = (float)atof(argv[1]);
+		if (fScale < 0.01)
+			fScale = 0.01f;
+		if (fScale > 1000.0)
+			fScale = 1000;
+	}
+
+	pPlayer->m_miBaseModel = pMonsterInfo->appearance;
+	pPlayer->m_dwModel = pMonsterInfo->physics.setup_id;
+	pPlayer->m_dwAnimationSet = pMonsterInfo->physics.mtable_id;
+	pPlayer->m_dwSoundSet = pMonsterInfo->physics.stable_id;
+	pPlayer->m_dwEffectSet = pMonsterInfo->physics.phstable_id;
+	pPlayer->m_fScale = pMonsterInfo->physics.object_scale * fScale;
+
+	pPlayer->UpdateEntity(pPlayer);
+	return false;
+}
+
 CLIENT_COMMAND(invisible, "", "Go Invisible", BASIC_ACCESS)
 {
-
-	WORD wIndex = 160;
 	float fSpeed = (argc >= 2) ? (float)atof(argv[1]) : 1.0f;
-	float fDelay = 0.5f;
-	pPlayer->Animation_PlayPrimary(wIndex, fSpeed, fDelay);
+	pPlayer->Animation_PlayPrimary(160, fSpeed, 0.5f);
 	return false;
 }
+
 CLIENT_COMMAND(visible, "", "Go Visible", BASIC_ACCESS)
 {
-
-	WORD wIndex = 161;
 	float fSpeed = (argc >= 2) ? (float)atof(argv[1]) : 1.0f;
-	float fDelay = 0.5f;
-	pPlayer->Animation_PlayPrimary(wIndex, fSpeed, fDelay);
+	pPlayer->Animation_PlayPrimary(161, fSpeed, 0.5f);
 	return false;
 }
+
 CLIENT_COMMAND(motion, "<index> [speed=1]", "Plays a sequenced animation.", BASIC_ACCESS)
 {
 	if (argc < 1)
@@ -1175,6 +1539,11 @@ CLIENT_COMMAND(tabletest, "", "Performs a table test.", BASIC_ACCESS)
 
 CLIENT_COMMAND(doomshard, "[palette=0xBF7]", "Spawns a doom shard.", BASIC_ACCESS)
 {
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
+
 	WORD palette = 0xBF7;
 
 	if (argc >= 1)
@@ -1196,42 +1565,26 @@ CLIENT_COMMAND(doomshard, "[palette=0xBF7]", "Spawns a doom shard.", BASIC_ACCES
 
 CLIENT_COMMAND(spawnaerfalle, "", "Spawn aerfalle for testing if the data is available.", ADMIN_ACCESS)
 {
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
+
 	g_pGameDatabase->SpawnAerfalle();
 	return false;
 }
 
-CLIENT_COMMAND(players, "", "List the players logged in.", BASIC_ACCESS)
+CLIENT_COMMAND(freecam, "", "Allows free camera movement.", BASIC_ACCESS)
 {
-	PlayerMap *pPlayers = g_pWorld->GetPlayers();
-
-	pPlayer->SendText(csprintf("Players logged in (%u)", pPlayers->size()), 1);
-
-	for (auto& player : *pPlayers)
-	{
-		const char *playerName = player.second->m_strName.c_str();
-		const char *playerAccount = player.second->GetClient() ? player.second->GetClient()->GetAccount() : "";
-
-		if (pPlayer->GetClient() && pPlayer->GetClient()->GetAccessLevel() >= BASIC_ACCESS) // ADMIN_ACCESS)
-		{
-			pPlayer->SendText(csprintf("%s (%s, 0x%08X %.3f %.3f %.3f)", playerName, playerAccount, player.second->m_Origin.landcell, player.second->m_Origin.x, player.second->m_Origin.y, player.second->m_Origin.z), 1);
-		}
-		else
-		{
-			pPlayer->SendText(playerName, 1);
-		}
-	}
-
+	pPlayer->ChangeVIS(pPlayer->m_PhysicsState ^ (DWORD)(PARTICLE_EMITTER_PS));
 	return false;
 }
 
 CLIENT_COMMAND(spawn, "[name] [scale] [animate 0=no 1=yes]", "Spawns something by name (right now works for monsters, NPCs, players.)", BASIC_ACCESS)
 {
-	if (g_bSilence)
+	if (!SpawningEnabled(pPlayer))
 	{
-		if (pPlayer->GetClient()->GetAccessLevel() < ADMIN_ACCESS)
-		{
-			return false;
-		}
+		return false;
 	}
 
 	if (argc < 1)
@@ -1246,11 +1599,102 @@ CLIENT_COMMAND(spawn, "[name] [scale] [animate 0=no 1=yes]", "Spawns something b
 	}
 
 	float fScale = 1.0f;
+	if (argc >= 2)
+	{
+		fScale = (float) atof(argv[1]);
+		if (fScale < 0.01)
+			fScale = 0.01f;
+		if (fScale > 1000.0)
+			fScale = 1000;
+	}
+
+	bool bAnimate = true;
+	if (argc >= 3)
+	{
+		bAnimate = atoi(argv[2]) ? true : false;
+	}
+
+	CPhysicsObj *pMonster = g_pGameDatabase->CreateFromCapturedData(pMonsterInfo);
+
+	// Modify these
+	pMonster->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
+	pMonster->m_fScale = pMonsterInfo->physics.object_scale * fScale;
+	pMonster->m_Origin = pPlayer->m_Origin;
+
+	// Add and spawn it
+	g_pWorld->CreateEntity(pMonster);	
+	pMonster->PostSpawn();
+
+	return false;
+}
+
+CLIENT_COMMAND(spawnitem2, "[name] [scale", "Spawns something by name (works for most items.)", BASIC_ACCESS)
+{
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
+
+	if (argc < 1)
+	{
+		return true;
+	}
+
+	CCapturedWorldObjectInfo *pItemInfo = g_pGameDatabase->GetCapturedItemData(argv[0]);
+
+	if (!pItemInfo)
+	{
+		pPlayer->SendText("Couldn't find that to spawn!", 1);
+		return false;
+	}
+
+	float fScale = 1.0f;
+	if (argc >= 2)
+	{
+		fScale = (float)atof(argv[1]);
+		if (fScale < 0.01)
+			fScale = 0.01f;
+		if (fScale > 1000.0)
+			fScale = 1000;
+	}
+
+	CPhysicsObj *pItem = g_pGameDatabase->CreateFromCapturedData(pItemInfo);
+
+	pItem->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
+	pItem->m_fScale = pItemInfo->physics.object_scale * fScale;
+	pItem->m_Origin = pPlayer->m_Origin;	
+	pItem->m_dwCoverage2 = 0; // Not equipped
+
+	g_pWorld->CreateEntity(pItem);
+	return false;
+}
+
+CLIENT_COMMAND(spawnarmor, "[name]", "Spawns armor by name.", BASIC_ACCESS)
+{
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
+
+	if (argc < 1)
+	{
+		return true;
+	}
+
+	CCapturedWorldObjectInfo *pItemInfo = g_pGameDatabase->GetCapturedArmorData(argv[0]);
+
+	if (!pItemInfo)
+	{
+		pPlayer->SendText("Couldn't find that to spawn!", 1);
+		return false;
+	}
+
+	float fScale = 1.0f;
 	bool bAnimate = true;
 
 	if (argc >= 2)
 	{
-		fScale = (float) atof(argv[1]);
+		fScale = (float)atof(argv[1]);
 		if (fScale < 0.01)
 			fScale = 0.01f;
 		if (fScale > 1000.0)
@@ -1262,28 +1706,21 @@ CLIENT_COMMAND(spawn, "[name] [scale] [animate 0=no 1=yes]", "Spawns something b
 		bAnimate = atoi(argv[2]) ? true : false;
 	}
 
-	CBaseMonster *pMonster = new CBaseMonster();
-	pMonster->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
-	pMonster->m_miBaseModel = pMonsterInfo->appearance;
-	pMonster->m_dwModel = pMonsterInfo->physics.setup_id;
-	pMonster->m_dwAnimationSet = pMonsterInfo->physics.mtable_id;
-	pMonster->m_dwSoundSet = pMonsterInfo->physics.stable_id;
-	pMonster->m_dwEffectSet = pMonsterInfo->physics.phstable_id;
-	pMonster->m_fScale = pMonsterInfo->physics.object_scale * fScale;
-	pMonster->m_ItemType = pMonsterInfo->weenie._type;
-	pMonster->m_strName = pMonsterInfo->weenie._name;
+	CPhysicsObj *pItem = g_pGameDatabase->CreateFromCapturedData(pItemInfo);
 
-	pMonster->m_Origin = pPlayer->m_Origin;
-	pMonster->m_Origin.z += 5.0;
+	pItem->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
+	pItem->m_fScale = pItemInfo->physics.object_scale * fScale;
+	pItem->m_dwCoverage2 = 0;
+	pItem->m_Origin = pPlayer->m_Origin;
 
-	if (pMonsterInfo->physics.movement_buffer && bAnimate)
+	if (!bAnimate)
 	{
-		pMonster->m_AnimOverrideData = pMonsterInfo->physics.movement_buffer;
-		pMonster->m_AnimOverrideDataLen = pMonsterInfo->physics.movement_buffer_length;
-		pMonster->m_AutonomousMovement = pMonsterInfo->physics.autonomous_movement;
+		pItem->m_AnimOverrideData = NULL;
+		pItem->m_AnimOverrideDataLen = 0;
+		pItem->m_AutonomousMovement = 0;
 	}
 
-	g_pWorld->CreateEntity(pMonster);
+	g_pWorld->CreateEntity(pItem);
 	return false;
 }
 
@@ -1316,10 +1753,47 @@ CLIENT_COMMAND(spawnlist, "[num to list]", "Lists spawnable objects.", BASIC_ACC
 }
 
 
+CLIENT_COMMAND(spawnrandomarmor, "", "Spawns random armor.", BASIC_ACCESS)
+{
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
+
+	CCapturedWorldObjectInfo *pItemInfo = g_pGameDatabase->GetRandomCapturedArmorData();
+
+	if (!pItemInfo)
+	{
+		pPlayer->SendText("Couldn't find anything to spawn!", 1);
+		return false;
+	}
+
+	CPhysicsObj *pItem = g_pGameDatabase->CreateFromCapturedData(pItemInfo);
+
+	pItem->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
+	pItem->m_dwCoverage2 = 0;
+	pItem->m_Origin = pPlayer->m_Origin;
+	pItem->m_dwEquipSlot = 0; // ???
+	pItem->m_dwEquipType = 0; // ???
+	pItem->m_AnimOverrideData = NULL;
+	pItem->m_AnimOverrideDataLen = 0;
+	pItem->m_AutonomousMovement = 0;
+
+	g_pWorld->CreateEntity(pItem);
+	return false;
+}
+
 CLIENT_COMMAND(spawnrandom, "[num to spawn] [scale]", "Spawns random objects.", BASIC_ACCESS)
 {
 	if (argc < 1)
+	{
 		return true;
+	}
+
+	if (!SpawningEnabled(pPlayer))
+	{
+		return false;
+	}
 
 	int num = atoi(argv[0]);
 	if (num < 0)
@@ -1349,32 +1823,22 @@ CLIENT_COMMAND(spawnrandom, "[num to spawn] [scale]", "Spawns random objects.", 
 			return false;
 		}
 
-		bool bAnimate = false;
+		CPhysicsObj *pMonster = g_pGameDatabase->CreateFromCapturedData(pMonsterInfo);
 
-		CBaseMonster *pMonster = new CBaseMonster();
 		pMonster->m_dwGUID = g_pWorld->GenerateGUID(eDynamicGUID);
-		pMonster->m_miBaseModel = pMonsterInfo->appearance;
-		pMonster->m_dwModel = pMonsterInfo->physics.setup_id;
-		pMonster->m_dwAnimationSet = pMonsterInfo->physics.mtable_id;
-		pMonster->m_dwSoundSet = pMonsterInfo->physics.stable_id;
-		pMonster->m_dwEffectSet = pMonsterInfo->physics.phstable_id;
 		pMonster->m_fScale = pMonsterInfo->physics.object_scale * fScale;
-		pMonster->m_ItemType = pMonsterInfo->weenie._type;
-		pMonster->m_strName = pMonsterInfo->weenie._name;
+		pMonster->m_dwCoverage2 = 0;
+		pMonster->m_AnimOverrideData = NULL;
+		pMonster->m_AnimOverrideDataLen = 0;
+		pMonster->m_AutonomousMovement = 0;
 
 		pMonster->m_Origin = pPlayer->m_Origin;
-		pMonster->m_Origin.x += (float) RandomFloat(-2.0f * total, 2.0f * total);
-		pMonster->m_Origin.y += (float) RandomFloat(-2.0f * total, 2.0f * total);
-		pMonster->m_Origin.z += 5.0;
-
-		if (pMonsterInfo->physics.movement_buffer && bAnimate)
-		{
-			pMonster->m_AnimOverrideData = pMonsterInfo->physics.movement_buffer;
-			pMonster->m_AnimOverrideDataLen = pMonsterInfo->physics.movement_buffer_length;
-			pMonster->m_AutonomousMovement = pMonsterInfo->physics.autonomous_movement;
-		}
+		pMonster->m_Origin.x += (float)RandomFloat(-2.0f * total, 2.0f * total);
+		pMonster->m_Origin.y += (float)RandomFloat(-2.0f * total, 2.0f * total);
 
 		g_pWorld->CreateEntity(pMonster);
+		pMonster->PostSpawn();
+
 		num--;
 	}
 	return false;

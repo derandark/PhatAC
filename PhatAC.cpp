@@ -100,7 +100,7 @@ LRESULT CALLBACK AboutProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam
 			EndDialog(hDlg, LOWORD(wParam));
 			return TRUE;
 		case IDC_WEBSITE:
-			ShellExecute(0, "open", "http://hunczak.com/", NULL, NULL, SW_SHOW);
+			ShellExecute(0, "open", "https://discord.gg/ve6uAKt", NULL, NULL, SW_SHOW);
 			break;
 		default:
 			break;
@@ -545,7 +545,7 @@ int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				}
 				else
 				{
-					delete g_pPhatServer; g_pPhatServer = NULL;
+					SafeDelete(g_pPhatServer);
 					SendMessage(GetDlgItem(hDlg, IDC_CLIENTS), LB_RESETCONTENT, 0, 0);
 
 					SetWindowText(GetDlgItem(hDlg, IDC_TOGGLE), "Start");

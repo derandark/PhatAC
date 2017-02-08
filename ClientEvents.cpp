@@ -21,6 +21,7 @@
 #include "Monster.h"
 #include "Player.h"
 #include "Door.h"
+#include "ChatMsgs.h"
 
 CClientEvents::CClientEvents(CClient *parent)
 {
@@ -81,7 +82,7 @@ void CClientEvents::BeginLogout()
 	if (m_pPlayer && !m_fLogout)
 	{
 		m_pPlayer->Animation_ClipMotions(0);
-		m_pPlayer->Animation_PlayPrimary(0x11B, 1.0f, 5.0f);
+		m_pPlayer->Animation_PlayPrimary(286, 1.0f, 5.0f);
 
 		m_fLogout = g_pGlobals->Time();
 	}
@@ -94,14 +95,14 @@ void CClientEvents::LoginError(int iError)
 	ErrorPackage[0] = 0xF659;
 	ErrorPackage[1] = iError;
 
-	m_pClient->SendMessage(ErrorPackage, sizeof(ErrorPackage), PRIVATE_MSG);
+	m_pClient->SendNetMessage(ErrorPackage, sizeof(ErrorPackage), PRIVATE_MSG);
 }
 
 void CClientEvents::LoginCharacter(DWORD dwGUID, const char *szAccount)
 {
 	_CHARDESC desc;
 
-	if (m_pPlayer)
+	if (m_pPlayer || g_pWorld->FindPlayer(dwGUID))
 	{
 		// LOG(Temp, Normal, "Character already logged in!\n");
 		LoginError(13);
@@ -128,7 +129,7 @@ void CClientEvents::LoginCharacter(DWORD dwGUID, const char *szAccount)
 
 void CClientEvents::SendText(const char *szText, long lColor)
 {
-	m_pClient->SendMessage(ServerText(szText, lColor), PRIVATE_MSG, FALSE, TRUE);
+	m_pClient->SendNetMessage(ServerText(szText, lColor), PRIVATE_MSG, FALSE, TRUE);
 }
 
 void CClientEvents::UpdateBurdenUI()
@@ -142,7 +143,7 @@ void CClientEvents::Attack(DWORD dwTarget, DWORD dwHeight, float flPower)
 
 void CClientEvents::SendTellByGUID(const char* szText, DWORD dwGUID)
 {
-	if (strlen(szText) > 180)
+	if (strlen(szText) > 300)
 		return;
 
 	//should really check for invalid characters and such ;]
@@ -154,7 +155,7 @@ void CClientEvents::SendTellByGUID(const char* szText, DWORD dwGUID)
 
 	if (dwGUID == m_pPlayer->m_dwGUID)
 	{
-		m_pPlayer->SendMessage(ServerText("You really need some new friends..", 1), PRIVATE_MSG, FALSE);
+		m_pPlayer->SendNetMessage(ServerText("You really need some new friends..", 1), PRIVATE_MSG, FALSE);
 		return;
 	}
 
@@ -165,16 +166,16 @@ void CClientEvents::SendTellByGUID(const char* szText, DWORD dwGUID)
 
 	char szResponse[300];
 	_snprintf(szResponse, 300, "You tell %s, \"%s\"", pTarget->GetName(), szText);
-	m_pPlayer->SendMessage(ServerText(szResponse, 4), PRIVATE_MSG, FALSE);
+	m_pPlayer->SendNetMessage(ServerText(szResponse, 4), PRIVATE_MSG, FALSE);
 
-	pTarget->SendMessage(DirectChat(szText, m_pPlayer->GetName(), m_pPlayer->m_dwGUID, dwGUID, 3), PRIVATE_MSG, TRUE);
+	pTarget->SendNetMessage(DirectChat(szText, m_pPlayer->GetName(), m_pPlayer->m_dwGUID, dwGUID, 3), PRIVATE_MSG, TRUE);
 }
 
 void CClientEvents::SendTellByName(const char* szText, const char* szName)
 {
-	if (strlen(szName) > 180)
+	if (strlen(szName) > 300)
 		return;
-	if (strlen(szText) > 180)
+	if (strlen(szText) > 300)
 		return;
 
 	//should really check for invalid characters and such ;]
@@ -191,15 +192,15 @@ void CClientEvents::SendTellByName(const char* szText, const char* szName)
 
 	if (pTarget->m_dwGUID == m_pPlayer->m_dwGUID)
 	{
-		m_pPlayer->SendMessage(ServerText("You really need some new friends..", 1), PRIVATE_MSG, FALSE);
+		m_pPlayer->SendNetMessage(ServerText("You really need some new friends..", 1), PRIVATE_MSG, FALSE);
 		return;
 	}
 
 	char szResponse[300];
 	_snprintf(szResponse, 300, "You tell %s, \"%s\"", pTarget->GetName(), szText);
-	m_pPlayer->SendMessage(ServerText(szResponse, 4), PRIVATE_MSG, FALSE, TRUE);
+	m_pPlayer->SendNetMessage(ServerText(szResponse, 4), PRIVATE_MSG, FALSE, TRUE);
 
-	pTarget->SendMessage(DirectChat(szText, m_pPlayer->GetName(), m_pPlayer->m_dwGUID, pTarget->m_dwGUID, 3), PRIVATE_MSG, TRUE);
+	pTarget->SendNetMessage(DirectChat(szText, m_pPlayer->GetName(), m_pPlayer->m_dwGUID, pTarget->m_dwGUID, 3), PRIVATE_MSG, TRUE);
 }
 
 void CClientEvents::ClientText(char* szText)
@@ -224,7 +225,7 @@ void CClientEvents::ClientText(char* szText)
 
 void CClientEvents::EmoteText(char* szText)
 {
-	if (strlen(szText) > 180)
+	if (strlen(szText) > 300)
 		return;
 
 	//TODO: Check for invalid characters and such ;)
@@ -239,7 +240,7 @@ void CClientEvents::EmoteText(char* szText)
 
 void CClientEvents::ActionText(char* szText)
 {
-	if (strlen(szText) > 180)
+	if (strlen(szText) > 300)
 		return;
 
 	//TODO: Check for invalid characters and such ;)
@@ -254,7 +255,7 @@ void CClientEvents::ActionText(char* szText)
 
 void CClientEvents::ChannelText(DWORD dwChannel, const char* szText)
 {
-	if (strlen(szText) > 180)
+	if (strlen(szText) > 300)
 		return;
 
 	//TODO: Check for invalid characters and such ;)
@@ -270,7 +271,8 @@ void CClientEvents::ChannelText(DWORD dwChannel, const char* szText)
 	case 0x400:
 	case 0x800:
 		//For now we'll just spam them to everyone!
-		g_pWorld->BroadcastGlobal(ChannelChat(dwChannel, m_pPlayer->GetName(), szText), PRIVATE_MSG, m_pPlayer->m_dwGUID, TRUE);
+		// g_pWorld->BroadcastGlobal(ChannelChat(dwChannel, m_pPlayer->GetName(), szText), PRIVATE_MSG, m_pPlayer->m_dwGUID, TRUE);
+		g_pWorld->BroadcastGlobal(ServerText(csprintf("%s says to your fellow testers, \"%s\"", m_pPlayer->GetName(), szText), 3), PRIVATE_MSG, m_pPlayer->m_dwGUID, TRUE);
 	}
 
 	//Give a special copy to this player?
@@ -278,7 +280,7 @@ void CClientEvents::ChannelText(DWORD dwChannel, const char* szText)
 	{
 	case 0x400:
 	case 0x800:
-		m_pClient->SendMessage(ChannelChat(dwChannel, NULL, szText), PRIVATE_MSG, TRUE);
+		m_pClient->SendNetMessage(ServerText(csprintf("You say to your fellow testers, \"%s\"", szText), 3), PRIVATE_MSG, TRUE);
 		break;
 	default:
 		SendText("The server does not support this channel.", 1);
@@ -298,7 +300,7 @@ void CClientEvents::RequestHealthUpdate(DWORD dwGUID)
 	if (pEntity) {
 		if (pEntity->IsMonster())
 		{
-			m_pClient->SendMessage(HealthUpdate((CBaseMonster *)pEntity), PRIVATE_MSG, TRUE, TRUE);
+			m_pClient->SendNetMessage(HealthUpdate((CBaseMonster *)pEntity), PRIVATE_MSG, TRUE, TRUE);
 		}
 	}
 }
@@ -338,8 +340,11 @@ void CClientEvents::EquipItem(DWORD dwItemID, DWORD dwCoverage)
 	if (pItem->HasOwner())
 		m_pPlayer->Container_ReleaseItem(pItem, FALSE);
 
-	if (pItem->m_ItemType != TYPE_ARMOR)
+	if (!(pItem->m_ItemType & (TYPE_ARMOR | TYPE_CLOTHING)))
+	{
 		pItem->SetWorldWielder(dwCell, m_pPlayer);
+	}
+
 	pItem->SetWorldContainer(dwCell, NULL);
 	pItem->SetWorldCoverage(dwCell, dwCoverage);
 
@@ -347,12 +352,14 @@ void CClientEvents::EquipItem(DWORD dwItemID, DWORD dwCoverage)
 	m_pPlayer->Container_EquipItem(dwCell, pItem, dwCoverage);
 
 	m_pPlayer->EmitSound(0x77, 1.0f);
-	m_pClient->SendMessage(InventoryEquip(dwItemID, dwCoverage), PRIVATE_MSG, TRUE);
+	m_pClient->SendNetMessage(InventoryEquip(dwItemID, dwCoverage), PRIVATE_MSG, TRUE);
 
 	UpdateBurdenUI();
 
-	if (pItem->m_ItemType == TYPE_ARMOR)
+	if (pItem->m_ItemType & (TYPE_ARMOR|TYPE_CLOTHING))
+	{
 		m_pPlayer->UpdateModel();
+	}
 }
 
 void CClientEvents::StoreItem(DWORD dwItemID, DWORD dwContainer, char cSlot)
@@ -402,11 +409,11 @@ void CClientEvents::StoreItem(DWORD dwItemID, DWORD dwContainer, char cSlot)
 	cSlot = pContainer->Container_InsertInventoryItem(dwCell, pItem, cSlot);
 
 	m_pPlayer->EmitSound(0x78, 1.0f);
-	m_pClient->SendMessage(InventoryMove(dwItemID, dwContainer, cSlot, 0), PRIVATE_MSG, TRUE);
+	m_pClient->SendNetMessage(InventoryMove(dwItemID, dwContainer, cSlot, 0), PRIVATE_MSG, TRUE);
 
 	UpdateBurdenUI();
 
-	if (pItem->m_ItemType == TYPE_ARMOR)
+	if (pItem->m_ItemType & (TYPE_ARMOR | TYPE_CLOTHING))
 		m_pPlayer->UpdateModel();
 }
 
@@ -426,6 +433,7 @@ void CClientEvents::DropItem(DWORD dwItemID)
 	if (!(pItem = m_pPlayer->Container_FindItem(dwItemID)))
 		return;
 
+	m_pPlayer->Animation_PlayPrimary(24, 1.0f, 2.0f);
 	DWORD dwCell = m_pPlayer->GetLandcell();
 
 	//Take it out of whatever slot it's in.
@@ -436,7 +444,7 @@ void CClientEvents::DropItem(DWORD dwItemID)
 	pItem->SetWorldWielder(dwCell, NULL);
 
 	m_pPlayer->EmitSound(0x7B, 1.0f);
-	m_pClient->SendMessage(InventoryDrop(dwItemID), PRIVATE_MSG, TRUE);
+	m_pClient->SendNetMessage(InventoryDrop(dwItemID), PRIVATE_MSG, TRUE);
 
 	g_pWorld->InsertEntity(pItem);
 
@@ -444,7 +452,7 @@ void CClientEvents::DropItem(DWORD dwItemID)
 
 	UpdateBurdenUI();
 
-	if (pItem->m_ItemType == TYPE_ARMOR)
+	if (pItem->m_ItemType & (TYPE_ARMOR | TYPE_CLOTHING))
 		m_pPlayer->UpdateModel();
 }
 
@@ -464,7 +472,7 @@ void CClientEvents::Ping()
 {
 	// Pong!
 	DWORD Pong = 0x1EA;
-	m_pClient->SendMessage(&Pong, sizeof(Pong), PRIVATE_MSG, TRUE);
+	m_pClient->SendNetMessage(&Pong, sizeof(Pong), PRIVATE_MSG, TRUE);
 }
 
 void CClientEvents::UseItemEx(DWORD dwSourceID, DWORD dwDestID)
@@ -503,22 +511,23 @@ void CClientEvents::ActionComplete()
 	ActionComplete[0] = 0x1C7;
 	ActionComplete[1] = 0;
 
-	m_pClient->SendMessage(ActionComplete, sizeof(ActionComplete), PRIVATE_MSG, TRUE);
+	m_pClient->SendNetMessage(ActionComplete, sizeof(ActionComplete), PRIVATE_MSG, TRUE);
 }
 
 void CClientEvents::Identify(DWORD dwObjectID)
 {
 	SendText("Identify will be incomplete -- it's not done!", 9);
 
-	CPhysicsObj *pSource = m_pPlayer->FindChild(dwObjectID);
+	CPhysicsObj *pTarget = m_pPlayer->FindChild(dwObjectID);
 
-	if (!pSource)
-		pSource = g_pWorld->FindWithinPVS(m_pPlayer, dwObjectID);
+	if (!pTarget)
+		pTarget = g_pWorld->FindWithinPVS(m_pPlayer, dwObjectID);
 
-	if (pSource)
-		pSource->Identify(m_pPlayer);
-
-	m_pPlayer->SetLastAssessedItem(pSource);
+	if (pTarget)
+	{
+		pTarget->Identify(m_pPlayer);
+		m_pPlayer->SetLastAssessed(pTarget->m_dwGUID);
+	}
 
 	ActionComplete();
 }
@@ -565,7 +574,15 @@ void CClientEvents::SpendSkillXP(DWORD dwSkill, DWORD dwXP)
 void CClientEvents::LifestoneRecall()
 {
 	//150 or 163?
-	m_pPlayer->Animation_PlaySimpleAnimation(0x163, 1.0f, 18.0f, ANIM_LSRECALL);
+
+	if (m_pPlayer->m_bLifestoneBound)
+	{
+		m_pPlayer->Animation_PlaySimpleAnimation(0x163, 1.0f, 18.0f, ANIM_LSRECALL);
+	}
+	else
+	{
+		m_pClient->SendNetMessage(ServerText("You are not bound to a Lifestone!", 7), PRIVATE_MSG);
+	}
 }
 
 void CClientEvents::MarketplaceRecall()
@@ -582,6 +599,10 @@ void CClientEvents::ProcessEvent(BinaryReader *in)
 	DWORD dwSequence = in->ReadDWORD();
 	DWORD dwEvent = in->ReadDWORD();
 	if (in->GetLastError()) return;
+
+#ifdef _DEBUG
+	LOG(Client, Verbose, "Processing event: 0x%X\n", dwEvent);
+#endif
 
 	switch (dwEvent)
 	{
@@ -714,7 +735,7 @@ void CClientEvents::ProcessEvent(BinaryReader *in)
 			LifestoneRecall();
 			break;
 		}
-		case 0x00A1: //Exit Portal
+		case 0x00A1: //  "Login Complete"
 		{
 			ExitPortal();
 			break;
@@ -725,6 +746,17 @@ void CClientEvents::ProcessEvent(BinaryReader *in)
 			if (in->GetLastError()) break;
 
 			Identify(dwObjectID);
+			break;
+		}
+		case 0x00D6: // Advocate teleport (triggered by having an admin flag set, clicking the mini-map)
+		{
+			// Starts with string (was empty when I tested)
+			in->ReadString();
+
+			// Then position (target)
+			loc_t loc = in->Read<loc_t>();
+			heading_t angles = in->Read<heading_t>();
+			m_pPlayer->Movement_Teleport(loc, angles);
 			break;
 		}
 		case 0x0147: //Channel Text
@@ -925,7 +957,7 @@ void CClientEvents::ProcessEvent(BinaryReader *in)
 				default:
 					if ((dwTurnAnim >> 24) != 0x65)
 					{
-						LOG(Animation, Warning, "Turn anim == 0x%02X", dwTurnAnim >> 24);
+						LOG(Animation, Warning, "Turn anim == 0x%02X\n", dwTurnAnim >> 24);
 					}
 
 					break;
@@ -1017,8 +1049,8 @@ void CClientEvents::ProcessEvent(BinaryReader *in)
 		default:
 		{
 			//Unknown Event
-			//LOG(Temp, Normal, "Unknown event %04X:\n", dwEvent );
-			//OutputConsoleBytes( in->GetDataPtr(), in->GetDataEnd() - in->GetDataPtr() );
+			// LOG(Temp, Normal, "Unhandled client event 0x%X:\n", dwEvent );
+			// LOG_BYTES(Temp, Verbose, in->GetDataPtr(), in->GetDataEnd() - in->GetDataPtr() );
 		}
 	}
 }

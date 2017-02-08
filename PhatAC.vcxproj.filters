@@ -23,9 +23,6 @@
     <Filter Include="Source Files\Object Capabilities">
       <UniqueIdentifier>{0d8e9324-e844-4a74-9ab3-5449d027f067}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Turbine Data Files">
-      <UniqueIdentifier>{64ec52ac-7a51-4ab2-b9ea-61deb90880c9}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\ZLib">
       <UniqueIdentifier>{e759c91a-cce8-41f9-b940-43fa1d6eaba4}</UniqueIdentifier>
     </Filter>
@@ -46,6 +43,15 @@
     <Filter Include="Source Files\Database 2.0">
       <UniqueIdentifier>{87d98e75-7d37-4239-bfdd-bc362458e794}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Data Files">
+      <UniqueIdentifier>{a74e1fcc-e2f8-4fa9-a1da-30065b158abf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\IO">
+      <UniqueIdentifier>{ddabc499-c9ff-4304-91aa-e764a4efb1c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Old Turbine Data Code %28To be replaced%29">
+      <UniqueIdentifier>{64ec52ac-7a51-4ab2-b9ea-61deb90880c9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PhatAC.cpp">
@@ -61,37 +67,34 @@
       <Filter>Source Files\Network</Filter>
     </ClCompile>
     <ClCompile Include="TurbineAnimation.cpp">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClCompile>
     <ClCompile Include="TurbineAnimationSet.cpp">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClCompile>
     <ClCompile Include="TurbineCell.cpp">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClCompile>
     <ClCompile Include="TurbineData.cpp">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClCompile>
     <ClCompile Include="TurbineDungeon.cpp">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClCompile>
     <ClCompile Include="TurbineFile.cpp">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClCompile>
     <ClCompile Include="TurbineObject.cpp">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClCompile>
     <ClCompile Include="TurbinePortal.cpp">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClCompile>
     <ClCompile Include="TurbineXPTable.cpp">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClCompile>
     <ClCompile Include="ModelInfo.cpp">
       <Filter>Source Files\Formats</Filter>
-    </ClCompile>
-    <ClCompile Include="DATDisk.cpp">
-      <Filter>Source Files\Turbine Data Files</Filter>
     </ClCompile>
     <ClCompile Include="Client.cpp">
       <Filter>Source Files\Client</Filter>
@@ -195,14 +198,23 @@
     <ClCompile Include="Database2.cpp">
       <Filter>Source Files\Database 2.0</Filter>
     </ClCompile>
-    <ClCompile Include="BinaryWriter.cpp">
-      <Filter>Source Files\Network</Filter>
-    </ClCompile>
-    <ClCompile Include="BinaryReader.cpp">
-      <Filter>Source Files\Network</Filter>
-    </ClCompile>
     <ClCompile Include="Logging.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GameMode.cpp">
+      <Filter>Source Files\World</Filter>
+    </ClCompile>
+    <ClCompile Include="DATDisk.cpp">
+      <Filter>Source Files\Data Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BinaryReader.cpp">
+      <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="BinaryWriter.cpp">
+      <Filter>Source Files\IO</Filter>
+    </ClCompile>
+    <ClCompile Include="Lifestone.cpp">
+      <Filter>Source Files\Objects</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -210,34 +222,34 @@
       <Filter>Source Files\Network</Filter>
     </ClInclude>
     <ClInclude Include="TurbineAnimation.h">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClInclude>
     <ClInclude Include="TurbineAnimationSet.h">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClInclude>
     <ClInclude Include="TurbineCell.h">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClInclude>
     <ClInclude Include="TurbineData.h">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClInclude>
     <ClInclude Include="TurbineDungeon.h">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClInclude>
     <ClInclude Include="TurbineFile.h">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClInclude>
     <ClInclude Include="TurbineFormats.h">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClInclude>
     <ClInclude Include="TurbineObject.h">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClInclude>
     <ClInclude Include="TurbinePortal.h">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClInclude>
     <ClInclude Include="TurbineXPTable.h">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClInclude>
     <ClInclude Include="zlib\zconf.h">
       <Filter>Source Files\ZLib</Filter>
@@ -254,11 +266,8 @@
     <ClInclude Include="StdAfx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DATDisk.h">
-      <Filter>Source Files\Turbine Data Files</Filter>
-    </ClInclude>
     <ClInclude Include="Vertex.h">
-      <Filter>Source Files\Turbine Data Files</Filter>
+      <Filter>Source Files\Old Turbine Data Code %28To be replaced%29</Filter>
     </ClInclude>
     <ClInclude Include="crc.h">
       <Filter>Source Files\Network</Filter>
@@ -377,12 +386,6 @@
     <ClInclude Include="Database2.h">
       <Filter>Source Files\Database 2.0</Filter>
     </ClInclude>
-    <ClInclude Include="BinaryWriter.h">
-      <Filter>Source Files\Network</Filter>
-    </ClInclude>
-    <ClInclude Include="BinaryReader.h">
-      <Filter>Source Files\Network</Filter>
-    </ClInclude>
     <ClInclude Include="PhysicsDesc.h">
       <Filter>Source Files\Objects</Filter>
     </ClInclude>
@@ -391,6 +394,24 @@
     </ClInclude>
     <ClInclude Include="Logging.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GameMode.h">
+      <Filter>Source Files\World</Filter>
+    </ClInclude>
+    <ClInclude Include="DATDisk.h">
+      <Filter>Source Files\Data Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BinaryWriter.h">
+      <Filter>Source Files\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="BinaryReader.h">
+      <Filter>Source Files\IO</Filter>
+    </ClInclude>
+    <ClInclude Include="Lifestone.h">
+      <Filter>Source Files\Objects</Filter>
+    </ClInclude>
+    <ClInclude Include="NetworkDefs.h">
+      <Filter>Source Files\Network</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -42,7 +42,7 @@ public:
 	DWORD GetLastEvent(void);
 	void ResetEvent(void);
 
-	BOOL SendMessage(void *data, DWORD length, WORD group);
+	BOOL SendNetMessage(void *data, DWORD length, WORD group);
 
 	template<class T>
 	void EraseInternal(T *data);

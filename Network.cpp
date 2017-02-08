@@ -120,7 +120,11 @@ void CNetwork::ThinkSocket(SOCKET socket)
 		blob->header.dwCRC -= CalcTransportCRC((DWORD *)blob);
 
 #ifdef _DEBUG
-		LOG(Network, Verbose, "Received:\n");
+		SOCKADDR_IN addr;
+		memset(&addr, 0, sizeof(addr));
+		int namelen = sizeof(addr);
+		getsockname(socket, (sockaddr *)&addr, &namelen);
+		LOG(Network, Verbose, "Received on port %d:\n", ntohs(addr.sin_port));
 		LOG_BYTES(Network, Verbose, &blob->header, blob->header.wSize + sizeof(blob->header));
 #endif
 
@@ -177,7 +181,7 @@ void CNetwork::KickClient(CClient *pClient)
 	KC.WriteLong(0xF7DC);
 	KC.WriteLong(0);
 
-	pClient->SendMessage(KC.GetData(), KC.GetSize(), PRIVATE_MSG);
+	pClient->SendNetMessage(KC.GetData(), KC.GetSize(), PRIVATE_MSG);
 	pClient->ThinkOutbound();
 	pClient->Kill(NULL, NULL);
 }
@@ -288,9 +292,12 @@ void CNetwork::ConnectionRequest(sockaddr_in *addr, BlobPacket_s *p)
 	szPassword++;
 
 	int accessLevel;
+	std::string actualAccount;
 
-	if (!g_pDB->AccountDB()->CheckAccount(szAccount, szPassword, &accessLevel))
+	if (!g_pDB->AccountDB()->CheckAccount(szAccount, szPassword, &accessLevel, actualAccount))
 	{
+		szAccount = (char *)actualAccount.c_str();
+
 		//Bad login.
 		CREATEBLOB(BadLogin, sizeof(DWORD));
 		*((DWORD *)BadLogin->data) = 0x00000000;
@@ -302,13 +309,21 @@ void CNetwork::ConnectionRequest(sockaddr_in *addr, BlobPacket_s *p)
 	}
 	else
 	{
+		szAccount = (char *)actualAccount.c_str();
+
 		CClient *pExistingClient = FindClientByAccount(szAccount);
 
 		if (pExistingClient)
 		{
-			KickClient(pExistingClient);
-			
-			// TODO don't allow this player to login for a few seconds while the world handles the other player
+			if (_stricmp(pExistingClient->GetAccount(), " admin"))
+			{
+				KickClient(pExistingClient);
+				// TODO don't allow this player to login for a few seconds while the world handles the other player
+			}
+			else
+			{
+				return;
+			}
 		}
 
 		WORD index = GetClientSlot();

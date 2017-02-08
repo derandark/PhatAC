@@ -118,10 +118,17 @@ public:
 	BYTE *m_ObjData;
 	unsigned m_ObjDataLen;
 
-	DWORD dwGUID;
+	DWORD guid;
 	ModelInfo appearance;
 	PhysicsDesc physics;
 	PublicWeenieDesc weenie;
+	std::map<DWORD, DWORD> dwordProperties;
+	std::map<DWORD, UINT64> qwordProperties;
+	std::map<DWORD, DWORD> boolProperties;
+	std::map<DWORD, double> floatProperties;
+	std::map<DWORD, std::string> stringProperties;
+	std::map<DWORD, DWORD> dataIDProperties;
+	ModelInfo wornAppearance;
 };
 
 class CGameDatabase
@@ -134,23 +141,39 @@ public:
 
 	bool LoadedPortals() { return m_bLoadedPortals; }
 	CCapturedWorldObjectInfo *GetCapturedMonsterData(const char *name);
+	CCapturedWorldObjectInfo *GetCapturedItemData(const char *name);
+	CCapturedWorldObjectInfo *GetCapturedArmorData(const char *name);
 	CCapturedWorldObjectInfo *GetRandomCapturedMonsterData();
+	CCapturedWorldObjectInfo *GetRandomCapturedItemData();
+	CCapturedWorldObjectInfo *GetRandomCapturedArmorData();
 
 	void SpawnAerfalle();
 
+	class CPhysicsObj *CreateFromCapturedData(CCapturedWorldObjectInfo *pObjectInfo);
+
 protected:
 
+	std::string ConvertNameForLookup(std::string name);
+
 	void LoadPortals();
-	void LoadAerfalle();
+	void LoadAerfalle();	
 	void LoadCapturedMonsterData();	
+	void LoadCapturedItemData();
+	void LoadCapturedArmorData();
 	void LoadMonsterTemplates();
 	void LoadTeleTownList();
+	void LoadStaticsData();
 
 	bool m_bLoadedPortals;
 
+	std::list<CCapturedWorldObjectInfo *> m_CapturedStaticsData;
 	std::list<CCapturedWorldObjectInfo *> m_CapturedAerfalleData;
 	std::map<std::string, CCapturedWorldObjectInfo *> m_CapturedMonsterData;
 	std::vector<CCapturedWorldObjectInfo *> m_CapturedMonsterDataList;
+	std::map<std::string, CCapturedWorldObjectInfo *> m_CapturedItemData;
+	std::vector<CCapturedWorldObjectInfo *> m_CapturedItemDataList;
+	std::map<std::string, CCapturedWorldObjectInfo *> m_CapturedArmorData;
+	std::vector<CCapturedWorldObjectInfo *> m_CapturedArmorDataList;
 };
 
 extern CGameDatabase *g_pGameDatabase;

@@ -4,6 +4,9 @@
 #include "Monster.h"
 #include "World.h"
 #include "Item.h"
+#include "GameMode.h"
+#include "Lifestone.h"
+#include "ChatMsgs.h"
 
 CBaseMonster::CBaseMonster()
 {
@@ -17,6 +20,14 @@ CBaseMonster::~CBaseMonster()
 void CBaseMonster::Precache(void)
 {
 	CalculateSpeed();
+}
+
+void CBaseMonster::PostSpawn()
+{
+	if (!IsPlayer())
+	{
+		EmitEffect(88, 1.0f);
+	}
 }
 
 void CBaseMonster::CalculateSpeed(void)
@@ -198,12 +209,43 @@ void CBaseMonster::Animation_Complete(animation_t *data)
 	}
 	case ANIM_LSRECALL:
 	{
-		Movement_Teleport(loc_t(0xEFEA0001, 0, 0, 0), heading_t(0, 0, 0, 0));
+		if (m_bLifestoneBound)
+		{
+			Movement_Teleport(m_LifestonePlacement.origin, m_LifestonePlacement.angles);
+		}
+
 		break;
 	}
 	case ANIM_MPRECALL:
 	{
-		Movement_Teleport(loc_t(0x016C01BC, 0, 0, 0), heading_t(0.70339513f, 0, 0, -0.7107991f));
+		Movement_Teleport(loc_t(0x016C01BC, 49.11f, -31.22f, 0.005f), heading_t(0.7009f, 0, 0, -0.7132f));
+		break;
+	}
+	case ANIM_BINDLIFESTONE:
+	{
+		if (IsPlayer())
+		{
+			CBasePlayer *pPlayer = (CBasePlayer *)this;
+
+			DWORD dwLifestone = data->dwActionData[0];
+
+			CPhysicsObj *pLifestone = g_pWorld->FindWithinPVS(this, dwLifestone);
+			if (pLifestone)
+			{
+				if (pLifestone->DistanceTo(this) <= LIFESTONE_MAX_BIND_DISTANCE)
+				{
+					pPlayer->SendNetMessage(ServerText("You have attuned your spirit to this Lifestone. You will resurrect here after you die.", 7), PRIVATE_MSG, FALSE, TRUE);
+					m_LifestonePlacement.origin = m_Origin;
+					m_LifestonePlacement.angles = m_Angles;
+					m_bLifestoneBound = true;
+				}
+				else
+				{
+					pPlayer->SendNetMessage(ServerText("You are too far away for that!", 7), PRIVATE_MSG, FALSE, TRUE);
+				}
+			}
+		}
+
 		break;
 	}
 	default:
@@ -251,6 +293,25 @@ void CBaseMonster::LaunchSpell(DWORD dwSpellID, DWORD dwTarget)
 
 void CBaseMonster::Attack(DWORD dwTarget, DWORD dwHeight, float flPower)
 {
+	CPhysicsObj *pTarget = g_pWorld->FindWithinPVS(this, dwTarget);
+	
+	if (!pTarget || !pTarget->IsAttackable())
+	{
+		return;
+	}
+
+	float dist = DistanceTo(pTarget);
+
+	if (dist >= 5)
+	{
+		return;
+	}
+
+	if (g_pWorld->GetGameMode())
+	{
+		g_pWorld->GetGameMode()->OnTargetAttacked(pTarget, this);
+	}
+
 	WORD wAttackAnim;
 
 	switch (dwHeight)
@@ -285,12 +346,12 @@ CBaelZharon::CBaelZharon()
 
 	m_miBaseModel.dwBasePalette = 0x1071;
 	m_miBaseModel.lPalettes.push_back(PaletteRpl(0x1072, 0x00, 0x00));
-	SetThink(&CBaelZharon::CrazyThink);
+	// SetThink(&CBaelZharon::CrazyThink);
 }
 
 BOOL CBaelZharon::CrazyThink()
 {
-	SpeakLocal(csprintf("Today's lucky numbers are %u %u %u", RandomLong(0, 9), RandomLong(0, 9), RandomLong(0, 9)));
+	// SpeakLocal(csprintf("Today's lucky numbers are %u %u %u", RandomLong(0, 9), RandomLong(0, 9), RandomLong(0, 9)));
 
 	m_fNextThink = g_pGlobals->Time() + 20.0f + RandomFloat(0, 40);
 	return TRUE;

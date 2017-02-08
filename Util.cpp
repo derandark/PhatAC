@@ -2,7 +2,37 @@
 #include "StdAfx.h"
 #include "TurbineFormats.h"
 
-static char szReadBuffer[600];
+bool LoadDataFromFile(const char *filepath, BYTE **data, DWORD *length)
+{
+	*data = NULL;
+	*length = 0;
+
+	FILE *fp = fopen(filepath, "rb");
+
+	if (fp)
+	{
+		fseek(fp, 0, SEEK_END);
+		long _fileSize = ftell(fp);
+		fseek(fp, 0, SEEK_SET);
+
+		if (_fileSize < 0)
+			_fileSize = 0;
+
+		DWORD fileSize = (DWORD)_fileSize;
+
+		BYTE *fileData = new BYTE[fileSize];
+		fread(fileData, fileSize, 1, fp);
+		fclose(fp);
+
+		*data = fileData;
+		*length = fileSize;
+		return true;
+	}
+
+	return false;
+}
+
+static char szReadBuffer[1024];
 static char szWriteBuffer[600];
 
 char* csprintf(const char *format, ...)
@@ -13,6 +43,8 @@ char* csprintf(const char *format, ...)
 	va_start(args, format);
 	_vsnprintf(szReadBuffer, 1024, format, args);
 	va_end(args);
+
+	szReadBuffer[1023] = '\0';
 
 	return szReadBuffer;
 }
@@ -265,6 +297,7 @@ float NorthSouth(char *szCoord)
 	char *end = &szCoord[len - 1];
 	char NS = *end;
 	*end = 0;
+
 	strtrim(szCoord);
 
 	float dir = 0.0f;

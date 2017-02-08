@@ -381,7 +381,9 @@ void CPhysicsObj::Animation_Update()
 	AnimUpdate.WriteWORD(++m_wNumAnimInteracts);
 	AnimUpdate.WriteWORD(m_wAnimCount);
 
-	AnimUpdate.WriteWORD((m_bForced) ? FALSE : TRUE);
+	AnimUpdate.WriteBYTE((m_bForced) ? FALSE : TRUE);
+	AnimUpdate.Align();
+
 	m_bForced = FALSE;
 
 	BinaryWriter *AnimInfo = Animation_GetAnimationInfo();

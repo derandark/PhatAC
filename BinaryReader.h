@@ -13,18 +13,21 @@ public:
 	if ( !(x) ) \
 	{ \
 		m_dwErrorCode = 1; \
-		memset(&ret, 0, sizeof(ret)); \
-		return ret; \
+		memset(&returnValue, 0, sizeof(returnValue)); \
+		return returnValue; \
 	}
-#define STREAM_OUT(func, type) \
-	__forceinline type func () \
-	{ \
-		type ret; \
-		BOUND_CHECK((m_pData + sizeof(type)) <= m_pEnd); \
-		ret = *((type *)m_pData); \
-		m_pData += sizeof(type); \
-		return ret; \
+
+	template <typename ReturnType> ReturnType Read()
+	{
+		ReturnType returnValue;
+		BOUND_CHECK((m_pData + sizeof(ReturnType)) <= m_pEnd);
+		returnValue = *((ReturnType *)m_pData);
+		m_pData += sizeof(ReturnType);
+		return returnValue;
 	}
+
+#define STREAM_OUT(func, type) type func() { return Read<type>(); }
+	
 	STREAM_OUT(ReadChar, BYTE);
 	STREAM_OUT(ReadShort, BYTE);
 	STREAM_OUT(ReadLong, BYTE);
@@ -47,21 +50,57 @@ public:
 
 	__forceinline DWORD ReadPackedDWORD()
 	{
-		DWORD ret;
+		DWORD returnValue;
 		BOUND_CHECK((m_pData + sizeof(WORD)) <= m_pEnd);
-		ret = *((WORD *)m_pData);
-		if (ret & 0x8000)
+		returnValue = *((WORD *)m_pData);
+		if (returnValue & 0x8000)
 		{
 			BOUND_CHECK((m_pData + sizeof(DWORD)) <= m_pEnd);
 			DWORD src = *((DWORD *)m_pData);
-			ret = (((src & 0x3FFF) << 16) | (src >> 16));
+			returnValue = (((src & 0x3FFF) << 16) | (src >> 16));
 			m_pData += sizeof(DWORD);
 		}
 		else
 		{
 			m_pData += sizeof(WORD);
 		}
-		return ret;
+		return returnValue;
+	}
+
+	template<typename A, typename B> std::map<A, B> ReadMap()
+	{
+		std::map<A, B> table;
+
+		WORD count = ReadWORD();
+		ReadWORD();
+
+		while (count > 0 && !m_dwErrorCode)
+		{
+			A theKey = Read<A>();
+			B theValue = Read<B>();
+			table.insert(std::pair<A, B>(theKey, theValue));
+			count--;
+		}
+
+		return table;
+	}
+
+	template<typename A> std::map<A, std::string> ReadMap()
+	{
+		std::map<A, std::string> table;
+
+		WORD count = ReadWORD();
+		ReadWORD();
+
+		while (count > 0 && !m_dwErrorCode)
+		{
+			A theKey = Read<A>();
+			std::string theValue = ReadString();
+			table.insert(std::pair<A, std::string>(theKey, theValue));
+			count--;
+		}
+
+		return table;
 	}
 
 	void ReadAlign(void);
@@ -75,6 +114,8 @@ public:
 	DWORD GetOffset(void);
 	DWORD GetLastError(void);
 	DWORD GetDataRemaining(void);
+
+	void SetOffset(DWORD offset);
 
 private:
 	DWORD m_dwErrorCode;

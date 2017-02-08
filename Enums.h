@@ -108,9 +108,9 @@ enum PhysicsState {
 	MISSILE_PS = (1 << 6),
 	PUSHABLE_PS = (1 << 7),
 	ALIGNPATH_PS = (1 << 8), // 0x100
-	PATHCLIPPED_PS = (1 << 9),
-	GRAVITY_PS = (1 << 10),
-	LIGHTING_ON_PS = (1 << 11),
+	PATHCLIPPED_PS = (1 << 9), // 0x200
+	GRAVITY_PS = (1 << 10), // 0x400
+	LIGHTING_ON_PS = (1 << 11), // 0x800
 	PARTICLE_EMITTER_PS = (1 << 12), // 0x1000
 	UNNUSED2_PS = (1 << 13),
 	HIDDEN_PS = (1 << 14),
@@ -127,10 +127,10 @@ enum PhysicsState {
 };
 
 enum BitfieldIndex {
-	BF_OPENABLE = (1 << 0),
-	BF_INSCRIBABLE = (1 << 1),
-	BF_STUCK = (1 << 2),
-	BF_PLAYER = (1 << 3),
+	BF_OPENABLE = (1 << 0), // 1
+	BF_INSCRIBABLE = (1 << 1), // 2
+	BF_STUCK = (1 << 2), // 4
+	BF_PLAYER = (1 << 3), // 8
 	BF_ATTACKABLE = (1 << 4), // 0x10
 	BF_PLAYER_KILLER = (1 << 5),
 	BF_HIDDEN_ADMIN = (1 << 6),
@@ -141,7 +141,7 @@ enum BitfieldIndex {
 	BF_NPKSWITCH = (1 << 11),
 	BF_DOOR = (1 << 12), // 0x1000
 	BF_CORPSE = (1 << 13),
-	BF_LIFESTONE = (1 << 14),
+	BF_LIFESTONE = (1 << 14), // 0x4000
 	BF_FOOD = (1 << 15),
 	BF_HEALER = (1 << 16), // 0x10000
 	BF_LOCKPICK = (1 << 17),
@@ -161,61 +161,61 @@ enum BitfieldIndex {
 };
 
 enum PhysicsDescInfo {
-	CSetup = (1 << 0),
-	MTABLE = (1 << 1),
-	VELOCITY = (1 << 2),
-	ACCELERATION = (1 << 3),
+	CSetup = (1 << 0), // 1
+	MTABLE = (1 << 1), // 2
+	VELOCITY = (1 << 2), // 4
+	ACCELERATION = (1 << 3), // 8
 	OMEGA = (1 << 4), // 0x10
-	PARENT = (1 << 5),
-	CHILDREN = (1 << 6),
-	OBJSCALE = (1 << 7),
+	PARENT = (1 << 5), // 0x20
+	CHILDREN = (1 << 6), // 0x40
+	OBJSCALE = (1 << 7), // 0x80
 	FRICTION = (1 << 8), // 0x100
-	ELASTICITY = (1 << 9),
-	TIMESTAMPS = (1 << 10),
-	STABLE = (1 << 11),
+	ELASTICITY = (1 << 9), // 0x200
+	TIMESTAMPS = (1 << 10), // 0x400
+	STABLE = (1 << 11), // 0x800
 	PETABLE = (1 << 12), // 0x1000
-	DEFAULT_SCRIPT = (1 << 13),
-	DEFAULT_SCRIPT_INTENSITY = (1 << 14),
-	POSITION = (1 << 15),
+	DEFAULT_SCRIPT = (1 << 13), // 0x2000
+	DEFAULT_SCRIPT_INTENSITY = (1 << 14), // 0x4000
+	POSITION = (1 << 15), // 0x8000
 	MOVEMENT = (1 << 16), // 0x10000
-	ANIMFRAME_ID = (1 << 17),
-	TRANSLUCENCY = (1 << 18)
+	ANIMFRAME_ID = (1 << 17), // 0x20000
+	TRANSLUCENCY = (1 << 18) // 0x40000
 };
 
 enum PublicWeenieDescPackHeader {
 	PWD_Packed_None = 0,
-	PWD_Packed_PluralName = (1 << 0),
-	PWD_Packed_ItemsCapacity = (1 << 1),
-	PWD_Packed_ContainersCapacity = (1 << 2),
-	PWD_Packed_Value = (1 << 3),
+	PWD_Packed_PluralName = (1 << 0), // 1
+	PWD_Packed_ItemsCapacity = (1 << 1), // 2
+	PWD_Packed_ContainersCapacity = (1 << 2), // 4
+	PWD_Packed_Value = (1 << 3), // 8
 	PWD_Packed_Useability = (1 << 4), // 0x10
-	PWD_Packed_UseRadius = (1 << 5),
-	PWD_Packed_Monarch = (1 << 6),
-	PWD_Packed_UIEffects = (1 << 7),
+	PWD_Packed_UseRadius = (1 << 5), // 0x20
+	PWD_Packed_Monarch = (1 << 6), // 0x40
+	PWD_Packed_UIEffects = (1 << 7), // 0x80
 	PWD_Packed_AmmoType = (1 << 8),  // 0x100
-	PWD_Packed_CombatUse = (1 << 9),
-	PWD_Packed_Structure = (1 << 10),
-	PWD_Packed_MaxStructure = (1 << 11),
+	PWD_Packed_CombatUse = (1 << 9), // 0x200
+	PWD_Packed_Structure = (1 << 10), // 0x400
+	PWD_Packed_MaxStructure = (1 << 11), // 0x800
 	PWD_Packed_StackSize = (1 << 12),  // 0x1000
-	PWD_Packed_MaxStackSize = (1 << 13),
-	PWD_Packed_ContainerID = (1 << 14),
-	PWD_Packed_WielderID = (1 << 15),
+	PWD_Packed_MaxStackSize = (1 << 13), // 0x2000
+	PWD_Packed_ContainerID = (1 << 14), // 0x4000
+	PWD_Packed_WielderID = (1 << 15), // 0x8000
 	PWD_Packed_ValidLocations = (1 << 16),  // 0x10000
-	PWD_Packed_Location = (1 << 17),
-	PWD_Packed_Priority = (1 << 18),
-	PWD_Packed_TargetType = (1 << 19),
+	PWD_Packed_Location = (1 << 17), // 0x20000
+	PWD_Packed_Priority = (1 << 18), // 0x40000
+	PWD_Packed_TargetType = (1 << 19), // 0x80000
 	PWD_Packed_BlipColor = (1 << 20),  // 0x100000
-	PWD_Packed_Burden = (1 << 21), // NOTE: May be PWD_Packed_VendorClassID
-	PWD_Packed_SpellID = (1 << 22),
-	PWD_Packed_RadarEnum = (1 << 23), // NOTE: May be PWD_Packed_RadarDistance
+	PWD_Packed_Burden = (1 << 21), // 0x200000  // NOTE: May be PWD_Packed_VendorClassID
+	PWD_Packed_SpellID = (1 << 22), // 0x400000
+	PWD_Packed_RadarEnum = (1 << 23), // 0x800000 // NOTE: May be PWD_Packed_RadarDistance
 	PWD_Packed_Workmanship = (1 << 24), // 0x1000000
-	PWD_Packed_HouseOwner = (1 << 25),
-	PWD_Packed_HouseRestrictions = (1 << 26),
-	PWD_Packed_PScript = (1 << 27),
+	PWD_Packed_HouseOwner = (1 << 25), // 0x2000000
+	PWD_Packed_HouseRestrictions = (1 << 26), // 0x4000000
+	PWD_Packed_PScript = (1 << 27), // 0x8000000
 	PWD_Packed_HookType = (1 << 28), // 0x10000000
-	PWD_Packed_HookItemTypes = (1 << 29),
-	PWD_Packed_IconOverlay = (1 << 30),
-	PWD_Packed_MaterialType = (1 << 31)
+	PWD_Packed_HookItemTypes = (1 << 29), // 0x20000000
+	PWD_Packed_IconOverlay = (1 << 30), // 0x40000000
+	PWD_Packed_MaterialType = (1 << 31) // 0x80000000
 };
 
 enum PublicWeenieDescPackHeader2 {

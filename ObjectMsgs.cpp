@@ -27,15 +27,23 @@ BinaryWriter *GetWeenieObjData(CPhysicsObj *pEntity)
 		OptionalWeenieObjData.WriteBYTE(pEntity->Container_MaxContainerSlots()); // container capacity
 	}
 
-	if (pEntity->HasValue())
+	if (pEntity->m_AmmoType != 0)
 	{
-		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_Value;
-		OptionalWeenieObjData.WriteDWORD(pEntity->GetValue());
+		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_AmmoType;
+		OptionalWeenieObjData.WriteWORD(pEntity->m_AmmoType);
 	}
 
-	//Use item? 1 = Cannot be used?
-	dwSections |= PublicWeenieDescPackHeader::PWD_Packed_Useability;
-	OptionalWeenieObjData.WriteDWORD((DWORD)pEntity->m_Usability);
+	if (pEntity->m_Value != 0)
+	{
+		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_Value;
+		OptionalWeenieObjData.WriteDWORD(pEntity->m_Value);
+	}
+
+	if (pEntity->m_Usability != 0)
+	{
+		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_Useability;
+		OptionalWeenieObjData.WriteDWORD((DWORD)pEntity->m_Usability);
+	}
 
 	float flApproachDist = pEntity->GetApproachDist();
 	if (flApproachDist > 0.0f)
@@ -44,17 +52,22 @@ BinaryWriter *GetWeenieObjData(CPhysicsObj *pEntity)
 		OptionalWeenieObjData.WriteFloat(flApproachDist);
 	}
 
-	DWORD dwHighlight = pEntity->GetHighlightColor();
-	if (dwHighlight)
+	if (pEntity->m_TargetType != 0)
+	{
+		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_TargetType;
+		OptionalWeenieObjData.WriteDWORD(pEntity->m_TargetType);
+	}
+
+	if (pEntity->m_UIEffects)
 	{
 		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_UIEffects;
-		OptionalWeenieObjData.WriteDWORD(dwHighlight);
+		OptionalWeenieObjData.WriteDWORD(pEntity->m_UIEffects);
 	}
 
 	if (pEntity->HasEquipType())
 	{
 		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_CombatUse;
-		OptionalWeenieObjData.WriteDWORD(pEntity->GetEquipType());
+		OptionalWeenieObjData.WriteBYTE((BYTE)pEntity->GetEquipType());
 	}
 
 	if (pEntity->IsContained())
@@ -87,13 +100,13 @@ BinaryWriter *GetWeenieObjData(CPhysicsObj *pEntity)
 		}
 	}
 
-	if (pEntity->HasRadarDot())
+	if (pEntity->m_BlipColor != 0)
 	{
 		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_BlipColor;
-		OptionalWeenieObjData.WriteBYTE(pEntity->GetRadarColor());
+		OptionalWeenieObjData.WriteBYTE(pEntity->m_BlipColor);
 	}
 
-	// if (pEntity->IsPlayer())
+	if (pEntity->m_RadarVis != 0)
 	{
 		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_RadarEnum;
 		OptionalWeenieObjData.WriteBYTE((BYTE)pEntity->m_RadarVis);
@@ -102,7 +115,7 @@ BinaryWriter *GetWeenieObjData(CPhysicsObj *pEntity)
 	if (pEntity->HasBurden())
 	{
 		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_Burden;
-		OptionalWeenieObjData.WriteWORD(pEntity->GetBurden());
+		OptionalWeenieObjData.WriteWORD(pEntity->m_Burden);
 	}
 
 	BinaryWriter *WeenieObjData = new BinaryWriter;
@@ -111,7 +124,7 @@ BinaryWriter *GetWeenieObjData(CPhysicsObj *pEntity)
 	WeenieObjData->WriteWORD(pEntity->m_wTypeID);
 	WeenieObjData->WriteWORD(pEntity->m_wIcon);
 	WeenieObjData->WriteDWORD(pEntity->m_ItemType);
-	WeenieObjData->WriteDWORD(pEntity->GetDescFlags());
+	WeenieObjData->WriteDWORD(pEntity->m_WeenieBitfield);
 	WeenieObjData->AppendData(OptionalWeenieObjData.GetData(), OptionalWeenieObjData.GetSize());
 
 	return WeenieObjData;
@@ -132,7 +145,6 @@ BinaryWriter *GetPhysicsObjData(CPhysicsObj *pEntity)
 
 			OptionalPhysicsObjData.WriteDWORD(AnimInfo->GetSize());
 			OptionalPhysicsObjData.AppendData(AnimInfo->GetData(), AnimInfo->GetSize());
-
 			OptionalPhysicsObjData.WriteDWORD(pEntity->m_AutonomousMovement); // autonomous movement?
 
 			delete AnimInfo;
@@ -144,8 +156,7 @@ BinaryWriter *GetPhysicsObjData(CPhysicsObj *pEntity)
 			OptionalPhysicsObjData.WriteDWORD(pEntity->m_AutonomousMovement);
 		}
 	}
-
-	if (pEntity->CanPickup())
+	else if (pEntity->CanPickup())
 	{
 		dwSections |= PhysicsDescInfo::ANIMFRAME_ID;
 		OptionalPhysicsObjData.WriteDWORD(0x00000065); // animation frame ID????
@@ -229,6 +240,14 @@ BinaryWriter *GetPhysicsObjData(CPhysicsObj *pEntity)
 		OptionalPhysicsObjData.WriteFloat(pEntity->m_fScale);
 	}
 
+	/*
+	if (pEntity->m_Translucency != 0.0f)
+	{
+		dwSections |= PhysicsDescInfo::TRANSLUCENCY;
+		OptionalPhysicsObjData.WriteFloat(pEntity->m_Translucency);
+	}
+	*/
+
 	BinaryWriter *PhysicsObjData = new BinaryWriter;
 	PhysicsObjData->WriteDWORD(dwSections);
 	PhysicsObjData->WriteDWORD(pEntity->m_PhysicsState); //VIS flags
@@ -244,7 +263,8 @@ BinaryWriter *GetPhysicsObjData(CPhysicsObj *pEntity)
 	PhysicsObjData->WriteWORD(pEntity->m_wNumOverride);
 	PhysicsObjData->WriteWORD(pEntity->m_wNumModelChanges);
 	PhysicsObjData->WriteWORD(pEntity->m_wInstance);
-	PhysicsObjData->WriteWORD(pEntity->m_wSeagreen10);
+
+	PhysicsObjData->Align();
 
 	return PhysicsObjData;
 }
@@ -282,6 +302,13 @@ BinaryWriter *UpdateObject(CPhysicsObj *pEntity)
 	BinaryWriter *ModelData = pEntity->GetModelData();
 	UO->AppendData(ModelData->GetData(), ModelData->GetSize());
 	delete ModelData;
+
+	pEntity->m_wNumModelChanges++;
+	pEntity->m_wNumPortals++;
+	pEntity->m_wNumAnimInteracts++;
+	pEntity->m_wNumBubbleModes++;
+	pEntity->m_wNumJumps++;
+	pEntity->m_wNumMovements++;
 
 	BinaryWriter *PhysicsObjData = GetPhysicsObjData(pEntity);
 	UO->AppendData(PhysicsObjData->GetData(), PhysicsObjData->GetSize());
@@ -329,9 +356,6 @@ BinaryWriter *IdentifyObject_DwordData(CPhysicsObj *pEntity)
 
 BinaryWriter *IdentifyObject_StringData(CPhysicsObj *pEntity)
 {
-	if (!pEntity->IsItem())
-		return NULL;
-
 	BinaryWriter *Strings = new BinaryWriter;
 	WORD wStringCount = 0;
 
@@ -418,6 +442,25 @@ BinaryWriter *IdentifyObject_PlayerData(CPhysicsObj *pEntity)
 
 BinaryWriter *IdentifyObject(CPhysicsObj *pEntity)
 {
+	enum AppraisalProfilePackHeader {
+		Packed_None = 0,
+		Packed_IntStats = (1 << 0),
+		Packed_BoolStats = (1 << 1),
+		Packed_FloatStats = (1 << 2),
+		Packed_StringStats = (1 << 3),
+		Packed_SpellList = (1 << 4), // 0x10
+		Packed_WeaponProfile = (1 << 5),
+		Packed_HookProfile = (1 << 6),
+		Packed_ArmorProfile = (1 << 7),
+		Packed_CreatureProfile = (1 << 8), // 0x100
+		Packed_ArmorEnchant = (1 << 9),
+		Packed_ResistEnchant = (1 << 10),
+		Packed_WeaponEnchant = (1 << 11),
+		Packed_DataIDStats = (1 << 12), // 0x1000
+		Packed_Int64Stats = (1 << 13),
+		Packed_ArmorLevels = (1 << 14)
+	};
+
 	BinaryWriter *IdentTotal = new BinaryWriter;
 	BinaryWriter *IdentStuff = new BinaryWriter;
 
@@ -429,27 +472,47 @@ BinaryWriter *IdentifyObject(CPhysicsObj *pEntity)
 	BinaryWriter *Stuffing;
 	DWORD dwSections = 0;
 
+	/*
 	if (Stuffing = IdentifyObject_DwordData(pEntity))
 	{
-		dwSections |= 0x00000001;
+		dwSections |= Packed_IntStats;
 		IdentStuff->AppendData(Stuffing->GetData(), Stuffing->GetSize());
 		delete Stuffing;
 	}
+	*/
+
+	dwSections |= Packed_IntStats;
+	IdentStuff->WriteMap(pEntity->m_dwordProperties);
+	dwSections |= Packed_Int64Stats;
+	IdentStuff->WriteMap(pEntity->m_qwordProperties);
+	dwSections |= Packed_BoolStats;
+	IdentStuff->WriteMap(pEntity->m_boolProperties);
+	dwSections |= Packed_FloatStats;
+	IdentStuff->WriteMap(pEntity->m_floatProperties);
+
 	if (Stuffing = IdentifyObject_StringData(pEntity))
 	{
-		dwSections |= 0x00000008;
-		IdentStuff->AppendData(Stuffing->GetData(), Stuffing->GetSize());
-		delete Stuffing;
-	}
-	if (Stuffing = IdentifyObject_PlayerData(pEntity))
-	{
-		dwSections |= 0x00000100;
+		dwSections |= Packed_StringStats;
 		IdentStuff->AppendData(Stuffing->GetData(), Stuffing->GetSize());
 		delete Stuffing;
 	}
 
+	/*
+	dwSections |= Packed_StringStats;
+	IdentStuff->WriteMap(pEntity->m_stringProperties);
+	dwSections |= Packed_DataIDStats;
+	IdentStuff->WriteMap(pEntity->m_dataIDProperties);
+
+	if (Stuffing = IdentifyObject_PlayerData(pEntity))
+	{
+		dwSections |= Packed_CreatureProfile;
+		IdentStuff->AppendData(Stuffing->GetData(), Stuffing->GetSize());
+		delete Stuffing;
+	}
+	*/
+
 	IdentTotal->WriteDWORD(dwSections);
-	IdentTotal->WriteDWORD(TRUE); //always success for now
+	IdentTotal->WriteDWORD(1); // Succeeded: always yes for now
 	IdentTotal->AppendData(IdentStuff->GetData(), IdentStuff->GetSize());
 	delete IdentStuff;
 
@@ -552,20 +615,20 @@ BinaryWriter *LoginCharacter(CBasePlayer *pPlayer)
 	BinaryWriter *LC = new BinaryWriter;
 
 	LC->WriteDWORD(0x0013);
-	LC->WriteDWORD(0x001B); //loginmask1
+	LC->WriteDWORD(0x001B); // section flags
 	LC->WriteDWORD(0x000A);
 
 	BinaryWriter *StatInfo = GetStatInfo(pPlayer);
 	LC->AppendData(StatInfo->GetData(), StatInfo->GetSize());
 	delete StatInfo;
 
-	//What the hell are these?
+	// BOOL properties
 	LC->WriteWORD(5);
 	LC->WriteWORD(0x20);
 	LC->WriteDWORD(0x0004);
 	LC->WriteDWORD(0x0000);
 	LC->WriteDWORD(0x002C);
-	LC->WriteDWORD(0x0000);
+	LC->WriteDWORD(0x0001); // Is ADMIN
 	LC->WriteDWORD(0x002D);
 	LC->WriteDWORD(0x0000);
 	LC->WriteDWORD(0x002E);
@@ -573,7 +636,7 @@ BinaryWriter *LoginCharacter(CBasePlayer *pPlayer)
 	LC->WriteDWORD(0x002F);
 	LC->WriteDWORD(0x0000);
 
-	//Character strings
+	// Character strings
 	LC->WriteWORD(4);
 	LC->WriteWORD(0x10);
 	LC->WriteDWORD(0x0001);

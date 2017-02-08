@@ -92,7 +92,7 @@ void CPhysicsObj::Container_GetEquippedArmor(ItemVector *pVector)
 		if (!pItem)
 			continue;
 
-		if (pItem->m_ItemType == TYPE_ARMOR)
+		if (pItem->m_ItemType & (TYPE_ARMOR | TYPE_CLOTHING))
 			pVector->push_back(pItem);
 	}
 }
@@ -196,7 +196,7 @@ void CPhysicsObj::Container_EquipItem(DWORD dwCell, CBaseItem* pItem, DWORD dwCo
 		dwCoverage = dwCoverage >> 1;
 	}
 
-	if (pItem->m_ItemType != TYPE_ARMOR)
+	if (!(pItem->m_ItemType & (TYPE_ARMOR | TYPE_CLOTHING)))
 	{
 		BinaryWriter Blah;
 		Blah.WriteDWORD(0xF749);

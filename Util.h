@@ -17,6 +17,8 @@
 class CClient;
 struct BlockData;
 
+bool LoadDataFromFile(const char *filepath, BYTE **data, DWORD *length);
+
 extern void MsgBox(const char* format, ...);
 extern void MsgBox(UINT iType, const char* format, ...);
 extern void MsgBoxError(DWORD dwError, const char* event);

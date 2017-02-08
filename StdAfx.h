@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <stdint.h>
 #include <stdio.h>
+#include <set>
 
 #include "resource.h"
 
@@ -39,13 +40,9 @@
 class CPhysicsObj;
 class CBasePlayer;
 
-#include "Logging.h"
-#include "Enums.h"
 #include "Common.h"
-#include "Math.h"
 #include "Util.h"
 #include "Globals.h"
-#include "Killable.h"
 
 extern class CDatabase *g_pDB;
 extern class CMYSQLDatabase *g_pDB2;
@@ -64,4 +61,3 @@ extern TURBINECELL* g_pCell;
 extern GAMERULES* g_pGameRules;
 
 extern bool g_bDebugToggle;
-

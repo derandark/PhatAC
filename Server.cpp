@@ -174,6 +174,7 @@ CPhatServer::~CPhatServer()
 		g_pNetwork->Think();
 		SafeDelete(g_pNetwork);
 	}
+
 	SafeDelete(g_pWorld);
 	SafeDelete(g_pGameDatabase);
 	SafeDelete(g_pDB2);

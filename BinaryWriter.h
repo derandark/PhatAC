@@ -13,8 +13,7 @@ public:
 	void AppendData(const void *pData, size_t len);
 	void Align(void);
 
-	template <class DataT>
-	void AppendData(DataT pData)
+	template <class DataT> void AppendData(DataT pData)
 	{
 		AppendData(&pData, sizeof(DataT));
 	}
@@ -42,6 +41,28 @@ public:
 
 	__forceinline void WriteString(const char *f00d) { AppendString(f00d); }
 	__forceinline void WriteData(const void *data, size_t len) { AppendData(data, len); }
+
+	template<typename A, typename B> void WriteMap(std::map<A, B> &table)
+	{
+		WriteWORD((WORD) table.size());
+		WriteWORD(0x40);
+		for (std::map<A, B>::iterator keyValuePair = table.begin(); keyValuePair != table.end(); keyValuePair++)
+		{
+			AppendData((A)keyValuePair->first);
+			AppendData((B)keyValuePair->second);
+		}
+	}
+
+	template<typename A> void WriteMap(std::map<A, std::string> &table)
+	{
+		WriteWORD((WORD) table.size());
+		WriteWORD(0x40);
+		for (std::map<A, std::string>::iterator keyValuePair = table.begin(); keyValuePair != table.end(); keyValuePair++)
+		{
+			AppendData((A)keyValuePair->first);
+			AppendString(keyValuePair->second.c_str());
+		}
+	}
 
 	BYTE*	GetData();
 	DWORD	GetSize();

@@ -51,8 +51,8 @@ void TurbineData::LoadFile(const char* szFile)
 	}
 	else
 	{
-		// LOG(Temp, Normal, "mapping.. ");
-		// m_pDATDisk->FindFileIDsWithinRange(0, (DWORD)-1, FileFoundCallback, NULL, this);
+		LOG(Temp, Normal, "mapping.. ");
+		m_pDATDisk->FindFileIDsWithinRange(0, (DWORD)-1, FileFoundCallback, NULL, this);
 		LOG(Temp, Normal, "done!\n");
 
 #ifdef PRE_TOD_DATA_FILES
