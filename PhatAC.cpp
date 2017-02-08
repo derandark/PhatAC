@@ -236,7 +236,7 @@ LRESULT CALLBACK LauncherProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 					dwRemoteIP = htonl(dwRemoteIP);
 					char szLaunch[256];
 					char szLaunchDir[MAX_PATH + 1];
-					sprintf(szLaunch, "-h %s -p %u -a %s:%s", inet_ntoa(*((in_addr *)&dwRemoteIP)), atol(szRemotePort), szAccount, szPassword);
+					sprintf(szLaunch, "-h %s -p %u -rodat off -a %s:%s", inet_ntoa(*((in_addr *)&dwRemoteIP)), atol(szRemotePort), szAccount, szPassword);
 
 					DWORD	dwLen = MAX_PATH + 1;
 					memset(szLaunchDir, 0, dwLen);
@@ -473,7 +473,7 @@ int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 				{
 					char szLaunch[256];
 					char szLaunchDir[MAX_PATH + 10];
-					sprintf(szLaunch, "-h %s -p %u -a admin:%06lu", serverHost.c_str(), serverPort, g_dwMagicNumber);
+					sprintf(szLaunch, "-h %s -p %u -rodat off -a admin:%06lu", serverHost.c_str(), serverPort, g_dwMagicNumber);
 
 					DWORD dwLen = MAX_PATH + 10;
 					memset(szLaunchDir, 0, dwLen);
@@ -538,7 +538,7 @@ int CALLBACK MainProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 						serverIP = htonl(serverIP);
 						g_pPhatServer = new CPhatServer(*((in_addr *)&serverIP), serverPort);
 						SetWindowText(GetDlgItem(hDlg, IDC_TOGGLE), "Stop");
-						SetWindowText(GetDlgItem(hDlg, IDC_CONNECTLINK), csprintf("acclient.exe -h %s -p %d -a username:password", serverHost.c_str(), serverPort));
+						SetWindowText(GetDlgItem(hDlg, IDC_CONNECTLINK), csprintf("acclient.exe -h %s -p %d -a username:password -rodat off", serverHost.c_str(), serverPort));
 					}
 					else
 						MsgBox("Please specify the server's external IP.");
