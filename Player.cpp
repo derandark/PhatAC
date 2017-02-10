@@ -7,7 +7,7 @@
 //Network access.
 #include "Client.h"
 #include "ClientEvents.h"
-#include "NetFood.h"
+#include "BinaryWriter.h"
 #include "ObjectMsgs.h"
 
 //Database access.
@@ -18,10 +18,14 @@
 //World access.
 #include "World.h"
 
+#include "ClientCommands.h"
+
 CBasePlayer::CBasePlayer(CClient *pClient, DWORD dwGUID)
 {
 	m_pClient = pClient;
 	m_dwGUID = dwGUID;
+
+	m_WeenieBitfield |= BF_PLAYER|BF_PLAYER_KILLER;
 
 	m_dwStats[eTotalBurden] = 1;
 	m_dwStats[eTotalPyreal] = 100000;
@@ -39,7 +43,7 @@ CBasePlayer::CBasePlayer(CClient *pClient, DWORD dwGUID)
 
 	m_bStatSequence = 0;
 
-	m_VisFlags = VF_BUBBLES | VF_NOEDGEFALL | VF_PLAYER;
+	m_PhysicsState = PhysicsState::HIDDEN_PS | PhysicsState::IGNORE_COLLISIONS_PS | PhysicsState::EDGE_SLIDE_PS | PhysicsState::GRAVITY_PS;
 
 	// Human Female by Default
 
@@ -48,6 +52,10 @@ CBasePlayer::CBasePlayer(CClient *pClient, DWORD dwGUID)
 	m_dwSoundSet = 0x20000002;
 	m_dwEffectSet = 0x34000004;
 	m_fScale = 1.0f;
+
+	m_BlipColor = 5; // 3=NPK, 5=PK
+	if (pClient->GetAccessLevel() >= ADMIN_ACCESS)
+		m_BlipColor = 3; // BLUE
 
 #if FALSE
 	if (m_dwGUID == 0x000004D2) //Pea
@@ -89,8 +97,16 @@ CBasePlayer::CBasePlayer(CClient *pClient, DWORD dwGUID)
 	else
 	{
 		// Otherwise outside Abandoned Mines
-		m_Origin = loc_t(0xC3AA0028, 111.904579f, 188.143036f, 116.005005f);
-		m_Angles = heading_t(0.998854f, 0.000000, 0.000000, 0.047870f);
+		// m_Origin = loc_t(0xC3AA0028, 111.904579f, 188.143036f, 116.005005f);
+		// m_Angles = heading_t(0.998854f, 0.000000, 0.000000, 0.047870f);
+
+		// Arena
+		m_Origin = loc_t(0x02E20152, 54.991661f, -95.483475f, 12.004999f);
+		m_Angles = heading_t(0.999982f, 0.000000f, 0.000000f, 0.005921f);
+		
+		// Cathedral waterfall
+		// m_Origin = loc_t(0xF4180034, 146.588699f, 90.489342f, 159.554993f);
+		// m_Angles = heading_t(0.994240f, 0.000000f, 0.000000f, -0.107177f);
 	}
 
 	SetThink(&CBasePlayer::PlayerThink);
@@ -118,6 +134,8 @@ CBasePlayer::CBasePlayer(CClient *pClient, DWORD dwGUID)
 		fclose(tmp);
 	}
 #endif
+
+	m_LastAssessed = 0;
 }
 
 CBasePlayer::~CBasePlayer()
@@ -131,7 +149,7 @@ CBasePlayer::~CBasePlayer()
 
 void CBasePlayer::Precache()
 {
-	m_miBaseModel.wBasePalette = 0x7E;
+	m_miBaseModel.dwBasePalette = 0x7E;
 
 	m_miBaseModel.lPalettes.push_back(PaletteRpl(0x4A7, 0x00, 0x18));
 	m_miBaseModel.lPalettes.push_back(PaletteRpl(0x2F2, 0x18, 0x08));
@@ -186,7 +204,7 @@ void CBasePlayer::Precache()
 			}
 			if (!stricmp("human-envoy", desc.szWorldClass))
 			{
-				m_miBaseModel.wBasePalette = 0x7E;
+				m_miBaseModel.dwBasePalette = 0x7E;
 
 				m_miBaseModel.lPalettes.clear();
 				m_miBaseModel.lPalettes.push_back(PaletteRpl(0x2BA, 0x00, 0x18));
@@ -230,9 +248,60 @@ void CBasePlayer::Precache()
 				m_miBaseModel.lModels.push_back(ModelRpl(0x0E, 0x19EF));
 				m_miBaseModel.lModels.push_back(ModelRpl(0x10, 0x3148));
 			}
+
+			if (!stricmp("human-admin", desc.szWorldClass))
+			{
+				m_miBaseModel.dwBasePalette = 0x7E;
+
+				m_miBaseModel.lPalettes.clear();
+				m_miBaseModel.lPalettes.push_back(PaletteRpl(0xEB6, 0x00, 0x18));
+
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x10, 0x98, 0x10B8));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x10, 0x24C, 0x1067));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x10, 0x2F5, 0x108A));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x10, 0x25C, 0x10A3));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x00, 0x0CBE, 0x1701));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x00, 0xBB0, 0x1701));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x01, 0x1707, 0x1707));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x01, 0x1844, 0x1844));			
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x02, 0x1708, 0x1708));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x02, 0x1844, 0x1844));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x05, 0x1707, 0x1707));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x05, 0x1844, 0x1844));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x06, 0x1708, 0x1708));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x06, 0x1844, 0x1844));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x09, 0x3DE, 0x1830));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x09, 0x3D6, 0x182F));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x0A, 0x16FF, 0x182E));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x0B, 0x16FE, 0x174E));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x0C, 0x3D3, 0x3D3));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x0D, 0x16FF, 0x182E));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x0E, 0x16FE, 0x174E));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x0F, 0x3D3, 0x3D3));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x10, 0xEC4, 0x1832));
+				m_miBaseModel.lTextures.push_back(TextureRpl(0x10, 0xEC3, 0x16FD));
+
+				m_miBaseModel.lModels.push_back(ModelRpl(0x00, 0x0477));
+				m_miBaseModel.lModels.push_back(ModelRpl(0x01, 0x16EE));
+				m_miBaseModel.lModels.push_back(ModelRpl(0x02, 0x16EC));
+				m_miBaseModel.lModels.push_back(ModelRpl(0x03, 0x1EC));
+				m_miBaseModel.lModels.push_back(ModelRpl(0x04, 0x1EC));
+				m_miBaseModel.lModels.push_back(ModelRpl(0x05, 0x16E9));
+				m_miBaseModel.lModels.push_back(ModelRpl(0x06, 0x16ED));
+				m_miBaseModel.lModels.push_back(ModelRpl(0x07, 0x1EC));
+				m_miBaseModel.lModels.push_back(ModelRpl(0x08, 0x1EC));
+				m_miBaseModel.lModels.push_back(ModelRpl(0x09, 0x4B9));
+				m_miBaseModel.lModels.push_back(ModelRpl(0x0A, 0x16E7));
+				m_miBaseModel.lModels.push_back(ModelRpl(0x0B, 0x16E5));
+				m_miBaseModel.lModels.push_back(ModelRpl(0x0C, 0x76));
+				m_miBaseModel.lModels.push_back(ModelRpl(0x0D, 0x16E4));
+				m_miBaseModel.lModels.push_back(ModelRpl(0x0E, 0x16E6));
+				m_miBaseModel.lModels.push_back(ModelRpl(0x0F, 0x77));
+				m_miBaseModel.lModels.push_back(ModelRpl(0x10, 0x193D));
+			}
 		}
 
-		OutputConsole("Loaded player %s (%u)\r\n", m_strName.c_str(), m_wInstance);
+		LOG(Temp, Normal, "Loaded player %s (%u)\n", m_strName.c_str(), m_wInstance);
 	}
 
 	Container_InitContents(MAX_PLAYER_EQUIPMENT, MAX_PLAYER_INVENTORY, MAX_PLAYER_CONTAINERS);
@@ -324,13 +393,13 @@ void CBasePlayer::Precache()
 
 void CBasePlayer::EmitSoundUI(DWORD dwIndex, float fSpeed)
 {
-	NetFood SoundMsg;
+	BinaryWriter SoundMsg;
 	SoundMsg.WriteDWORD(0xF750);
 	SoundMsg.WriteDWORD(m_dwGUID);
 	SoundMsg.WriteDWORD(dwIndex);
 	SoundMsg.WriteFloat(fSpeed);
 
-	SendMessage(&SoundMsg, OBJECT_MSG, FALSE, FALSE);
+	SendNetMessage(&SoundMsg, OBJECT_MSG, FALSE, FALSE);
 }
 
 DWORD CBasePlayer::GiveAttributeXP(eAttribute index, DWORD dwXP)
@@ -351,7 +420,7 @@ DWORD CBasePlayer::GiveAttributeXP(eAttribute index, DWORD dwXP)
 		SendText(szNotice, 13);
 	}
 
-	NetFood UpdateAttribute;
+	BinaryWriter UpdateAttribute;
 
 	UpdateAttribute.WriteDWORD(0x241);
 	UpdateAttribute.WriteWORD(index);
@@ -361,7 +430,7 @@ DWORD CBasePlayer::GiveAttributeXP(eAttribute index, DWORD dwXP)
 	UpdateAttribute.WriteDWORD(pAttrib->data.base);
 	UpdateAttribute.WriteDWORD(pAttrib->data.exp);
 
-	SendMessage(&UpdateAttribute, PRIVATE_MSG, FALSE, FALSE);
+	SendNetMessage(&UpdateAttribute, PRIVATE_MSG, FALSE, FALSE);
 
 	return dwRaises;
 }
@@ -384,7 +453,7 @@ DWORD CBasePlayer::GiveVitalXP(eVital index, DWORD dwXP)
 		SendText(szNotice, 13);
 	}
 
-	NetFood UpdateVital;
+	BinaryWriter UpdateVital;
 
 	UpdateVital.WriteDWORD(0x243);
 	UpdateVital.WriteWORD(index);
@@ -395,7 +464,7 @@ DWORD CBasePlayer::GiveVitalXP(eVital index, DWORD dwXP)
 	UpdateVital.WriteDWORD(pVital->data.exp);
 	UpdateVital.WriteDWORD(pVital->data.raises);
 
-	SendMessage(&UpdateVital, PRIVATE_MSG, FALSE, FALSE);
+	SendNetMessage(&UpdateVital, PRIVATE_MSG, FALSE, FALSE);
 
 	return dwRaises;
 }
@@ -418,7 +487,7 @@ DWORD CBasePlayer::GiveSkillXP(eSkill index, DWORD dwXP)
 		SendText(szNotice, 13);
 	}
 
-	NetFood UpdateSkill;
+	BinaryWriter UpdateSkill;
 
 	UpdateSkill.WriteDWORD(0x23E);
 	UpdateSkill.WriteWORD(index);
@@ -433,21 +502,21 @@ DWORD CBasePlayer::GiveSkillXP(eSkill index, DWORD dwXP)
 	UpdateSkill.WriteDWORD(0);
 	UpdateSkill.WriteDWORD(0);
 
-	SendMessage(&UpdateSkill, PRIVATE_MSG, FALSE, FALSE);
+	SendNetMessage(&UpdateSkill, PRIVATE_MSG, FALSE, FALSE);
 
 	return dwRaises;
 }
 
-void CBasePlayer::SendMessage(void *_data, DWORD _len, WORD _group, BOOL _event)
+void CBasePlayer::SendNetMessage(void *_data, DWORD _len, WORD _group, BOOL _event)
 {
 	if (m_pClient)
-		m_pClient->SendMessage(_data, _len, _group, _event);
+		m_pClient->SendNetMessage(_data, _len, _group, _event);
 }
 
-void CBasePlayer::SendMessage(NetFood *_food, WORD _group, BOOL _event, BOOL del)
+void CBasePlayer::SendNetMessage(BinaryWriter *_food, WORD _group, BOOL _event, BOOL del)
 {
 	if (m_pClient)
-		m_pClient->SendMessage(_food, _group, _event, del);
+		m_pClient->SendNetMessage(_food, _group, _event, del);
 }
 
 void CBasePlayer::SendText(const char* szText, long lColor)
@@ -461,14 +530,14 @@ void CBasePlayer::SendText(const char* szText, long lColor)
 	}
 }
 
-NetFood* CBasePlayer::GetModelData()
+BinaryWriter* CBasePlayer::GetModelData()
 {
 	//if ( !IsHuman() )
 	{
 		return CBaseMonster::GetModelData();
 	}
 
-	NetFood *MD = new NetFood;
+	BinaryWriter *MD = new BinaryWriter;
 
 	//Fake Zyrca:
 
@@ -540,17 +609,26 @@ void CBasePlayer::Save()
 
 void CBasePlayer::ChangeVIS(DWORD dwFlags)
 {
-	CBaseMonster::ChangeVIS(dwFlags | VF_PLAYER);
+	CBaseMonster::ChangeVIS(dwFlags | PhysicsState::GRAVITY_PS);
+}
+
+void CBasePlayer::AddSpellByID(DWORD id)
+{
+	BinaryWriter AddSpellToSpellbook;
+	AddSpellToSpellbook.WriteDWORD(0x02C1);
+	AddSpellToSpellbook.WriteDWORD(id);
+	AddSpellToSpellbook.WriteDWORD(0x0);
+	SendNetMessage(AddSpellToSpellbook.GetData(), AddSpellToSpellbook.GetSize(), EVENT_MSG,true);
 }
 
 void CBasePlayer::EnterPortal()
 {
-	ChangeVIS(VF_BUBBLES | VF_NOEDGEFALL);
+	ChangeVIS(PhysicsState::HIDDEN_PS | PhysicsState::IGNORE_COLLISIONS_PS | PhysicsState::EDGE_SLIDE_PS);
 
-	NetFood EnterPortal;
+	BinaryWriter EnterPortal;
 	EnterPortal.WriteDWORD(0xF751);
 	EnterPortal.WriteDWORD(m_wNumPortals);
-	SendMessage(EnterPortal.GetData(), EnterPortal.GetSize(), OBJECT_MSG);
+	SendNetMessage(EnterPortal.GetData(), EnterPortal.GetSize(), OBJECT_MSG);
 }
 
 void CBasePlayer::SpawnCows()
@@ -588,9 +666,9 @@ const char* CBasePlayer::GetTitleString()
 
 void CBasePlayer::MakeAware(CPhysicsObj *pEntity)
 {
-	NetFood *CM = pEntity->CreateMessage();
+	BinaryWriter *CM = pEntity->CreateMessage();
 	if (CM)
-		SendMessage(CM, 10);
+		SendNetMessage(CM, 10);
 
 	ItemVector vItems;
 
@@ -601,9 +679,9 @@ void CBasePlayer::MakeAware(CPhysicsObj *pEntity)
 
 	while (iit != iend)
 	{
-		NetFood *CM = ((CPhysicsObj *)(*iit))->CreateMessage();
+		BinaryWriter *CM = ((CPhysicsObj *)(*iit))->CreateMessage();
 		if (CM)
-			SendMessage(CM, 10);
+			SendNetMessage(CM, 10);
 
 		iit++;
 	}
@@ -615,24 +693,24 @@ void CBasePlayer::LoginCharacter(void)
 
 	SC[0] = 0xF746;
 	SC[1] = m_dwGUID;
-	SendMessage(SC, sizeof(SC), 10);
+	SendNetMessage(SC, sizeof(SC), 10);
 
-	NetFood *LC = ::LoginCharacter(this);
-	SendMessage(LC->GetData(), LC->GetSize(), PRIVATE_MSG, TRUE);
+	BinaryWriter *LC = ::LoginCharacter(this);
+	SendNetMessage(LC->GetData(), LC->GetSize(), PRIVATE_MSG, TRUE);
 	delete LC;
 }
 
 void CBasePlayer::ExitPortal()
 {
-	ChangeVIS(VF_NORMAL | VF_NOEDGEFALL);
+	ChangeVIS(REPORT_COLLISIONS_PS | PhysicsState::EDGE_SLIDE_PS);
 }
 
 void CBasePlayer::UpdateEntity(CPhysicsObj *pEntity)
 {
-	NetFood *CO = pEntity->CreateMessage();
+	BinaryWriter *CO = pEntity->UpdateMessage();
 	if (CO)
 	{
-		SendMessage(CO->GetData(), CO->GetSize(), OBJECT_MSG);
+		g_pWorld->BroadcastPVS(GetLandcell(), CO->GetData(), CO->GetSize(), OBJECT_MSG, 0);
 		delete CO;
 	}
 }
@@ -652,16 +730,41 @@ DWORD CBasePlayer::SetObjectStat(eObjectStat index, DWORD value)
 	if (index >= 0x100)
 		return NULL;
 
-	NetFood UpdateStatistic;
+	BinaryWriter UpdateStatistic;
 
 	UpdateStatistic.WriteDWORD(0x237);
 	UpdateStatistic.WriteBYTE(++m_bStatSequence);
 	UpdateStatistic.WriteDWORD(index);
 	UpdateStatistic.WriteDWORD(value);
 
-	SendMessage(&UpdateStatistic, PRIVATE_MSG, FALSE, FALSE);
+	SendNetMessage(&UpdateStatistic, PRIVATE_MSG, FALSE, FALSE);
 
 	return CPhysicsObj::SetObjectStat(index, value);
+}
+
+void CBasePlayer::SetLastAssessed(DWORD guid)
+{
+	m_LastAssessed = guid;
+}
+
+std::string CBasePlayer::RemoveLastAssessed()
+{
+	if (m_LastAssessed != 0)
+	{
+		CPhysicsObj *pObject = g_pWorld->FindWithinPVS(this, m_LastAssessed);
+
+		if (pObject != NULL && !pObject->IsPlayer() && !pObject->m_bDontClear) {
+			std::string name = pObject->GetName();
+			CLandBlock *pBlock = GetBlock();
+			pObject->RemoveMe();
+			pBlock->Destroy(pObject);
+
+			m_LastAssessed = 0;
+			return name;
+		}
+	}
+
+	return "";
 }
 
 

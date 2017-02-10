@@ -13,7 +13,10 @@ public:
 	{
 #ifdef _DEBUG
 		if (szSource)
-			OutputConsole("Kill() @ %s: %u\r\n", szSource, dwLine);
+		{
+			LOG(Temp, Debug, "Kill() @ %s: %u\n", szSource, dwLine);
+		}
+
 #endif
 		bAlive = FALSE;
 	}

@@ -12,10 +12,11 @@
 #include "CharacterDatabase.h"
 
 #include "TurbineDungeon.h"
+#include "GameMode.h"
 
 CWorld::CWorld()
 {
-	OutputConsole("Initializing World..\r\n");
+	LOG(Temp, Normal, "Initializing World..\n");
 	m_dwHintStaticGUID = 0x10000000;
 	m_dwHintPlayerGUID = 0x50000000;
 	m_dwHintItemGUID = 0x60000000;
@@ -26,10 +27,11 @@ CWorld::CWorld()
 	LoadStateFile();
 	LoadDungeonsFile();
 	LoadMOTD();
-
 	EnumerateDungeonsFromCellData();
 
 	m_fLastSave = g_pGlobals->Time();
+
+	m_pGameMode = NULL;
 }
 
 void CWorld::SaveWorld()
@@ -40,6 +42,12 @@ void CWorld::SaveWorld()
 
 CWorld::~CWorld()
 {
+	if (m_pGameMode)
+	{
+		delete m_pGameMode;
+		m_pGameMode = NULL;
+	}
+
 	for (LandblockVector::iterator it = m_vBlocks.begin(); it != m_vBlocks.end(); it++)
 		delete (*it);
 	m_vBlocks.clear();
@@ -153,7 +161,7 @@ void CWorld::LoadDungeonsFile()
 		long lSize = fsize(wd);
 		BYTE* pbData = new BYTE[lSize];
 		long lRead = (long)fread(pbData, sizeof(BYTE), lSize, wd);
-		NetMeal input(pbData, lRead);
+		BinaryReader input(pbData, lRead);
 
 		DWORD dwDungeonCount = input.ReadDWORD();
 
@@ -193,7 +201,7 @@ void CWorld::SaveDungeonsFile()
 	FILE *wd = g_pDB->DataFileCreate("worlddesc");
 	if (wd)
 	{
-		NetFood output;
+		BinaryWriter output;
 
 		output.WriteDWORD((DWORD)m_mDungeonDescs.size());
 
@@ -304,7 +312,7 @@ DWORD CWorld::GenerateGUID(eGUIDClass type)
 		// 0x50000000 - 0x60000000
 		if (m_dwHintPlayerGUID >= 0x60000000)
 		{
-			OutputConsole("Player GUID overflow!\n");
+			LOG(Temp, Normal, "Player GUID overflow!\n");
 			return 0;
 		}
 
@@ -322,7 +330,7 @@ DWORD CWorld::GenerateGUID(eGUIDClass type)
 		/* 0x10000000 - 0x50000000 */
 		if (m_dwHintStaticGUID >= 0x50000000)
 		{
-			OutputConsole("Static GUID overflow!\n");
+			LOG(Temp, Normal, "Static GUID overflow!\n");
 			return 0;
 		}
 
@@ -334,7 +342,7 @@ DWORD CWorld::GenerateGUID(eGUIDClass type)
 		// 0xC0000000 - 0xF0000000
 		if (m_dwHintDynamicGUID >= 0xF0000000)
 		{
-			OutputConsole("Dynamic GUID overflow!\n");
+			LOG(Temp, Normal, "Dynamic GUID overflow!\n");
 			return 0;
 		}
 
@@ -346,7 +354,7 @@ DWORD CWorld::GenerateGUID(eGUIDClass type)
 		// 0x60000000 - 0xC0000000
 		if (m_dwHintItemGUID >= 0xC0000000)
 		{
-			OutputConsole("Item GUID overflow!\n");
+			LOG(Temp, Normal, "Item GUID overflow!\n");
 			return 0;
 		}
 
@@ -356,6 +364,15 @@ DWORD CWorld::GenerateGUID(eGUIDClass type)
 	}
 
 	return 0;
+}
+
+void CWorld::ClearAllSpawns()
+{
+	for (DWORD i = 0; i < (256 * 256); i++)
+	{
+		if (m_pBlocks[i])
+			m_pBlocks[i]->ClearSpawns();
+	}
 }
 
 CLandBlock* CWorld::GetLandblock(WORD wHeader)
@@ -372,7 +389,7 @@ CLandBlock* CWorld::ActivateBlock(WORD wHeader)
 	pBlock = *ppBlock;
 	if (pBlock != NULL)
 	{
-		OutputConsole("Landblock already active!\n");
+		LOG(Temp, Normal, "Landblock already active!\n");
 		return pBlock;
 	}
 #endif
@@ -391,7 +408,7 @@ void CWorld::CreateEntity(CPhysicsObj *pEntity)
 #if _DEBUG
 	if (!pEntity->m_dwGUID)
 	{
-		OutputConsole("Null entid being placed in world.\r\n");
+		LOG(Temp, Normal, "Null entid being placed in world.\n");
 		return;
 	}
 #endif
@@ -407,6 +424,18 @@ void CWorld::CreateEntity(CPhysicsObj *pEntity)
 	}
 
 	CLandBlock *pBlock = m_pBlocks[wHeader];
+
+	if (pBlock)
+	{
+		if (pBlock->FindEntity(pEntity->m_dwGUID))
+		{
+			// DEBUGOUT("Not spawning duplicate entity!\n");
+			// Already exists.
+			delete pEntity;
+			return;
+		}
+	}
+
 	if (!pBlock)
 		pBlock = ActivateBlock(wHeader);
 
@@ -414,6 +443,42 @@ void CWorld::CreateEntity(CPhysicsObj *pEntity)
 
 	pEntity->MakeAware(pEntity);
 	pEntity->Spawn();
+}
+
+void CWorld::InsertTeleportLocation(TeleTownList_s l)
+{
+	m_vTeleTown.push_back(l);
+}
+std::string CWorld::GetTeleportList()
+{
+	std::string result;
+
+	for each (TeleTownList_s var in m_vTeleTown)
+	{
+		result.append(var.m_teleString).append(", ");
+	}
+	if (result.back() == 0x20) { //Get out behind of bad formatting
+		result.pop_back();
+		result.pop_back();
+	}
+
+	return result;
+}
+TeleTownList_s CWorld::GetTeleportLocation(std::string location)
+{
+	TeleTownList_s val;
+	std::transform(location.begin(), location.end(), location.begin(), ::tolower);
+	for each (TeleTownList_s var in m_vTeleTown)
+	{
+		//Lets waste a bunch of time with this.. Hey, if its the first one on the list its O(1)
+		std::string town = var.m_teleString;
+		std::transform(town.begin(), town.end(), town.begin(), ::tolower);
+		if (town.find(location) != std::string::npos) {
+			val = var;
+			break;
+		}
+	}
+	return val;
 }
 
 void CWorld::InsertEntity(CPhysicsObj *pEntity, BOOL bSilent)
@@ -538,7 +603,7 @@ void CWorld::BroadcastPVS(DWORD dwCell, void *_data, DWORD _len, WORD _group, DW
 	}
 }
 
-void CWorld::BroadcastGlobal(NetFood *food, WORD _group, DWORD ignore_ent, BOOL _game_event, BOOL del)
+void CWorld::BroadcastGlobal(BinaryWriter *food, WORD _group, DWORD ignore_ent, BOOL _game_event, BOOL del)
 {
 	BroadcastGlobal(food->GetData(), food->GetSize(), _group, ignore_ent, _game_event);
 	if (del)
@@ -562,7 +627,7 @@ void CWorld::BroadcastGlobal(void *_data, DWORD _len, WORD _group, DWORD ignore_
 		if (pPlayer = pit->second)
 		{
 			if (!ignore_ent || (pPlayer->m_dwGUID != ignore_ent))
-				pPlayer->SendMessage(_data, _len, _group, _game_event);
+				pPlayer->SendNetMessage(_data, _len, _group, _game_event);
 		}
 
 		pit++;
@@ -586,29 +651,36 @@ void CWorld::BroadcastGlobal(void *_data, DWORD _len, WORD _group, DWORD ignore_
 
 void CWorld::Test()
 {
-	OutputConsole("<CWorld::Test()>\r\n");
-	OutputConsole("Portal: v%lu, %lu files.\r\n", g_pPortal->GetVersion(), g_pPortal->GetFileCount());
-	OutputConsole("Cell: v%lu, %u files.\r\n", g_pCell->GetVersion(), g_pCell->GetFileCount());
-	OutputConsole("%u players:\r\n", m_mAllPlayers.size());
+	LOG(Temp, Normal, "<CWorld::Test()>\n");
+	LOG(Temp, Normal, "Portal: v%lu, %lu files.\n", g_pPortal->GetVersion(), g_pPortal->GetFileCount());
+	LOG(Temp, Normal, "Cell: v%lu, %u files.\n", g_pCell->GetVersion(), g_pCell->GetFileCount());
+	LOG(Temp, Normal, "%u players:\n", m_mAllPlayers.size());
 	for (PlayerMap::iterator pit = m_mAllPlayers.begin(); pit != m_mAllPlayers.end(); pit++)
 	{
 		CBasePlayer* pPlayer = pit->second;
-		OutputConsole("%08X %s\r\n", pPlayer->m_dwGUID, pPlayer->GetName());
+		LOG(Temp, Normal, "%08X %s\n", pPlayer->m_dwGUID, pPlayer->GetName());
 	}
-	OutputConsole("%u active blocks:\r\n", m_vBlocks.size());
+	LOG(Temp, Normal, "%u active blocks:\n", m_vBlocks.size());
 	for (LandblockVector::iterator it = m_vBlocks.begin(); it != m_vBlocks.end(); it++)
 	{
 		CLandBlock* pBlock = *it;
-		OutputConsole("%08X %lu players %lu live %lu dormant\r\n", pBlock->GetHeader() << 16, pBlock->PlayerCount(), pBlock->LiveCount(), pBlock->DormantCount());
+		LOG(Temp, Normal, "%08X %lu players %lu live %lu dormant\n", pBlock->GetHeader() << 16, pBlock->PlayerCount(), pBlock->LiveCount(), pBlock->DormantCount());
 	}
 
-	OutputConsole("</CWorld::Test()>\r\n");
+	LOG(Temp, Normal, "</CWorld::Test()>\n");
 }
 
 void CWorld::RemoveEntity(CPhysicsObj *pEntity)
 {
 	if (!pEntity)
+	{
 		return;
+	}
+
+	if (m_pGameMode)
+	{
+		m_pGameMode->OnRemoveEntity(pEntity);
+	}
 
 	DWORD dwGUID = pEntity->m_dwGUID;
 
@@ -627,7 +699,9 @@ void CWorld::RemoveEntity(CPhysicsObj *pEntity)
 		DELETE_ENTITY(pEntity);
 	}
 	else
+	{
 		pBlock->Destroy(pEntity);
+	}
 }
 
 void CWorld::Think()
@@ -662,6 +736,38 @@ void CWorld::Think()
 		SaveWorld();
 		m_fLastSave = g_pGlobals->Time();
 	}
+
+	if (m_pGameMode)
+	{
+		m_pGameMode->Think();
+	}
+}
+
+CGameMode *CWorld::GetGameMode()
+{
+	return m_pGameMode;
+}
+
+void CWorld::SetNewGameMode(CGameMode *pGameMode)
+{
+	if (pGameMode)
+	{
+		g_pWorld->BroadcastGlobal(ServerText(csprintf("Setting game mode to %s", pGameMode->GetName())), PRIVATE_MSG);
+	}
+	else
+	{
+		if (!pGameMode && m_pGameMode)
+		{
+			g_pWorld->BroadcastGlobal(ServerText(csprintf("Turning off game mode %s", m_pGameMode->GetName())), PRIVATE_MSG);
+		}
+	}
+
+	if (m_pGameMode)
+	{
+		delete m_pGameMode;
+	}
+
+	m_pGameMode = pGameMode;
 }
 
 void CWorld::EnumNearby(CPhysicsObj *pSource, float fRange, std::list<CPhysicsObj *> *pResults)
@@ -876,7 +982,7 @@ void CWorld::EnumerateDungeonsFromCellData()
 					di.z = (float)(_zTrans + pt.z + 0.025f);
 
 					//if ( BLOCK_WORD( dwID ) == 0xF924 )
-					// OutputConsole("%f %f %f\r\n", di.x, di.y, di.z );
+					// LOG(Temp, Normal, "%f %f %f\n", di.x, di.y, di.z );
 
 					m_mDungeons[dungeonID] = di;
 
@@ -894,7 +1000,7 @@ void CWorld::EnumerateDungeonsFromCellData()
 			}
 			else
 			{
-				OutputConsole("Dungeon block mismatch. Are portal/cell versions inconsistant?\r\n");
+				LOG(Temp, Normal, "Dungeon block mismatch. Are portal/cell versions inconsistant?\n");
 			}
 		}
 

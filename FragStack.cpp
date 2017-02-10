@@ -43,7 +43,7 @@ void FragmentStack::AddFragment(FragPacket_s *frag)
 	else if (datalen < 0x1C0)
 	{
 		//Size should never be less than 0x1C0 if it isn't the last chunk
-		OutputConsole("This should never happen\r\n");
+		LOG(Temp, Normal, "This should never happen\n");
 	}
 }
 

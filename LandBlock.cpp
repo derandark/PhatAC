@@ -266,7 +266,7 @@ void CLandBlock::Broadcast(void *_data, DWORD _len, WORD _group, DWORD ignore_en
 		{
 			if (!ignore_ent || (ignore_ent != pPlayer->m_dwGUID))
 			{
-				pPlayer->SendMessage(_data, _len, _group, _game_event);
+				pPlayer->SendNetMessage(_data, _len, _group, _game_event);
 			}
 
 			pit++;
@@ -393,7 +393,7 @@ void CLandBlock::Destroy(CPhysicsObj *pEntity)
 
 	m_pWorld->BroadcastPVS(pEntity->GetLandcell(), RemoveObject, sizeof(RemoveObject));
 
-	//OutputConsole("Removing entity %08X %04X @ %08X \r\n", pEntity->m_dwGUID, pEntity->m_wInstance, pEntity->GetLandcell());
+	// LOG(Temp, Normal, "Removing entity %08X %04X @ %08X \n", pEntity->m_dwGUID, pEntity->m_wInstance, pEntity->GetLandcell());
 #endif
 
 	DELETE_ENTITY(pEntity);
@@ -528,17 +528,24 @@ void CLandBlock::ClearSpawns()
 	{
 		pEntity = *eit;
 
-		if (pEntity)
+		if (pEntity && !pEntity->m_bDontClear)
 		{
-			Destroy(pEntity);
+			if (pEntity)
+			{
+				Destroy(pEntity);
 
-			eit = m_vDormantEnts.begin();
-			eend = m_vDormantEnts.end();
+				eit = m_vDormantEnts.begin();
+				eend = m_vDormantEnts.end();
+			}
+			else
+			{
+				eit = m_vDormantEnts.erase(eit);
+				eend = m_vDormantEnts.end();
+			}
 		}
 		else
 		{
-			eit = m_vDormantEnts.erase(eit);
-			eend = m_vDormantEnts.end();
+			eit++;
 		}
 	}
 }

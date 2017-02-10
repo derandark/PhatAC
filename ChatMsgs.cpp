@@ -6,13 +6,13 @@
 
 //Network access.
 #include "Client.h"
-#include "NetFood.h"
+#include "BinaryWriter.h"
 #include "ChatMsgs.h"
 
-#define MESSAGE_BEGIN(x) NetFood *x = new NetFood
+#define MESSAGE_BEGIN(x) BinaryWriter *x = new BinaryWriter
 #define MESSAGE_END(x) return x
 
-NetFood *LocalChat(const char *szText, const char *szName, DWORD dwSourceID, long lColor)
+BinaryWriter *LocalChat(const char *szText, const char *szName, DWORD dwSourceID, long lColor)
 {
 	MESSAGE_BEGIN(LocalChat);
 
@@ -25,7 +25,7 @@ NetFood *LocalChat(const char *szText, const char *szName, DWORD dwSourceID, lon
 	MESSAGE_END(LocalChat);
 }
 
-NetFood *EmoteChat(const char* szText, const char* szName, DWORD dwSourceID)
+BinaryWriter *EmoteChat(const char* szText, const char* szName, DWORD dwSourceID)
 {
 	MESSAGE_BEGIN(EmoteChat);
 
@@ -39,7 +39,7 @@ NetFood *EmoteChat(const char* szText, const char* szName, DWORD dwSourceID)
 
 //0x5719F5DB
 
-NetFood *DirectChat(const char* szText, const char* szName, DWORD dwSourceID, DWORD dwDestID, long lColor)
+BinaryWriter *DirectChat(const char* szText, const char* szName, DWORD dwSourceID, DWORD dwDestID, long lColor)
 {
 	//Fake-tells: bit 10 must be set.
 	//Envoy: bit 21 must be set.
@@ -79,7 +79,7 @@ NetFood *DirectChat(const char* szText, const char* szName, DWORD dwSourceID, DW
 	MESSAGE_END(DirectChat);
 }
 
-NetFood *ActionChat(const char* szText, const char* szName, DWORD dwSourceID)
+BinaryWriter *ActionChat(const char* szText, const char* szName, DWORD dwSourceID)
 {
 	MESSAGE_BEGIN(EmoteChat);
 
@@ -91,7 +91,7 @@ NetFood *ActionChat(const char* szText, const char* szName, DWORD dwSourceID)
 	MESSAGE_END(EmoteChat);
 }
 
-NetFood *ServerText(const char *szText, long lColor)
+BinaryWriter *ServerText(const char *szText, long lColor)
 {
 	MESSAGE_BEGIN(ServerText);
 
@@ -102,7 +102,7 @@ NetFood *ServerText(const char *szText, long lColor)
 	MESSAGE_END(ServerText);
 }
 
-NetFood *ServerBroadcast(const char *szSource, const char *szText, long lColor)
+BinaryWriter *ServerBroadcast(const char *szSource, const char *szText, long lColor)
 {
 	// Using string class to prevent from static buffer collisions.
 	std::string strBroadcast;
@@ -114,7 +114,7 @@ NetFood *ServerBroadcast(const char *szSource, const char *szText, long lColor)
 	MESSAGE_END(ServerText(strBroadcast.c_str(), lColor));
 }
 
-NetFood *ChannelChat(DWORD dwChannel, const char* szName, const char* szText)
+BinaryWriter *ChannelChat(DWORD dwChannel, const char* szName, const char* szText)
 {
 	MESSAGE_BEGIN(ChannelChat);
 

@@ -66,11 +66,6 @@ public:
 	virtual void SetWorldWielder(DWORD dwCell, CPhysicsObj *pWielder);
 	virtual void SetWorldCoverage(DWORD dwCell, DWORD dwCoverage);
 
-	virtual BOOL IsInscribable() { return TRUE; }
-	virtual BOOL CanPickup() { return TRUE; }
-
-	virtual WORD GetBurden() { return m_wBurden; }
-	virtual DWORD GetValue() { return m_dwValue; }
 	virtual DWORD GetEquipSlot() { return m_dwEquipSlot; }
 	virtual DWORD GetEquipType() { return m_dwEquipType; }
 	virtual DWORD GetCoverage1() { return m_dwCoverage1; }
@@ -84,19 +79,10 @@ public:
 
 	BOOL CanEquip();
 
-protected:
+// protected:
 	BYTE m_bWieldSequence;
 	BYTE m_bContainSequence;
 	BYTE m_bCoverSequence;
-
-	DWORD m_dwEquipSlot;
-	DWORD m_dwEquipType;
-	DWORD m_dwCoverage1;
-	DWORD m_dwCoverage2;
-	DWORD m_dwCoverage3;
-
-	WORD m_wBurden;
-	DWORD m_dwValue;
 
 	CPhysicsObj* m_pWielder;
 	CPhysicsObj* m_pContainer;
@@ -106,20 +92,12 @@ class CBaseWand : public CBaseItem
 {
 public:
 	CBaseWand();
-
-	virtual DWORD GetHighlightColor() { return eHighlightRed; }
 };
 
 class CBaseArmor : public CBaseItem
 {
 public:
 	CBaseArmor();
-
-	virtual BOOL IsArmor() { return TRUE; }
-	ModelInfo* GetArmorModel();
-
-protected:
-	ModelInfo m_miArmorModel;
 };
 
 class CAcademyCoat : public CBaseArmor

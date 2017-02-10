@@ -7,60 +7,73 @@
 
 //Network access.
 #include "Client.h"
-#include "NetFood.h"
+#include "BinaryWriter.h"
 #include "ObjectMsgs.h"
 
-#define MESSAGE_BEGIN(x)	NetFood *x = new NetFood
+#define MESSAGE_BEGIN(x)	BinaryWriter *x = new BinaryWriter
 #define MESSAGE_END(x)		return x
 
-NetFood *GetClassData(CPhysicsObj *pEntity)
+BinaryWriter *GetWeenieObjData(CPhysicsObj *pEntity)
 {
-	NetFood Class;
-	DWORD dwSections = 0; //0x00800016
+	BinaryWriter OptionalWeenieObjData;
+	DWORD dwSections = 0;
 
 	if (pEntity->Container_HasContents())
 	{
-		dwSections |= 0x00000002;
-		Class.WriteBYTE(pEntity->Container_MaxInventorySlots());
+		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_ItemsCapacity;
+		OptionalWeenieObjData.WriteBYTE(pEntity->Container_MaxInventorySlots()); // item capacity
 
-		dwSections |= 0x00000004;
-		Class.WriteBYTE(pEntity->Container_MaxContainerSlots());
+		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_ContainersCapacity;
+		OptionalWeenieObjData.WriteBYTE(pEntity->Container_MaxContainerSlots()); // container capacity
 	}
 
-	if (pEntity->HasValue())
+	if (pEntity->m_AmmoType != 0)
 	{
-		dwSections |= 0x00000008;
-		Class.WriteDWORD(pEntity->GetValue());
+		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_AmmoType;
+		OptionalWeenieObjData.WriteWORD(pEntity->m_AmmoType);
 	}
 
-	//Use item? 1 = Cannot be used?
-	dwSections |= 0x00000010;
-	Class.WriteDWORD((DWORD)pEntity->m_Usability);
+	if (pEntity->m_Value != 0)
+	{
+		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_Value;
+		OptionalWeenieObjData.WriteDWORD(pEntity->m_Value);
+	}
+
+	if (pEntity->m_Usability != 0)
+	{
+		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_Useability;
+		OptionalWeenieObjData.WriteDWORD((DWORD)pEntity->m_Usability);
+	}
 
 	float flApproachDist = pEntity->GetApproachDist();
 	if (flApproachDist > 0.0f)
 	{
-		dwSections |= 0x00000020;
-		Class.WriteFloat(flApproachDist);
+		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_UseRadius;
+		OptionalWeenieObjData.WriteFloat(flApproachDist);
 	}
 
-	DWORD dwHighlight = pEntity->GetHighlightColor();
-	if (dwHighlight)
+	if (pEntity->m_TargetType != 0)
 	{
-		dwSections |= 0x00000080;
-		Class.WriteDWORD(dwHighlight);
+		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_TargetType;
+		OptionalWeenieObjData.WriteDWORD(pEntity->m_TargetType);
+	}
+
+	if (pEntity->m_UIEffects)
+	{
+		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_UIEffects;
+		OptionalWeenieObjData.WriteDWORD(pEntity->m_UIEffects);
 	}
 
 	if (pEntity->HasEquipType())
 	{
-		dwSections |= 0x00000200;
-		Class.WriteDWORD(pEntity->GetEquipType());
+		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_CombatUse;
+		OptionalWeenieObjData.WriteBYTE((BYTE)pEntity->GetEquipType());
 	}
 
 	if (pEntity->IsContained())
 	{
-		dwSections |= 0x00004000;
-		Class.WriteDWORD(pEntity->GetContainerID());
+		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_ContainerID;
+		OptionalWeenieObjData.WriteDWORD(pEntity->GetContainerID());
 	}
 
 	if (pEntity->HasCoverage())
@@ -72,116 +85,122 @@ NetFood *GetClassData(CPhysicsObj *pEntity)
 
 		if (dwCoverage1)
 		{
-			dwSections |= 0x00010000;
-			Class.WriteDWORD(dwCoverage1);
+			dwSections |= PublicWeenieDescPackHeader::PWD_Packed_ValidLocations;
+			OptionalWeenieObjData.WriteDWORD(dwCoverage1);
 		}
 		if (dwCoverage2)
 		{
-			dwSections |= 0x00020000;
-			Class.WriteDWORD(dwCoverage1);
+			dwSections |= PublicWeenieDescPackHeader::PWD_Packed_Location;
+			OptionalWeenieObjData.WriteDWORD(dwCoverage1);
 		}
 		if (dwCoverage3)
 		{
-			dwSections |= 0x00040000;
-			Class.WriteDWORD(dwCoverage1);
+			dwSections |= PublicWeenieDescPackHeader::PWD_Packed_Priority;
+			OptionalWeenieObjData.WriteDWORD(dwCoverage1);
 		}
 	}
 
-	if (pEntity->HasRadarDot())
+	if (pEntity->m_BlipColor != 0)
 	{
-		dwSections |= 0x00100000;
-		Class.WriteBYTE(pEntity->GetRadarColor());
+		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_BlipColor;
+		OptionalWeenieObjData.WriteBYTE(pEntity->m_BlipColor);
 	}
 
-	// if (pEntity->IsPlayer())
+	if (pEntity->m_RadarVis != 0)
 	{
-		dwSections |= 0x00800000;
-		Class.WriteBYTE((BYTE)pEntity->m_RadarVis);
+		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_RadarEnum;
+		OptionalWeenieObjData.WriteBYTE((BYTE)pEntity->m_RadarVis);
 	}
 
 	if (pEntity->HasBurden())
 	{
-		dwSections |= 0x00200000;
-		Class.WriteWORD(pEntity->GetBurden());
+		dwSections |= PublicWeenieDescPackHeader::PWD_Packed_Burden;
+		OptionalWeenieObjData.WriteWORD(pEntity->m_Burden);
 	}
 
-	NetFood *ClassData = new NetFood;
-	ClassData->WriteDWORD(dwSections);
-	ClassData->WriteString(pEntity->GetName());
-	ClassData->WriteWORD(pEntity->m_wTypeID);
-	ClassData->WriteWORD(pEntity->m_wIcon);
-	ClassData->WriteDWORD(pEntity->m_ItemType);
-	ClassData->WriteDWORD(pEntity->GetDescFlags());
-	ClassData->AppendData(Class.GetData(), Class.GetSize());
+	BinaryWriter *WeenieObjData = new BinaryWriter;
+	WeenieObjData->WriteDWORD(dwSections);
+	WeenieObjData->WriteString(pEntity->GetName());
+	WeenieObjData->WriteWORD(pEntity->m_wTypeID);
+	WeenieObjData->WriteWORD(pEntity->m_wIcon);
+	WeenieObjData->WriteDWORD(pEntity->m_ItemType);
+	WeenieObjData->WriteDWORD(pEntity->m_WeenieBitfield);
+	WeenieObjData->AppendData(OptionalWeenieObjData.GetData(), OptionalWeenieObjData.GetSize());
 
-	return ClassData;
+	return WeenieObjData;
 }
 
-NetFood *GetOrientData(CPhysicsObj *pEntity)
+BinaryWriter *GetPhysicsObjData(CPhysicsObj *pEntity)
 {
-	NetFood Orient;
+	BinaryWriter OptionalPhysicsObjData;
 	DWORD dwSections = 0; //0x019803
 
 	if (pEntity->m_dwAnimationSet)
 	{
-		dwSections |= 0x10000;
+		dwSections |= PhysicsDescInfo::MOVEMENT;
 
-		NetFood *AnimInfo = pEntity->Animation_GetAnimationInfo();
+		if (!pEntity->m_AnimOverrideData)
+		{
+			BinaryWriter *AnimInfo = pEntity->Animation_GetAnimationInfo();
 
-		Orient.WriteDWORD(AnimInfo->GetSize()); //byte size
-		Orient.AppendData(AnimInfo->GetData(), AnimInfo->GetSize());
+			OptionalPhysicsObjData.WriteDWORD(AnimInfo->GetSize());
+			OptionalPhysicsObjData.AppendData(AnimInfo->GetData(), AnimInfo->GetSize());
+			OptionalPhysicsObjData.WriteDWORD(pEntity->m_AutonomousMovement); // autonomous movement?
 
-		//unk:
-		Orient.WriteDWORD(0);
-
-		delete AnimInfo;
+			delete AnimInfo;
+		}
+		else
+		{
+			OptionalPhysicsObjData.WriteDWORD(pEntity->m_AnimOverrideDataLen);
+			OptionalPhysicsObjData.AppendData(pEntity->m_AnimOverrideData, pEntity->m_AnimOverrideDataLen);
+			OptionalPhysicsObjData.WriteDWORD(pEntity->m_AutonomousMovement);
+		}
 	}
-
-	if (pEntity->CanPickup())
+	else if (pEntity->CanPickup())
 	{
-		dwSections |= 0x20000;
-		Orient.WriteDWORD(0x00000065); //not sure what this does
+		dwSections |= PhysicsDescInfo::ANIMFRAME_ID;
+		OptionalPhysicsObjData.WriteDWORD(0x00000065); // animation frame ID????
 	}
 
 	if (!pEntity->HasOwner())
 	{
-		dwSections |= 0x8000;
-		Orient.AppendData(&pEntity->m_Origin, sizeof(loc_t));
-		Orient.AppendData(&pEntity->m_Angles, sizeof(heading_t));
+		dwSections |= PhysicsDescInfo::POSITION;
+		OptionalPhysicsObjData.AppendData(&pEntity->m_Origin, sizeof(loc_t));
+		OptionalPhysicsObjData.AppendData(&pEntity->m_Angles, sizeof(heading_t));
 	}
 
 	if (pEntity->m_dwAnimationSet)
 	{
-		dwSections |= 0x0002;
-		Orient.WriteDWORD(pEntity->m_dwAnimationSet);
+		dwSections |= PhysicsDescInfo::MTABLE;
+		OptionalPhysicsObjData.WriteDWORD(pEntity->m_dwAnimationSet);
 	}
 
 	DWORD dwSoundSet = pEntity->GetSoundSet();
 	if (dwSoundSet)
 	{
-		dwSections |= 0x0800;
-		Orient.WriteDWORD(dwSoundSet);
+		dwSections |= PhysicsDescInfo::STABLE;
+		OptionalPhysicsObjData.WriteDWORD(dwSoundSet);
 	}
 
 	DWORD dwEffectSet = pEntity->GetEffectSet();
 	if (dwEffectSet)
 	{
-		dwSections |= 0x1000;
-		Orient.WriteDWORD(dwEffectSet);
+		dwSections |= PhysicsDescInfo::PETABLE;
+		OptionalPhysicsObjData.WriteDWORD(dwEffectSet);
 	}
 
 	DWORD dwModelNumber = pEntity->m_dwModel;
 	if (dwModelNumber)
 	{
-		dwSections |= 0x0001;
-		Orient.WriteDWORD(dwModelNumber);
+		dwSections |= PhysicsDescInfo::CSetup;
+		OptionalPhysicsObjData.WriteDWORD(dwModelNumber);
 	}
 
 	if (pEntity->IsWielded())
 	{
-		dwSections |= 0x0020;
-		Orient.WriteDWORD(pEntity->GetWielderID());
-		Orient.WriteDWORD(pEntity->GetEquipSlot());
+		dwSections |= PhysicsDescInfo::PARENT;
+		OptionalPhysicsObjData.WriteDWORD(pEntity->GetWielderID());
+		OptionalPhysicsObjData.WriteDWORD(pEntity->GetEquipSlot());
 	}
 
 	ItemVector vItems;
@@ -190,7 +209,7 @@ NetFood *GetOrientData(CPhysicsObj *pEntity)
 	if (!vItems.empty())
 	{
 		DWORD	dwEquippedCount = 0;
-		NetFood pEquipped;
+		BinaryWriter pEquipped;
 
 		ItemVector::iterator iit = vItems.begin();
 		ItemVector::iterator iend = vItems.end();
@@ -209,88 +228,103 @@ NetFood *GetOrientData(CPhysicsObj *pEntity)
 
 		if (dwEquippedCount)
 		{
-			dwSections |= 0x0040;
-			Orient.WriteDWORD(dwEquippedCount);
-			Orient.AppendData(pEquipped.GetData(), pEquipped.GetSize());
+			dwSections |= PhysicsDescInfo::CHILDREN;
+			OptionalPhysicsObjData.WriteDWORD(dwEquippedCount);
+			OptionalPhysicsObjData.AppendData(pEquipped.GetData(), pEquipped.GetSize());
 		}
 	}
 
-	float flScale = pEntity->m_fScale;
-	if (flScale && flScale != 1.0f)
+	if (pEntity->m_fScale != 0.0f && pEntity->m_fScale != 1.0f)
 	{
-		dwSections |= 0x0080;
-		Orient.WriteFloat(flScale);
+		dwSections |= PhysicsDescInfo::OBJSCALE;
+		OptionalPhysicsObjData.WriteFloat(pEntity->m_fScale);
 	}
 
-	NetFood *OrientData = new NetFood;
-	OrientData->WriteDWORD(dwSections);
-	OrientData->WriteDWORD(pEntity->m_VisFlags); //VIS flags
-	OrientData->AppendData(Orient.GetData(), Orient.GetSize());
+	/*
+	if (pEntity->m_Translucency != 0.0f)
+	{
+		dwSections |= PhysicsDescInfo::TRANSLUCENCY;
+		OptionalPhysicsObjData.WriteFloat(pEntity->m_Translucency);
+	}
+	*/
+
+	BinaryWriter *PhysicsObjData = new BinaryWriter;
+	PhysicsObjData->WriteDWORD(dwSections);
+	PhysicsObjData->WriteDWORD(pEntity->m_PhysicsState); //VIS flags
+	PhysicsObjData->AppendData(OptionalPhysicsObjData.GetData(), OptionalPhysicsObjData.GetSize());
 
 	//Moved from CO
-	OrientData->WriteWORD(pEntity->m_wNumMovements);
-	OrientData->WriteWORD(pEntity->m_wNumAnimInteracts);
-	OrientData->WriteWORD(pEntity->m_wNumBubbleModes);
-	OrientData->WriteWORD(pEntity->m_wNumJumps);
-	OrientData->WriteWORD(pEntity->m_wNumPortals);
-	OrientData->WriteWORD(pEntity->m_wAnimCount);
-	OrientData->WriteWORD(pEntity->m_wNumOverride);
-	OrientData->WriteWORD(pEntity->m_wNumModelChanges);
-	OrientData->WriteWORD(pEntity->m_wInstance);
-	OrientData->WriteWORD(pEntity->m_wSeagreen10);
+	PhysicsObjData->WriteWORD(pEntity->m_wNumMovements);
+	PhysicsObjData->WriteWORD(pEntity->m_wNumAnimInteracts);
+	PhysicsObjData->WriteWORD(pEntity->m_wNumBubbleModes);
+	PhysicsObjData->WriteWORD(pEntity->m_wNumJumps);
+	PhysicsObjData->WriteWORD(pEntity->m_wNumPortals);
+	PhysicsObjData->WriteWORD(pEntity->m_wAnimCount);
+	PhysicsObjData->WriteWORD(pEntity->m_wNumOverride);
+	PhysicsObjData->WriteWORD(pEntity->m_wNumModelChanges);
+	PhysicsObjData->WriteWORD(pEntity->m_wInstance);
 
-	return OrientData;
+	PhysicsObjData->Align();
+
+	return PhysicsObjData;
 }
 
-NetFood *CreateObject(CPhysicsObj *pEntity)
+BinaryWriter *CreateObject(CPhysicsObj *pEntity)
 {
-	NetFood *CO = new NetFood;
+	BinaryWriter *CO = new BinaryWriter;
 
 	CO->WriteDWORD(0xF745);
 	CO->WriteDWORD(pEntity->m_dwGUID);
 
-	NetFood *ModelData = pEntity->GetModelData();
+	BinaryWriter *ModelData = pEntity->GetModelData();
 	CO->AppendData(ModelData->GetData(), ModelData->GetSize());
 	delete ModelData;
 
-	NetFood *OrientData = GetOrientData(pEntity);
-	CO->AppendData(OrientData->GetData(), OrientData->GetSize());
-	delete OrientData;
+	BinaryWriter *PhysicsObjData = GetPhysicsObjData(pEntity);
+	CO->AppendData(PhysicsObjData->GetData(), PhysicsObjData->GetSize());
+	delete PhysicsObjData;
 
-	NetFood *ClassData = GetClassData(pEntity);
-	CO->AppendData(ClassData->GetData(), ClassData->GetSize());
-	delete ClassData;
+	BinaryWriter *WeenieObjData = GetWeenieObjData(pEntity);
+	CO->AppendData(WeenieObjData->GetData(), WeenieObjData->GetSize());
+	delete WeenieObjData;
 
 	CO->Align();
 	return CO;
 }
 
-NetFood *UpdateObject(CPhysicsObj *pEntity)
+BinaryWriter *UpdateObject(CPhysicsObj *pEntity)
 {
-	NetFood *UO = new NetFood;
+	BinaryWriter *UO = new BinaryWriter;
 
 	UO->WriteDWORD(0xF7DB);
 	UO->WriteDWORD(pEntity->m_dwGUID);
 
-	NetFood *ModelData = pEntity->GetModelData();
+	BinaryWriter *ModelData = pEntity->GetModelData();
 	UO->AppendData(ModelData->GetData(), ModelData->GetSize());
 	delete ModelData;
 
-	NetFood *OrientData = GetOrientData(pEntity);
-	UO->AppendData(OrientData->GetData(), OrientData->GetSize());
-	delete OrientData;
+	pEntity->m_wNumModelChanges++;
+	pEntity->m_wNumPortals++;
+	pEntity->m_wNumAnimInteracts++;
+	pEntity->m_wNumBubbleModes++;
+	pEntity->m_wNumJumps++;
+	pEntity->m_wNumMovements++;
 
-	NetFood *ClassData = GetClassData(pEntity);
-	UO->AppendData(ClassData->GetData(), ClassData->GetSize());
-	delete ClassData;
+	BinaryWriter *PhysicsObjData = GetPhysicsObjData(pEntity);
+	UO->AppendData(PhysicsObjData->GetData(), PhysicsObjData->GetSize());
+	delete PhysicsObjData;
+
+	BinaryWriter *WeenieObjData = GetWeenieObjData(pEntity);
+	UO->AppendData(WeenieObjData->GetData(), WeenieObjData->GetSize());
+	delete WeenieObjData;
 
 	UO->Align();
 	return UO;
 }
 
-NetFood *IdentifyObject_DwordData(CPhysicsObj *pEntity)
+BinaryWriter *IdentifyObject_DwordData(CPhysicsObj *pEntity)
 {
-	NetFood *Dwords = new NetFood;
+	BinaryWriter *Dwords = new BinaryWriter;
 	int DwordCount = 0;
 
 	for (int i = 0; i < 0x100; i++) {
@@ -310,7 +344,7 @@ NetFood *IdentifyObject_DwordData(CPhysicsObj *pEntity)
 		return NULL;
 	}
 
-	NetFood *DwordData = new NetFood;
+	BinaryWriter *DwordData = new BinaryWriter;
 
 	DwordData->WriteWORD(DwordCount);
 	DwordData->WriteWORD(0x40);
@@ -320,12 +354,9 @@ NetFood *IdentifyObject_DwordData(CPhysicsObj *pEntity)
 	return DwordData;
 }
 
-NetFood *IdentifyObject_StringData(CPhysicsObj *pEntity)
+BinaryWriter *IdentifyObject_StringData(CPhysicsObj *pEntity)
 {
-	if (!pEntity->IsItem())
-		return NULL;
-
-	NetFood *Strings = new NetFood;
+	BinaryWriter *Strings = new BinaryWriter;
 	WORD wStringCount = 0;
 
 	const char* szDescription = pEntity->GetDescription();
@@ -342,7 +373,7 @@ NetFood *IdentifyObject_StringData(CPhysicsObj *pEntity)
 		return NULL;
 	}
 
-	NetFood *StringData = new NetFood;
+	BinaryWriter *StringData = new BinaryWriter;
 
 	StringData->WriteWORD(wStringCount);
 	StringData->WriteWORD(0x10);
@@ -352,14 +383,14 @@ NetFood *IdentifyObject_StringData(CPhysicsObj *pEntity)
 	return StringData;
 }
 
-NetFood *IdentifyObject_PlayerData(CPhysicsObj *pEntity)
+BinaryWriter *IdentifyObject_PlayerData(CPhysicsObj *pEntity)
 {
 	if (!pEntity->IsPlayer())
 		return NULL;
 
 	CBasePlayer* pPlayer = (CBasePlayer *)pEntity;
 
-	NetFood *PlayerPoo = new NetFood;
+	BinaryWriter *PlayerPoo = new BinaryWriter;
 	DWORD dwContents = 5;
 
 	if (pPlayer->IsHuman())
@@ -409,50 +440,89 @@ NetFood *IdentifyObject_PlayerData(CPhysicsObj *pEntity)
 	return PlayerPoo;
 }
 
-NetFood *IdentifyObject(CPhysicsObj *pEntity)
+BinaryWriter *IdentifyObject(CPhysicsObj *pEntity)
 {
-	NetFood *IdentTotal = new NetFood;
-	NetFood *IdentStuff = new NetFood;
+	enum AppraisalProfilePackHeader {
+		Packed_None = 0,
+		Packed_IntStats = (1 << 0),
+		Packed_BoolStats = (1 << 1),
+		Packed_FloatStats = (1 << 2),
+		Packed_StringStats = (1 << 3),
+		Packed_SpellList = (1 << 4), // 0x10
+		Packed_WeaponProfile = (1 << 5),
+		Packed_HookProfile = (1 << 6),
+		Packed_ArmorProfile = (1 << 7),
+		Packed_CreatureProfile = (1 << 8), // 0x100
+		Packed_ArmorEnchant = (1 << 9),
+		Packed_ResistEnchant = (1 << 10),
+		Packed_WeaponEnchant = (1 << 11),
+		Packed_DataIDStats = (1 << 12), // 0x1000
+		Packed_Int64Stats = (1 << 13),
+		Packed_ArmorLevels = (1 << 14)
+	};
+
+	BinaryWriter *IdentTotal = new BinaryWriter;
+	BinaryWriter *IdentStuff = new BinaryWriter;
 
 	//Possible sections
 
 	IdentTotal->WriteDWORD(0xC9);
 	IdentTotal->WriteDWORD(pEntity->m_dwGUID);
 
-	NetFood *Stuffing;
+	BinaryWriter *Stuffing;
 	DWORD dwSections = 0;
 
+	/*
 	if (Stuffing = IdentifyObject_DwordData(pEntity))
 	{
-		dwSections |= 0x00000001;
+		dwSections |= Packed_IntStats;
 		IdentStuff->AppendData(Stuffing->GetData(), Stuffing->GetSize());
 		delete Stuffing;
 	}
+	*/
+
+	dwSections |= Packed_IntStats;
+	IdentStuff->WriteMap(pEntity->m_dwordProperties);
+	dwSections |= Packed_Int64Stats;
+	IdentStuff->WriteMap(pEntity->m_qwordProperties);
+	dwSections |= Packed_BoolStats;
+	IdentStuff->WriteMap(pEntity->m_boolProperties);
+	dwSections |= Packed_FloatStats;
+	IdentStuff->WriteMap(pEntity->m_floatProperties);
+
 	if (Stuffing = IdentifyObject_StringData(pEntity))
 	{
-		dwSections |= 0x00000008;
-		IdentStuff->AppendData(Stuffing->GetData(), Stuffing->GetSize());
-		delete Stuffing;
-	}
-	if (Stuffing = IdentifyObject_PlayerData(pEntity))
-	{
-		dwSections |= 0x00000100;
+		dwSections |= Packed_StringStats;
 		IdentStuff->AppendData(Stuffing->GetData(), Stuffing->GetSize());
 		delete Stuffing;
 	}
 
+	/*
+	dwSections |= Packed_StringStats;
+	IdentStuff->WriteMap(pEntity->m_stringProperties);
+	dwSections |= Packed_DataIDStats;
+	IdentStuff->WriteMap(pEntity->m_dataIDProperties);
+
+	if (Stuffing = IdentifyObject_PlayerData(pEntity))
+	{
+		dwSections |= Packed_CreatureProfile;
+		IdentStuff->AppendData(Stuffing->GetData(), Stuffing->GetSize());
+		delete Stuffing;
+	}
+	*/
+
 	IdentTotal->WriteDWORD(dwSections);
-	IdentTotal->WriteDWORD(TRUE); //always success for now
+	IdentTotal->WriteDWORD(1); // Succeeded: always yes for now
 	IdentTotal->AppendData(IdentStuff->GetData(), IdentStuff->GetSize());
 	delete IdentStuff;
 
 	return IdentTotal;
 }
 
-NetFood *GetStatInfo(CBasePlayer *pPlayer)
+BinaryWriter *GetStatInfo(CBasePlayer *pPlayer)
 {
 	//0x05, 0x14, 0x19, 0x1E, 0x62, 0x7D (we'll add unassigned / totalxp too)
-	NetFood Stats;
+	BinaryWriter Stats;
 
 	Stats.WriteDWORD(eTotalBurden);
 	Stats.WriteDWORD(pPlayer->GetObjectStat(eTotalBurden));
@@ -475,7 +545,7 @@ NetFood *GetStatInfo(CBasePlayer *pPlayer)
 	Stats.WriteDWORD(eUnknown2);
 	Stats.WriteDWORD(pPlayer->GetObjectStat(eUnknown2));
 
-	NetFood *StatInfo = new NetFood;
+	BinaryWriter *StatInfo = new BinaryWriter;
 
 	StatInfo->WriteWORD(0xA);
 	StatInfo->WriteWORD(0x40);
@@ -484,16 +554,16 @@ NetFood *GetStatInfo(CBasePlayer *pPlayer)
 	return StatInfo;
 }
 
-void WriteSkillData(WORD index, SKILL* skill, NetFood *pFood)
+void WriteSkillData(WORD index, SKILL* skill, BinaryWriter *pFood)
 {
 	pFood->WriteWORD(index);
 	pFood->Align();
 	pFood->AppendData(&skill->data, sizeof(_SKILLDATA));
 }
 
-NetFood *GetSkillInfo(CBasePlayer *pPlayer)
+BinaryWriter *GetSkillInfo(CBasePlayer *pPlayer)
 {
-	NetFood Skills;
+	BinaryWriter Skills;
 
 	WriteSkillData(eAxe, pPlayer->GetSkillData(eAxe), &Skills);
 	WriteSkillData(eBow, pPlayer->GetSkillData(eBow), &Skills);
@@ -531,7 +601,7 @@ NetFood *GetSkillInfo(CBasePlayer *pPlayer)
 	WriteSkillData(eAlchemy, pPlayer->GetSkillData(eAlchemy), &Skills);
 	WriteSkillData(eCooking, pPlayer->GetSkillData(eCooking), &Skills);
 
-	NetFood *SkillInfo = new NetFood;
+	BinaryWriter *SkillInfo = new BinaryWriter;
 	SkillInfo->WriteWORD(0x23); //skillcount
 	SkillInfo->WriteWORD(0x20);
 	SkillInfo->AppendData(Skills.GetData(), Skills.GetSize());
@@ -539,26 +609,26 @@ NetFood *GetSkillInfo(CBasePlayer *pPlayer)
 	return SkillInfo;
 }
 
-NetFood *LoginCharacter(CBasePlayer *pPlayer)
+BinaryWriter *LoginCharacter(CBasePlayer *pPlayer)
 {
 	//Game Event 0x0013
-	NetFood *LC = new NetFood;
+	BinaryWriter *LC = new BinaryWriter;
 
 	LC->WriteDWORD(0x0013);
-	LC->WriteDWORD(0x001B); //loginmask1
+	LC->WriteDWORD(0x001B); // section flags
 	LC->WriteDWORD(0x000A);
 
-	NetFood *StatInfo = GetStatInfo(pPlayer);
+	BinaryWriter *StatInfo = GetStatInfo(pPlayer);
 	LC->AppendData(StatInfo->GetData(), StatInfo->GetSize());
 	delete StatInfo;
 
-	//What the hell are these?
+	// BOOL properties
 	LC->WriteWORD(5);
 	LC->WriteWORD(0x20);
 	LC->WriteDWORD(0x0004);
 	LC->WriteDWORD(0x0000);
 	LC->WriteDWORD(0x002C);
-	LC->WriteDWORD(0x0000);
+	LC->WriteDWORD(0x0001); // Is ADMIN
 	LC->WriteDWORD(0x002D);
 	LC->WriteDWORD(0x0000);
 	LC->WriteDWORD(0x002E);
@@ -566,7 +636,7 @@ NetFood *LoginCharacter(CBasePlayer *pPlayer)
 	LC->WriteDWORD(0x002F);
 	LC->WriteDWORD(0x0000);
 
-	//Character strings
+	// Character strings
 	LC->WriteWORD(4);
 	LC->WriteWORD(0x10);
 	LC->WriteDWORD(0x0001);
@@ -599,21 +669,23 @@ NetFood *LoginCharacter(CBasePlayer *pPlayer)
 		LC->WriteData(&vital->data, sizeof(_VITALDATA));
 	}
 
-	NetFood *SkillInfo = GetSkillInfo(pPlayer);
+	BinaryWriter *SkillInfo = GetSkillInfo(pPlayer);
 	LC->AppendData(SkillInfo->GetData(), SkillInfo->GetSize());
 	delete SkillInfo;
 
 	//spellbook:
-	//LC->WriteWORD( 3000 );
-	LC->WriteWORD(1);
-	LC->WriteWORD(0x40);
-	LC->WriteDWORD(2366);
-	LC->WriteFloat(2.0f);
-	//for (int i = 0; i < 3000; i++)
-	//{
-	//	LC->WriteDWORD( i );
-	//	LC->WriteFloat( 2.0f );
-	//}
+	//LC->WriteWORD( 55 );
+	LC->WriteWORD(6); // Number of spells
+	LC->WriteWORD(0x40); // Required ?
+
+	LC->WriteDWORD(2366); //Spell ID
+	LC->WriteFloat(2.0f); //Unknown
+
+	for (int i = 0; i < 5; i++) //Add 6 starter spells
+	{
+		LC->WriteDWORD( i );
+		LC->WriteFloat( 2.0f ); 
+	}
 
 	LC->WriteDWORD(0x0070); //loginmask3
 	LC->WriteDWORD(0x11C4E56A);
@@ -633,7 +705,7 @@ NetFood *LoginCharacter(CBasePlayer *pPlayer)
 	return LC;
 }
 
-NetFood *HealthUpdate(CBaseMonster *pMonster)
+BinaryWriter *HealthUpdate(CBaseMonster *pMonster)
 {
 	MESSAGE_BEGIN(HealthUpdate);
 
@@ -644,7 +716,7 @@ NetFood *HealthUpdate(CBaseMonster *pMonster)
 	MESSAGE_END(HealthUpdate);
 }
 
-NetFood *InventoryEquip(DWORD dwItemID, DWORD dwCoverage)
+BinaryWriter *InventoryEquip(DWORD dwItemID, DWORD dwCoverage)
 {
 	MESSAGE_BEGIN(InventoryEquip);
 
@@ -655,7 +727,7 @@ NetFood *InventoryEquip(DWORD dwItemID, DWORD dwCoverage)
 	MESSAGE_END(InventoryEquip);
 }
 
-NetFood *InventoryMove(DWORD dwItemID, DWORD dwContainerID, DWORD dwSlot, DWORD dwType)
+BinaryWriter *InventoryMove(DWORD dwItemID, DWORD dwContainerID, DWORD dwSlot, DWORD dwType)
 {
 	MESSAGE_BEGIN(InventoryMove);
 
@@ -668,7 +740,7 @@ NetFood *InventoryMove(DWORD dwItemID, DWORD dwContainerID, DWORD dwSlot, DWORD 
 	MESSAGE_END(InventoryMove);
 }
 
-NetFood *InventoryDrop(DWORD dwItemID)
+BinaryWriter *InventoryDrop(DWORD dwItemID)
 {
 	MESSAGE_BEGIN(InventoryDrop);
 
@@ -678,10 +750,10 @@ NetFood *InventoryDrop(DWORD dwItemID)
 	MESSAGE_END(InventoryDrop);
 }
 
-NetFood *MoveUpdate(CPhysicsObj *pEntity)
+BinaryWriter *MoveUpdate(CPhysicsObj *pEntity)
 {
 	MESSAGE_BEGIN(MoveUpdate);
-	NetFood *MovePayload = new NetFood;
+	BinaryWriter *MovePayload = new BinaryWriter;
 
 	MoveUpdate->WriteDWORD(0xF748);
 	MoveUpdate->WriteDWORD(pEntity->m_dwGUID);

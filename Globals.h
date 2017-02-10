@@ -4,14 +4,19 @@
 class CGlobals
 {
 public:
-	CGlobals(HWND hWindow);
+	CGlobals();
 	~CGlobals();
 
 	double Time();
 	void Update();
 
-	char *GetGameDirectory();
+	const char *GetGameDirectory();
+	std::string GetGameFile(const char *filename);
+
+	void SetWindowHandle(HWND);
 	HWND GetWindowHandle();
+	void SetConsoleWindowHandle(HWND);
+	HWND GetConsoleWindowHandle();
 
 	void SetClientCount(WORD wCount);
 	WORD GetClientCount();
@@ -30,6 +35,7 @@ public:
 
 private:
 	HWND m_hWnd;
+	HWND m_hConsoleWnd;
 	char m_GameDir[MAX_PATH + 2];
 
 	WORD m_wClientCount;

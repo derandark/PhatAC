@@ -12,8 +12,8 @@
 
 // Network access
 #include "crc.h"
-#include "NetFood.h"
-#include "NetMeal.h"
+#include "BinaryWriter.h"
+#include "BinaryReader.h"
 #include "PacketController.h"
 
 // NOTES:
@@ -70,8 +70,10 @@ void CNetwork::SendPacket(SOCKADDR_IN *peer, void *data, DWORD len)
 	SOCKET socket = m_sockets[0];
 	if (socket == INVALID_SOCKET) return;
 
-	// OutputConsole("Sent:\r\n");
-	// OutputConsoleBytes(data, len);
+#ifdef _DEBUG
+	LOG(Network, Verbose, "Sent:\n");
+	LOG_BYTES(Network, Verbose, data, len);
+#endif
 
 	sendto(socket, (char *)data, len, 0, (sockaddr *)peer, sizeof(SOCKADDR_IN));
 	g_pGlobals->PacketSent(len);
@@ -96,7 +98,7 @@ void CNetwork::ThinkSocket(SOCKET socket)
 			DWORD dwCode = WSAGetLastError();
 
 			if (dwCode != 10035)
-				OutputConsole("Winsock Error %lu\r\n", dwCode);
+				LOG(Temp, Normal, "Winsock Error %lu\n", dwCode);
 			break;
 		}
 		else if (!bloblen)
@@ -112,16 +114,24 @@ void CNetwork::ThinkSocket(SOCKET socket)
 		WORD wSize = blob->header.wSize;
 		WORD wRecID = blob->header.wRecID;
 
-		if (bloblen < wSize)
+		if (bloblen != wSize)
 			continue;
 
 		blob->header.dwCRC -= CalcTransportCRC((DWORD *)blob);
 
-		// OutputConsole("Received:\r\n");
-		// OutputConsoleBytes(&blob->header, blob->header.wSize + sizeof(blob->header));
+#ifdef _DEBUG
+		SOCKADDR_IN addr;
+		memset(&addr, 0, sizeof(addr));
+		int namelen = sizeof(addr);
+		getsockname(socket, (sockaddr *)&addr, &namelen);
+		LOG(Network, Verbose, "Received on port %d:\n", ntohs(addr.sin_port));
+		LOG_BYTES(Network, Verbose, &blob->header, blob->header.wSize + sizeof(blob->header));
+#endif
 
 		if (!wRecID)
+		{
 			ProcessConnectionless(&clientaddr, blob);
+		}
 		else
 		{
 			CClient *client = ValidateClient(wRecID, &clientaddr);
@@ -166,12 +176,12 @@ void CNetwork::KickClient(CClient *pClient)
 	if (!pClient)
 		return;
 
-	OutputConsole("Client #%u (%s) is being kicked.\r\n", pClient->GetIndex(), pClient->GetAccount());
-	NetFood KC;
+	LOG(Temp, Normal, "Client #%u (%s) is being kicked.\n", pClient->GetIndex(), pClient->GetAccount());
+	BinaryWriter KC;
 	KC.WriteLong(0xF7DC);
 	KC.WriteLong(0);
 
-	pClient->SendMessage(KC.GetData(), KC.GetSize(), PRIVATE_MSG);
+	pClient->SendNetMessage(KC.GetData(), KC.GetSize(), PRIVATE_MSG);
 	pClient->ThinkOutbound();
 	pClient->Kill(NULL, NULL);
 }
@@ -201,7 +211,7 @@ void CNetwork::KillClient(WORD index)
 	if (!pClient)
 		return;
 
-	OutputConsole("Client(%s, %s) disconnected. (%s)\r\n", pClient->GetAccount(), inet_ntoa(pClient->GetHostAddress()->sin_addr), timestamp());
+	LOG(Temp, Normal, "Client(%s, %s) disconnected. (%s)\n", pClient->GetAccount(), inet_ntoa(pClient->GetHostAddress()->sin_addr), timestamp());
 
 	delete pClient;
 	m_clients[index] = NULL;
@@ -229,7 +239,7 @@ CClient* CNetwork::FindClientByAccount(const char* account)
 
 void CNetwork::ConnectionRequest(sockaddr_in *addr, BlobPacket_s *p)
 {
-	NetMeal cr(p);
+	BinaryReader cr(p->data, p->header.wSize);
 
 	char *szVersion = cr.ReadString();	//client version stamp
 
@@ -281,8 +291,13 @@ void CNetwork::ConnectionRequest(sockaddr_in *addr, BlobPacket_s *p)
 	*(szPassword) = '\0';
 	szPassword++;
 
-	if (!g_pDB->AccountDB()->CheckAccount(szAccount, szPassword))
+	int accessLevel;
+	std::string actualAccount;
+
+	if (!g_pDB->AccountDB()->CheckAccount(szAccount, szPassword, &accessLevel, actualAccount))
 	{
+		szAccount = (char *)actualAccount.c_str();
+
 		//Bad login.
 		CREATEBLOB(BadLogin, sizeof(DWORD));
 		*((DWORD *)BadLogin->data) = 0x00000000;
@@ -290,15 +305,29 @@ void CNetwork::ConnectionRequest(sockaddr_in *addr, BlobPacket_s *p)
 		SendConnectlessBlob(addr, BadLogin, BT_ERROR, NULL);
 
 		DELETEBLOB(BadLogin);
-		OutputConsole("Invalid login from %s, used %s:%s\r\n", inet_ntoa(addr->sin_addr), szAccount, szPassword);
+		LOG(Temp, Normal, "Invalid login from %s, used %s:%s\n", inet_ntoa(addr->sin_addr), szAccount, szPassword);
 	}
 	else
 	{
-		//*need to check if the account is in use here*
-		CClient *dupe = FindClientByAccount(szAccount);
-		if (dupe) return;
+		szAccount = (char *)actualAccount.c_str();
+
+		CClient *pExistingClient = FindClientByAccount(szAccount);
+
+		if (pExistingClient)
+		{
+			if (_stricmp(pExistingClient->GetAccount(), " admin"))
+			{
+				KickClient(pExistingClient);
+				// TODO don't allow this player to login for a few seconds while the world handles the other player
+			}
+			else
+			{
+				return;
+			}
+		}
 
 		WORD index = GetClientSlot();
+
 		if (index == NULL)
 		{
 			//Server unavailable.
@@ -310,9 +339,9 @@ void CNetwork::ConnectionRequest(sockaddr_in *addr, BlobPacket_s *p)
 			DELETEBLOB(ServerFull);
 		}
 
-		OutputConsole("Client(%s, %s) connected on slot #%u (%s)\r\n", szAccount, inet_ntoa(addr->sin_addr), index, timestamp());
+		LOG(Temp, Normal, "Client(%s, %s) connected on slot #%u (%s)\n", szAccount, inet_ntoa(addr->sin_addr), index, timestamp());
 
-		CClient *client = m_clients[index] = new CClient(addr, index, szAccount);
+		CClient *client = m_clients[index] = new CClient(addr, index, szAccount, accessLevel);
 		client->SetLoginData(dwUnixTime, dwPortalStamp, dwCellStamp);
 
 		if (index > m_slotrange) m_slotrange = index;
@@ -321,7 +350,7 @@ void CNetwork::ConnectionRequest(sockaddr_in *addr, BlobPacket_s *p)
 		//Add the client to the HUD
 		UpdateClientsHUD(m_clients, m_slotrange);
 
-		NetFood AcceptConnect;
+		BinaryWriter AcceptConnect;
 
 		//Some server variables.
 		AcceptConnect.WriteDouble(g_pGlobals->Time());
@@ -419,7 +448,7 @@ void CNetwork::ConnectionRequest(sockaddr_in *addr, BlobPacket_s *p)
 		}
 		else
 		{
-			OutputConsole("AcceptConnect.GetSize() > 0x1D0");
+			LOG(Temp, Normal, "AcceptConnect.GetSize() > 0x1D0");
 		}
 	}
 }
@@ -444,15 +473,10 @@ void CNetwork::ProcessConnectionless(sockaddr_in *peer, BlobPacket_s *blob)
 {
 	DWORD dwFlags = blob->header.dwFlags;
 
-	/*
-	if (dwFlags & BT_WAKE)
-		return;
-		*/
-
 	if (dwFlags == BT_LOGIN)
 	{
 		//if (blob->header.dwSequence != 1)
-		//	OutputConsole("Client connecting with bad sequence?\r\n");
+		//	LOG(Temp, Normal, "Client connecting with bad sequence?\n");
 
 		if (!IsBannedIP(peer->sin_addr))
 		{
@@ -461,8 +485,7 @@ void CNetwork::ProcessConnectionless(sockaddr_in *peer, BlobPacket_s *blob)
 		return;
 	}
 
-	// OutputConsole("Unknown connectionless packet received: %08X Look into this\r\n", dwFlags);
-	// OutputConsoleBytes(blob->data, blob->header.wSize);
+	LOG(Network, Verbose, "Unhandled connectionless packet received: 0x%08X Look into this\n", dwFlags);
 }
 
 BOOL CNetwork::IsBannedIP(in_addr ip)

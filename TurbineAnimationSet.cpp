@@ -136,7 +136,7 @@ BYTE* TurbineAnimationSet::InitializeSequences(BYTE *pbData)
 
 AnimationEntry* TurbineAnimationSet::LookupAnimation(WORD wStance, WORD wIndex)
 {
-	OutputConsole("LookupAnimation %04X %04X", wStance, wIndex);
+	LOG(Temp, Normal, "LookupAnimation %04X %04X", wStance, wIndex);
 	AnimationMap::iterator i = m_mAnimations.find(wStance);
 
 	if (i == m_mAnimations.end())

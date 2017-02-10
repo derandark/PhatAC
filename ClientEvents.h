@@ -1,6 +1,6 @@
 
 #pragma once
-#include "NetMeal.h"
+#include "BinaryReader.h"
 
 class CBasePlayer;
 
@@ -58,7 +58,7 @@ public:
 	void UseItemEx(DWORD dwSourceID, DWORD dwDestID);
 	void UseObject(DWORD dwEID);
 
-	void ProcessEvent(NetMeal *);
+	void ProcessEvent(BinaryReader *);
 
 private:
 	CClient *m_pClient;

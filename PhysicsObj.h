@@ -1,5 +1,6 @@
 
 #pragma once
+
 #include "Animation.h"
 #include "ModelInfo.h"
 
@@ -20,8 +21,10 @@ class CLandBlock;
 #define ANIM_LSRECALL 4
 #define ANIM_MPRECALL 5
 #define ANIM_DROPITEM 6
+#define ANIM_BINDLIFESTONE 1000
 
 // Visual flags
+/*
 #define VF_JUMPLOCK (VisFlags_t)0x00800000 //no idea, jumping locks you to the north.
 #define VF_NOEDGEFALL (VisFlags_t)0x00400000 //falls off edges
 #define VF_FROZEN (VisFlags_t)0x00100000
@@ -34,6 +37,7 @@ class CLandBlock;
 #define VF_SIGN (VisFlags_t)0x00000010
 #define VF_NORMAL (VisFlags_t)0x00000008
 #define VF_HOLLOW (VisFlags_t)0x00000004 //haven't checked
+*/
 
 #define USEDISTANCE_ANYWHERE -0.1f
 
@@ -42,8 +46,6 @@ class CLandBlock;
 // 0x0100 = too cool, gives a sort of tumbling effect
 // 0x0020 = invisible/cloaked?
 // 0x0004 = can pass through objects?
-typedef DWORD VisFlags_t;
-
 typedef std::vector<CBaseItem *> ItemVector;
 
 /*
@@ -60,7 +62,8 @@ enum eOldWeenieType
 };
 */
 
-enum eHighlightColor
+/*
+enum UIEffectColors
 {
 	eHighlightNone = 0x00000000,
 	eHighlightRed = 0x00000004,
@@ -71,6 +74,7 @@ enum eHighlightColor
 	eHighlightWhite = 0x00000080,
 	eHighlightGreen = 0x00000100,
 };
+*/
 
 enum eObjectStat
 {
@@ -114,8 +118,9 @@ public:
 	void MakeLive(void);
 
 	//Generic network messages.
-	virtual NetFood* CreateMessage(void);
-	virtual NetFood* GetModelData(void);
+	virtual BinaryWriter* CreateMessage(void);
+	virtual BinaryWriter* UpdateMessage(void);
+	virtual BinaryWriter* GetModelData(void);
 	virtual void UpdateModel(void);
 
 	virtual void Spawn(void);
@@ -129,6 +134,8 @@ public:
 	virtual void Identify(CPhysicsObj *);
 
 	virtual void RemoveMe(void) { m_bRemoveMe = TRUE; }
+
+	virtual void PostSpawn() { }
 
 	// Actions
 	virtual void ChangeVIS(DWORD);
@@ -146,26 +153,25 @@ public:
 
 	//should be overridden
 	virtual BOOL IsItem() { return FALSE; }
-	virtual BOOL IsArmor() { return FALSE; }
+	BOOL IsWearable() { return m_dwCoverage1 != 0; }
 	virtual BOOL IsMonster() { return FALSE; }
 	virtual BOOL IsPlayer() { return FALSE; }
 
-	virtual BOOL IsCorpse() { return FALSE; }
-	virtual BOOL IsDoor() { return FALSE; }
+	bool IsCorpse() { return !!(m_WeenieBitfield & BF_CORPSE); }
+	bool IsDoor() { return !!(m_WeenieBitfield & BF_DOOR); }
 	virtual BOOL IsFoci() { return FALSE; }
-	virtual BOOL IsInscribable() { return FALSE; }
-	virtual BOOL IsLifestone() { return FALSE; }
-	virtual BOOL IsMerchant() { return FALSE; }
-	virtual BOOL CanPickup() { return FALSE; }
-	virtual BOOL IsPortal() { return FALSE; }
+	bool IsInscribable() { return !!(m_WeenieBitfield & BF_INSCRIBABLE); }
+	bool IsLifestone() { return !!(m_WeenieBitfield & BF_LIFESTONE); }
+	bool IsVendor() { return !!(m_WeenieBitfield & BF_VENDOR); }
+	bool CanPickup() { return !(m_WeenieBitfield & BF_STUCK); }
+	bool IsPortal() { return !!(m_WeenieBitfield & BF_PORTAL); }
 	virtual BOOL IsReadable() { return FALSE; }
-	virtual BOOL IsAttackable() { return TRUE; }
+	bool IsAttackable() { return !!(m_WeenieBitfield & BF_ATTACKABLE); }
 
 	virtual BOOL IsContained() { return FALSE; }
 	virtual BOOL IsWielded() { return FALSE; }
 	virtual BOOL HasOwner();
 
-	virtual DWORD GetDescFlags();
 	virtual DWORD GetContainerID() { return 0; }
 	virtual DWORD GetWielderID() { return 0; }
 	virtual WORD GetTypeID() { return m_wTypeID; }
@@ -173,13 +179,9 @@ public:
 	virtual DWORD GetSoundSet() { return m_dwSoundSet; }
 	virtual DWORD GetEffectSet() { return m_dwEffectSet; }
 	virtual const char* GetName() { return m_strName.c_str(); }
-	virtual WORD GetBurden() { return 0; }
-	virtual DWORD GetValue() { return 0; }
 	virtual float GetApproachDist() { return 0; }
-	virtual DWORD GetHighlightColor() { return eHighlightNone; }
 	virtual DWORD GetEquipSlot() { return 0; }
 	virtual DWORD GetEquipType() { return 0; }
-	virtual BYTE GetRadarColor() { return 0; }
 	const char* GetDescription();
 	void SetDescription(const char*);
 
@@ -187,11 +189,15 @@ public:
 	virtual BOOL HasEquipType() { return GetEquipType() ? TRUE : FALSE; }
 	virtual BOOL HasCoverage() { return FALSE; }
 	virtual BOOL HasBurden() { return FALSE; }
-	virtual BOOL HasValue() { return FALSE; }
-	virtual BOOL HasRadarDot() { return FALSE; }
 
 	virtual DWORD GetObjectStat(eObjectStat index);
 	virtual DWORD SetObjectStat(eObjectStat index, DWORD value);
+
+	virtual void SendNetMessage(void *_data, DWORD _len, WORD _group, BOOL _event = 0) { }
+	virtual void SendNetMessage(BinaryWriter *_food, WORD _group, BOOL _event = 0, BOOL del = 1) { }
+
+	float DistanceTo(CPhysicsObj *pOther);
+	void SetAppearanceOverride(ModelInfo *pAppearance);
 
 	BOOL m_bRemoveMe;
 	BOOL(CPhysicsObj::*m_pfnThink)(void);
@@ -209,7 +215,15 @@ public:
 
 	ITEM_USEABLE m_Usability;
 	float m_UseDistance;
+
+	DWORD m_Value;
+	WORD m_Burden;
+
+	ITEM_TYPE m_TargetType;
+	AMMO_TYPE m_AmmoType;
+
 	RadarEnum m_RadarVis;
+	int m_BlipColor; // 1=White 5=PK(red) 6=PKL(pink) 10=BrightGreen(fellowship)
 
 	WORD m_wNumMovements;
 	WORD m_wNumAnimInteracts;
@@ -229,16 +243,47 @@ public:
 
 	loc_t m_Origin;
 	heading_t m_Angles;
-	VisFlags_t m_VisFlags;
+	DWORD m_PhysicsState;
+	float m_Translucency;
+	DWORD m_WeenieBitfield;
+
 	double m_fNextThink;
 
 	DWORD m_dwStats[0x100];
-	ModelInfo m_miBaseModel;
 
+	ModelInfo m_miBaseModel;
+	ModelInfo m_miWornModel;
+
+	bool m_bUseModelOverride;
+	ModelInfo m_miModelOverride;
+
+	BYTE *m_AnimOverrideData;
+	DWORD m_AnimOverrideDataLen;
+	DWORD m_AutonomousMovement;
 
 #include "container.h"
 #include "animate.h"
 #include "moves.h"
+
+	std::map<DWORD, DWORD> m_dwordProperties;
+	std::map<DWORD, UINT64> m_qwordProperties;
+	std::map<DWORD, DWORD> m_boolProperties;
+	std::map<DWORD, double> m_floatProperties;
+	std::map<DWORD, std::string> m_stringProperties;
+	std::map<DWORD, DWORD> m_dataIDProperties;
+
+	bool m_bDontClear;
+
+	bool m_bLifestoneBound;
+	placement_t m_LifestonePlacement;
+
+	DWORD m_UIEffects;
+
+	DWORD m_dwEquipSlot;
+	DWORD m_dwEquipType;
+	DWORD m_dwCoverage1;
+	DWORD m_dwCoverage2;
+	DWORD m_dwCoverage3;
 
 private:
 	CLandBlock* m_pBlock;

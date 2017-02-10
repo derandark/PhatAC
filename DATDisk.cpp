@@ -66,16 +66,11 @@ const DATHeader *DATDisk::GetHeader()
 
 void DATDisk::FindFileIDsWithinRange(DWORD Min, DWORD Max, void(*FileCallback)(void *, DWORD, BTreeEntry *), void(*ProgressCallback)(void *, float), void *CallbackArg)
 {
-	// double startTime = g_pGlobals->Time();
-
 	m_BTree.SetFileCallback(FileCallback);
 	m_BTree.SetProgressCallback(ProgressCallback);
 	m_BTree.SetCallbackArg(CallbackArg);
 
 	m_BTree.FindEntryIDsWithinRange(Min, Max, 0, 100.0);
-
-	// double endTime = g_pGlobals->Time();
-	// DEBUGOUT("File search completed in %f seconds.\r\n", endTime - startTime);
 }
 
 BOOL DATDisk::GetData(DWORD ID, DATEntry *pEntry)

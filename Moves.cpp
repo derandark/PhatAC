@@ -67,7 +67,7 @@ void CPhysicsObj::Movement_SendUpdate(DWORD dwCell)
 	//sets some sort of boolean relating to the update
 	//----
 
-	NetFood* poo = MoveUpdate(this);
+	BinaryWriter* poo = MoveUpdate(this);
 
 	g_pWorld->BroadcastPVS(dwCell, poo->GetData(), poo->GetSize());
 

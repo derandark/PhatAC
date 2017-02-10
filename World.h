@@ -2,6 +2,7 @@
 #pragma once
 
 #include "LandBlock.h"
+#include "NetworkDefs.h"
 
 enum eGUIDClass {
 	ePresetGUID = 0,
@@ -22,6 +23,14 @@ typedef struct DungeonDesc_s
 	heading_t angles;
 } DungeonDesc_t;
 
+typedef struct TeleTownList_s
+{
+	std::string	m_teleString;	//! String representing the town name
+	loc_t loc;
+	heading_t heading;
+} TeleTownList_t;
+
+typedef std::vector<TeleTownList_s> TeletownVector;
 typedef std::map<DWORD, loc_t> LocationMap;
 typedef std::vector<CLandBlock *> LandblockVector;
 typedef std::map<WORD, DungeonDesc_t> DungeonDescMap;
@@ -34,6 +43,9 @@ public:
 	~CWorld();
 
 	void CreateEntity(CPhysicsObj*);
+	void InsertTeleportLocation(TeleTownList_s l);
+	std::string GetTeleportList();
+	TeleTownList_s GetTeleportLocation(std::string location);
 	void InsertEntity(CPhysicsObj*, BOOL bSilent = FALSE);
 	void Test();
 
@@ -45,8 +57,9 @@ public:
 
 	void BroadcastPVS(DWORD dwCell, void *_data, DWORD _len, WORD _group = OBJECT_MSG, DWORD ignore_ent = 0, BOOL _game_event = 0);
 	void BroadcastGlobal(void *_data, DWORD _len, WORD _group, DWORD ignore_ent = 0, BOOL _game_event = 0);
-	void BroadcastGlobal(NetFood *food, WORD _group, DWORD ignore_ent = 0, BOOL _game_event = 0, BOOL del = 1);
-
+	void BroadcastGlobal(BinaryWriter *food, WORD _group, DWORD ignore_ent = 0, BOOL _game_event = 0, BOOL del = 1);
+	
+	void ClearAllSpawns();
 	CLandBlock* GetLandblock(WORD wHeader);
 	loc_t FindDungeonDrop();
 	loc_t FindDungeonDrop(WORD wBlockID);
@@ -75,8 +88,10 @@ public:
 
 	const char* GetMOTD();
 
-private:
+	void SetNewGameMode(class CGameMode *pGameMode);
+	class CGameMode *GetGameMode();
 
+private:
 
 	void LoadStateFile();
 	void SaveStateFile();
@@ -93,6 +108,7 @@ private:
 	CLandBlock* m_pBlocks[256 * 256]; // 256 x 256 array of landblocks.
 	LandblockVector m_vBlocks; // Vector of active landblocks.
 	LandblockVector m_vSpawns; // Vector of spawned landblocks.
+	TeletownVector m_vTeleTown; //Vector of Teletowns
 
 	PlayerMap m_mAllPlayers; // Global list of players.
 	LocationMap m_mDungeons; // Global list of dungeons.
@@ -106,6 +122,8 @@ private:
 	double m_fLastSave;
 
 	std::string m_strMOTD;
+
+	class CGameMode *m_pGameMode;
 };
 
 

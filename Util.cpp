@@ -2,9 +2,38 @@
 #include "StdAfx.h"
 #include "TurbineFormats.h"
 
-static char szReadBuffer[600];
+bool LoadDataFromFile(const char *filepath, BYTE **data, DWORD *length)
+{
+	*data = NULL;
+	*length = 0;
+
+	FILE *fp = fopen(filepath, "rb");
+
+	if (fp)
+	{
+		fseek(fp, 0, SEEK_END);
+		long _fileSize = ftell(fp);
+		fseek(fp, 0, SEEK_SET);
+
+		if (_fileSize < 0)
+			_fileSize = 0;
+
+		DWORD fileSize = (DWORD)_fileSize;
+
+		BYTE *fileData = new BYTE[fileSize];
+		fread(fileData, fileSize, 1, fp);
+		fclose(fp);
+
+		*data = fileData;
+		*length = fileSize;
+		return true;
+	}
+
+	return false;
+}
+
+static char szReadBuffer[1024];
 static char szWriteBuffer[600];
-static char szConsoleBuffer[800];
 
 char* csprintf(const char *format, ...)
 {
@@ -14,6 +43,8 @@ char* csprintf(const char *format, ...)
 	va_start(args, format);
 	_vsnprintf(szReadBuffer, 1024, format, args);
 	va_end(args);
+
+	szReadBuffer[1023] = '\0';
 
 	return szReadBuffer;
 }
@@ -35,40 +66,71 @@ char *timestamp()
 	return result;
 }
 
-void OutputConsoleBytes(void *_data, unsigned int len) {
+unsigned long ResolveIPFromHost(const char *host)
+{
+	ULONG ipaddr;
 
+	// Check if it's in IP format.
+	ipaddr = ::inet_addr(host);
+
+	if (ipaddr && ipaddr != INADDR_NONE)
+		return (unsigned long)ipaddr;
+
+	// Try to resolve an IP address.
+
+	LPHOSTENT lphost;
+	lphost = gethostbyname(host);
+
+	if (lphost != NULL)
+	{
+		ipaddr = ((LPIN_ADDR)lphost->h_addr)->s_addr;
+
+		if (ipaddr && ipaddr != INADDR_NONE)
+			return (unsigned long)ipaddr;
+	}
+
+	return 0;
+}
+
+unsigned long GetLocalIP()
+{
+	char hostname[256];
+	gethostname(hostname, 256);
+	DWORD hostaddr = *((DWORD *)gethostbyname(hostname)->h_addr);
+
+	return *(unsigned long *)gethostbyname(hostname)->h_addr;
+}
+
+std::string GetLocalIPString()
+{
+	unsigned long localIP = GetLocalIP();
+	return inet_ntoa(*(in_addr *)&localIP);
+}
+
+std::string DebugBytesToString(void *_data, unsigned int len)
+{
 	BYTE *data = (BYTE *)_data;
+
+	std::string strBytes;
 
 	for (unsigned int i = 0; i < len; i++)
 	{
-		OutputConsole("%02X", data[i]);
+		char temp[3];
+		sprintf(temp, "%02X", data[i]);
+		strBytes += temp;
 
 		if (!((i + 1) % 16))
-			OutputConsole("\r\n");
+			strBytes += "\n";
 		else
-			OutputConsole(" ");
+			strBytes += " ";
 	}
 
 	if (len % 16)
-		OutputConsole("\r\n");
-}
+	{
+		strBytes += "\n";
+	}
 
-void OutputConsole(const char *format, ...)
-{
-	szConsoleBuffer[0] = 0;
-	va_list args;
-
-	va_start(args, format);
-	_vsnprintf(szConsoleBuffer, 1024, format, args);
-	va_end(args);
-
-	HWND console = GetDlgItem(g_pGlobals->GetWindowHandle(), IDC_CONSOLE);
-	int len = (int)SendMessage(console, WM_GETTEXTLENGTH, 0, 0);
-	DWORD start, end;
-	SendMessage(console, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
-	SendMessage(console, EM_SETSEL, len, len);
-	SendMessage(console, EM_REPLACESEL, FALSE, (LPARAM)szConsoleBuffer);
-	SendMessage(console, EM_SETSEL, start, end);
+	return strBytes;
 }
 
 void MsgBox(UINT type, const char *format, ...)
@@ -235,6 +297,7 @@ float NorthSouth(char *szCoord)
 	char *end = &szCoord[len - 1];
 	char NS = *end;
 	*end = 0;
+
 	strtrim(szCoord);
 
 	float dir = 0.0f;

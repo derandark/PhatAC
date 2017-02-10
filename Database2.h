@@ -36,6 +36,8 @@ public:
 	virtual bool Query(const char *query) = 0;
 	virtual unsigned int LastError() = 0;
 	virtual CSQLResult *GetResult() = 0;
+
+	static int s_NumConnectAttempts;
 };
 
 class CMYSQLConnection : public CSQLConnection
@@ -90,6 +92,45 @@ private:
 	bool m_bDisabled;
 };
 
+#include "ModelInfo.h"
+#include "PhysicsDesc.h"
+#include "PublicWeenieDesc.h"
+
+class CCapturedWorldObjectInfo
+{
+public:
+	CCapturedWorldObjectInfo() {
+		m_ObjData = NULL;
+		m_ObjDataLen = 0;
+	}
+	~CCapturedWorldObjectInfo() {
+		Free();
+	}
+	void Free() {
+		if (m_ObjData)
+		{
+			delete[] m_ObjData;
+			m_ObjData = NULL;
+		}
+	}
+
+	std::string m_ObjName;
+	BYTE *m_ObjData;
+	unsigned m_ObjDataLen;
+
+	DWORD guid;
+	ModelInfo appearance;
+	PhysicsDesc physics;
+	PublicWeenieDesc weenie;
+	std::map<DWORD, DWORD> dwordProperties;
+	std::map<DWORD, UINT64> qwordProperties;
+	std::map<DWORD, DWORD> boolProperties;
+	std::map<DWORD, double> floatProperties;
+	std::map<DWORD, std::string> stringProperties;
+	std::map<DWORD, DWORD> dataIDProperties;
+	ModelInfo wornAppearance;
+};
+
 class CGameDatabase
 {
 public:
@@ -99,11 +140,40 @@ public:
 	void Init();
 
 	bool LoadedPortals() { return m_bLoadedPortals; }
+	CCapturedWorldObjectInfo *GetCapturedMonsterData(const char *name);
+	CCapturedWorldObjectInfo *GetCapturedItemData(const char *name);
+	CCapturedWorldObjectInfo *GetCapturedArmorData(const char *name);
+	CCapturedWorldObjectInfo *GetRandomCapturedMonsterData();
+	CCapturedWorldObjectInfo *GetRandomCapturedItemData();
+	CCapturedWorldObjectInfo *GetRandomCapturedArmorData();
+
+	void SpawnAerfalle();
+
+	class CPhysicsObj *CreateFromCapturedData(CCapturedWorldObjectInfo *pObjectInfo);
 
 protected:
+
+	std::string ConvertNameForLookup(std::string name);
+
 	void LoadPortals();
-	
+	void LoadAerfalle();	
+	void LoadCapturedMonsterData();	
+	void LoadCapturedItemData();
+	void LoadCapturedArmorData();
+	void LoadMonsterTemplates();
+	void LoadTeleTownList();
+	void LoadStaticsData();
+
 	bool m_bLoadedPortals;
+
+	std::list<CCapturedWorldObjectInfo *> m_CapturedStaticsData;
+	std::list<CCapturedWorldObjectInfo *> m_CapturedAerfalleData;
+	std::map<std::string, CCapturedWorldObjectInfo *> m_CapturedMonsterData;
+	std::vector<CCapturedWorldObjectInfo *> m_CapturedMonsterDataList;
+	std::map<std::string, CCapturedWorldObjectInfo *> m_CapturedItemData;
+	std::vector<CCapturedWorldObjectInfo *> m_CapturedItemDataList;
+	std::map<std::string, CCapturedWorldObjectInfo *> m_CapturedArmorData;
+	std::vector<CCapturedWorldObjectInfo *> m_CapturedArmorDataList;
 };
 
 extern CGameDatabase *g_pGameDatabase;

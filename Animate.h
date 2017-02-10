@@ -24,7 +24,7 @@ void Animation_Jump(float fPower, float fDir1, float fDir2, float fHeight);
 void Animation_SetCombatStance(WORD);
 void Animation_SetCombatMode(WORD);
 
-NetFood* Animation_GetAnimationInfo();
+BinaryWriter* Animation_GetAnimationInfo();
 void Animation_Update();
 
 BOOL m_bAnimUpdate;

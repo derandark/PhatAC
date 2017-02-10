@@ -2,7 +2,7 @@
 #pragma once
 
 class CClient;
-class NetFood;
+class BinaryWriter;
 
 class CBasePlayer : public CBaseMonster
 {
@@ -25,7 +25,7 @@ public:
 	virtual const char *GetGenderString();
 	virtual const char *GetRaceString();
 	virtual const char *GetTitleString();
-	virtual NetFood *GetModelData();
+	virtual BinaryWriter *GetModelData();
 
 	virtual DWORD GiveAttributeXP(eAttribute index, DWORD dwXP);
 	virtual DWORD GiveVitalXP(eVital index, DWORD dwXP);
@@ -41,20 +41,25 @@ public:
 	virtual void MakeAware(CPhysicsObj *);
 	virtual void ChangeVIS(DWORD);
 
+	void AddSpellByID(DWORD id);
+
 	//Network events.
-	virtual void SendMessage(void *_data, DWORD _len, WORD _group, BOOL _event = 0);
-	virtual void SendMessage(NetFood *_food, WORD _group, BOOL _event = 0, BOOL del = 1);
+	virtual void SendNetMessage(void *_data, DWORD _len, WORD _group, BOOL _event = 0) override;
+	virtual void SendNetMessage(BinaryWriter *_food, WORD _group, BOOL _event = 0, BOOL del = 1) override;
 	virtual void EnterPortal();
 	virtual void ExitPortal();
 	virtual void LoginCharacter();
 	virtual void UpdateEntity(CPhysicsObj *);
 
 	virtual BOOL IsPlayer() { return TRUE; }
-	virtual BOOL HasRadarDot() { return TRUE; }
-	virtual BYTE GetRadarColor() { return 9; }
 
 	virtual DWORD GetObjectStat(eObjectStat index);
 	virtual DWORD SetObjectStat(eObjectStat index, DWORD value);
+
+	//cmoski -- remove last assessed item
+	void SetLastAssessed(DWORD guid);
+	std::string RemoveLastAssessed();
+	//
 
 	void EmitSoundUI(DWORD dwIndex, float fSpeed);
 
@@ -65,9 +70,10 @@ public:
 
 	BOOL IsHuman();
 
+	DWORD m_LastAssessed;
+
 protected:
 	CClient *m_pClient;
-
 	BYTE m_bStatSequence;
 };
 

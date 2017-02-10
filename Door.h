@@ -10,11 +10,6 @@ public:
 	virtual void Precache();
 	virtual void Use(CPhysicsObj *);
 
-	virtual BOOL IsAttackable() override { return FALSE; }
-
-	virtual BOOL CanMove() { return FALSE; }
-	virtual DWORD GetDescFlags();
-
 	BOOL CloseThink();
 	void CloseDoor();
 	void OpenDoor();

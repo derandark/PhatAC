@@ -14,7 +14,7 @@ void CDatabase::FatalError(SQLSMALLINT type, SQLHANDLE *handle)
 
 CDatabase::CDatabase()
 {
-	OutputConsole("Initializing Database..\r\n");
+	LOG(Temp, Normal, "Initializing Database..\n");
 
 	m_database = "main.mdb";
 	m_pAccountDB = NULL;
@@ -24,7 +24,7 @@ CDatabase::CDatabase()
 	Initialize();
 
 	if (!IsAlive())
-		OutputConsole("Database failure!\r\n");
+		LOG(Temp, Normal, "Database failure!\n");
 }
 
 CDatabase::~CDatabase()

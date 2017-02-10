@@ -10,18 +10,18 @@ void ModelInfo::MergeData(ModelInfo* pSrc, DWORD dwLayer)
 	//if ( !pSrc->wBasePalette )
 	//	return;
 
-	if (!wBasePalette)
-		wBasePalette = pSrc->wBasePalette;
+	if (!dwBasePalette)
+		dwBasePalette = pSrc->dwBasePalette;
 
 	for (PaletteRList::iterator newb = pSrc->lPalettes.begin(); newb != pSrc->lPalettes.end(); newb++)
 	{
-		WORD bNewbID = newb->wPaletteID;
+		DWORD dwNewbID = newb->dwPaletteID;
 		BYTE bNewbStart = newb->bOffset;
 		BYTE bNewbEnd = newb->bOffset + newb->bLength;
 
 		for (PaletteRList::iterator i = lPalettes.begin(); i != lPalettes.end(); )
 		{
-			WORD wBobID = i->wPaletteID;
+			DWORD dwBobID = i->dwPaletteID;
 			BYTE bBobStart = i->bOffset;
 			BYTE bBobEnd = i->bOffset + i->bLength;
 
@@ -32,15 +32,15 @@ void ModelInfo::MergeData(ModelInfo* pSrc, DWORD dwLayer)
 				}
 				else if (bBobEnd > bNewbEnd) {
 					//Going to have to split the existing into 2
-					PaletteRpl pr1(wBobID, bBobStart, bNewbStart - bBobStart);
-					PaletteRpl pr2(wBobID, bNewbEnd, bBobEnd - (bNewbEnd));
+					PaletteRpl pr1(dwBobID, bBobStart, bNewbStart - bBobStart);
+					PaletteRpl pr2(dwBobID, bNewbEnd, bBobEnd - (bNewbEnd));
 					lPalettes.push_back(pr1);
 					lPalettes.push_back(pr2);
 				}
 				else
 				{
 					//Need to cut off high-side of the existing
-					PaletteRpl pr1(wBobID, bBobStart, bNewbStart - bBobStart);
+					PaletteRpl pr1(dwBobID, bBobStart, bNewbStart - bBobStart);
 					lPalettes.push_back(pr1);
 				}
 				i++;
@@ -61,7 +61,7 @@ void ModelInfo::MergeData(ModelInfo* pSrc, DWORD dwLayer)
 				else
 				{
 					//Need to cut off low-side of the existing
-					PaletteRpl pr2(wBobID, bNewbEnd, bBobEnd - bNewbEnd);
+					PaletteRpl pr2(dwBobID, bNewbEnd, bBobEnd - bNewbEnd);
 					lPalettes.push_back(pr2);
 					i++;
 				}
@@ -100,9 +100,9 @@ void ModelInfo::MergeData(ModelInfo* pSrc, DWORD dwLayer)
 	std::copy(pSrc->lModels.begin(), pSrc->lModels.end(), std::back_inserter(lModels));
 }
 
-NetFood *ModelInfo::NetData()
+BinaryWriter *ModelInfo::NetData()
 {
-	NetFood* Poo = new NetFood;
+	BinaryWriter* Poo = new BinaryWriter;
 
 	Poo->WriteBYTE(0x11);
 	Poo->WriteBYTE((BYTE)lPalettes.size());
@@ -111,11 +111,11 @@ NetFood *ModelInfo::NetData()
 
 	if (!lPalettes.empty())
 	{
-		Poo->WritePackedDWORD(wBasePalette);
+		Poo->WritePackedDWORD(dwBasePalette);
 
 		for (PaletteRList::iterator i = lPalettes.begin(); i != lPalettes.end(); i++)
 		{
-			Poo->WritePackedDWORD(i->wPaletteID);
+			Poo->WritePackedDWORD(i->dwPaletteID);
 			Poo->WriteBYTE(i->bOffset);
 			Poo->WriteBYTE(i->bLength);
 		}
@@ -125,8 +125,8 @@ NetFood *ModelInfo::NetData()
 		for (TextureRList::iterator i = lTextures.begin(); i != lTextures.end(); i++)
 		{
 			Poo->WriteBYTE(i->bIndex);
-			Poo->WritePackedDWORD(i->wOriginID);
-			Poo->WritePackedDWORD(i->wTextureID);
+			Poo->WritePackedDWORD(i->dwOriginID);
+			Poo->WritePackedDWORD(i->dwTextureID);
 		}
 	}
 	if (!lModels.empty())
@@ -134,7 +134,7 @@ NetFood *ModelInfo::NetData()
 		for (ModelRList::iterator i = lModels.begin(); i != lModels.end(); i++)
 		{
 			Poo->WriteBYTE(i->bIndex);
-			Poo->WritePackedDWORD(i->wModelID);
+			Poo->WritePackedDWORD(i->dwModelID);
 		}
 	}
 

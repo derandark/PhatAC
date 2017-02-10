@@ -15,19 +15,21 @@ CBaseDoor::CBaseDoor()
 	m_wOpenAnim = DOOR_OPEN;
 	m_wCloseAnim = DOOR_CLOSED;
 
+	m_WeenieBitfield |= BF_DOOR;
+
 	m_strName = "Door";
 	m_wTypeID = 0x19C;
 	m_wIcon = 0x1317;
 
-	m_dwModel = 0x0200027C;
+	m_dwModel = 0x0200027C; //0x19FF
 	m_dwSoundSet = 0x20000023;
 	m_dwEffectSet = 0x3400002B;
 	m_fScale = 1.0f;
 
-	m_VisFlags = VF_DOOR | VF_NORMAL;	//who the hell knows, collision related.
+	m_PhysicsState = HAS_PHYSICS_BSP_PS | PhysicsState::REPORT_COLLISIONS_PS;	//who the hell knows, collision related.
 	m_ItemType = TYPE_MISC;
-	m_Usability = m_Usability;
-	m_UseDistance = USEDISTANCE_ANYWHERE;
+	m_Usability = USEABLE_REMOTE;
+	m_UseDistance = 5.0f;
 
 	m_dwAnimationSet = DOOR_ANIMSET;
 	m_wForwardAnim = m_wCloseAnim;
@@ -80,23 +82,17 @@ void CBaseDoor::CloseDoor()
 	HaltThink();
 }
 
-void CBaseDoor::Use(CPhysicsObj *pEntity)
+void CBaseDoor::Use(CPhysicsObj *pOther)
 {
 	// should check approach distance in a parent toggle class
-
 	if (Animation_IsActive())
 		return;
 
-	if (!m_bOpen)
-		OpenDoor();
-	else
-		CloseDoor();
+	if ((Vector(pOther->m_Origin) - Vector(m_Origin)).Length() < m_UseDistance)
+	{
+		if (!m_bOpen)
+			OpenDoor();
+		else
+			CloseDoor();
+	}
 }
-
-DWORD CBaseDoor::GetDescFlags()
-{
-	//0x1000 = I'm a door.
-	return (CPhysicsObj::GetDescFlags() | BF_DOOR);
-}
-
-
